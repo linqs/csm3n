@@ -72,8 +72,8 @@ for fold = 1:nFold
 			for i = 1:nCV
 				% infer (decode) labels of CV example
 				clamped = [zeros(size(Ycv(:,i))) ; Xcv(:,i)];
-				edgeStruct.useMex = 0;
-% 				pred = UGM_Decode_Conditional(nodePot,edgePot,edgeStruct,clamped,@UGM_Decode_LBP);
+				edgeStruct.useMex = 0; % for now, don't use mex
+				pred = UGM_Decode_Conditional(nodePot,edgePot,edgeStruct,clamped,@UGM_Decode_LBP);
 			end
 			
 		end
