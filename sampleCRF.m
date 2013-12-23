@@ -5,7 +5,7 @@ clear
 % structural constants
 nNode = 100;
 sparsity = 0.1;
-nFeat = 4; % # local features
+nFeat = 1; % # local features
 nStateX = 2^nFeat;
 nStateY = 2;
 nState = max(nStateX,nStateY);
@@ -48,7 +48,6 @@ for e=1:nEdge
         edgePot(1:nStateY,1:nStateY,e) = exp(wrel);
     end
 end
-
 
 %% SAMPLING
 

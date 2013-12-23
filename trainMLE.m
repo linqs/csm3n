@@ -5,7 +5,7 @@ function [w,nll] = trainMLE(X,Y,edgeStruct,inferFunc,C,w)
 % X : nNode x nTrain matrix of training observations
 % Y : nNode x nTrain matrix of training labels
 % edgeStruct : edge structure
-% inferFunc : inference function
+% inferFunc : inference function (0: use pseudolikelihood)
 % C : regularization constant (optional: def=nNode)
 % w : init weights (optional: def=zeros)
 
@@ -18,23 +18,33 @@ end
 if nargin < 5
 	C = nNode;
 end
+usePL = ~isa(inferFunc,'function_handle');
 
 % edge features
 Xedge = UGM_makeEdgeFeatures(X,edgeStruct.edgeEnds);
 
 % maps
 if nargin < 6
-	[nodeMap,edgeMap,w] = UGM_makeCRFmaps(X,Xedge,edgeStruct,0,1);
+	[nodeMap,edgeMap,w] = UGM_makeCRFmaps(X,Xedge,edgeStruct,0,1,1);
 else
-	[nodeMap,edgeMap] = UGM_makeCRFmaps(X,Xedge,edgeStruct,0,1);
+	[nodeMap,edgeMap] = UGM_makeCRFmaps(X,Xedge,edgeStruct,0,1,1);
 end
 
 % L2 regularization
 lambda = C * ones(size(w));
 lambda(1) = 0;
-obj = @(w)penalizedL2(w,@UGM_CRF_NLL,lambda,X,Xedge,Y',nodeMap,edgeMap,edgeStruct,inferFunc);
+if usePL
+	obj = @(w)penalizedL2(w,@UGM_CRF_PseudoNLL,lambda,X,Xedge,Y',nodeMap,edgeMap,edgeStruct);
+else
+	obj = @(w)penalizedL2(w,@UGM_CRF_NLL,lambda,X,Xedge,Y',nodeMap,edgeMap,edgeStruct,inferFunc);
+end
 
 % Optimize
 w = minFunc(obj,w);
-nll = UGM_CRF_NLL(w,X,Xedge,Y',nodeMap,edgeMap,edgeStruct,inferFunc);
+
+if usePL
+	nll = UGM_CRF_PseudoNLL(w,X,Xedge,Y',nodeMap,edgeMap,edgeStruct);
+else
+	nll = UGM_CRF_NLL(w,X,Xedge,Y',nodeMap,edgeMap,edgeStruct,inferFunc);
+end
 

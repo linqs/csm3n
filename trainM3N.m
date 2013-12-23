@@ -28,9 +28,9 @@ Xedge = UGM_makeEdgeFeatures(X,edgeStruct.edgeEnds);
 
 % maps
 if nargin < 7
-	[nodeMap,edgeMap,w] = UGM_makeCRFmaps(X,Xedge,edgeStruct,0,1);
+	[nodeMap,edgeMap,w] = UGM_makeCRFmaps(X,Xedge,edgeStruct,0,1,1);
 else
-	[nodeMap,edgeMap] = UGM_makeCRFmaps(X,Xedge,edgeStruct,0,1);
+	[nodeMap,edgeMap] = UGM_makeCRFmaps(X,Xedge,edgeStruct,0,1,1);
 end
 
 % SGD
