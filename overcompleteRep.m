@@ -1,17 +1,26 @@
-function [ocrep] = overcompleteRep(vals, nLabel)
+function [ocrep] = overcompleteRep(vals, nState, vectorize)
 
 % Converts a vector of values to overcomplete representation.
 %
 % vals : nVars x 1 vector of values
 % nLabel : number of labels per variable (must be uniform)
+% vectorize : convert output to vector (optional: def=1)
 %
-% ocrep : n*nLabels x 1 overcomplete representation
+% ocrep : if vector: nState*nNode x 1 overcomplete representation
+%		  if matrix: nState x nNode overcomplete representation
 
-nVars = length(vals);
-
-ocrep = zeros(nVars*nLabel,1);
-
-for i = 1:nVars
-	ocrep((i-1)*nLabel+vals(i)) = 1;
+if nargin < 3
+	vectorize = 1;
 end
 
+nNode = length(vals);
+
+ocrep = zeros(nState,nNode);
+
+for i = 1:nNode
+	ocrep(vals(i),i) = 1;
+end
+
+if vectorize
+	ocrep = ocrep(:);
+end
