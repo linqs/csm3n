@@ -1,50 +1,39 @@
-function [w,nll] = trainMLE(X,Y,edgeStruct,inferFunc,C,w)
+function [w,nll] = trainMLE(examples,inferFunc,C,w)
 %
 % Trains an MRF using MLE.
 %
-% X : nNode x nTrain matrix of training observations
-% Y : nNode x nTrain matrix of training labels
-% edgeStruct : edge structure
+% examples : cell array of examples
 % inferFunc : inference function (0: use pseudolikelihood)
-% C : regularization constant (optional: def=nNode)
+% C : regularization constant or nParam x 1 vector (optional: def=nNode of first example)
 % w : init weights (optional: def=zeros)
 
 % parse input
-if nargin < 4
-	error('USAGE: trainMLE(X,Y,edgeStruct,inferFunc)')
-	return
-end
-[nNode,nTrain] = size(Y);
-if nargin < 5
-	C = nNode;
-end
+assert(nargin >= 2,'USAGE: trainMLE(examples,inferFunc,C,w)')
 usePL = ~isa(inferFunc,'function_handle');
-
-% edge features
-Xedge = UGM_makeEdgeFeatures(X,edgeStruct.edgeEnds);
-
-% maps
-if nargin < 6
-	[nodeMap,edgeMap,w] = UGM_makeCRFmaps(X,Xedge,edgeStruct,0,1,1);
-else
-	[nodeMap,edgeMap] = UGM_makeCRFmaps(X,Xedge,edgeStruct,0,1,1);
+if nargin < 3
+	C = examples{1}.nNode;
+end
+if nargin < 4
+	nParam = max(max(examples{1}.nodeMap(:)),max(examples{1}.edgeMap(:)));
+	w = zeros(nParam,1);
 end
 
 % L2 regularization
-lambda = C * ones(size(w));
-lambda(1) = 0;
+if length(C) == 1
+	C = C * ones(size(w));
+end
 if usePL
-	obj = @(w)penalizedL2(w,@UGM_CRF_PseudoNLL,lambda,X,Xedge,Y',nodeMap,edgeMap,edgeStruct);
+	obj = @(w)penalizedL2(w,@UGM_CRFcell_PseudoNLL,C,examples);
 else
-	obj = @(w)penalizedL2(w,@UGM_CRF_NLL,lambda,X,Xedge,Y',nodeMap,edgeMap,edgeStruct,inferFunc);
+	obj = @(w)penalizedL2(w,@UGM_CRFcell_NLL,C,examples,inferFunc);
 end
 
 % Optimize
 w = minFunc(obj,w);
 
 if usePL
-	nll = UGM_CRF_PseudoNLL(w,X,Xedge,Y',nodeMap,edgeMap,edgeStruct);
+	nll = UGM_CRFcell_PseudoNLL(w,examples);
 else
-	nll = UGM_CRF_NLL(w,X,Xedge,Y',nodeMap,edgeMap,edgeStruct,inferFunc);
+	nll = UGM_CRFcell_NLL(w,examples,inferFunc);
 end
 
