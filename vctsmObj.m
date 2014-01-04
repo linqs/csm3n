@@ -1,14 +1,10 @@
-function [f, g] = vctsmObj(examples, C, F_labels, varargin)
+function [f, g] = vctsmObj(examples, C, varargin)
 
 % Outputs the objective value and gradient of the VCTSM learning objective
 % using the dual of loss-augmented inference to make the objective a
 % minimization.
 % Scope is an index vector (or logical vector) indicating which entries of
 % the marginal vector should be counted in the loss.
-
-if ~exist('F_labels', 'var')
-    F_labels = F*labels;
-end
 
 [d,m] = size(F);
 

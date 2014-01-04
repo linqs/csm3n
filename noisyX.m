@@ -11,7 +11,7 @@ end
 load Ximage.mat
 [nRows,nCols] = size(Ximage);
 nNode = nRows * nCols;
-nEx = 100;
+nEx = 10;
 nStateY = 2;
 
 % Make noisy X instances
@@ -67,6 +67,7 @@ for i = 1:nEx
 	Xnode = X(i,:,:);
 	Xedge = UGM_makeEdgeFeatures(Xnode,edgeStruct.edgeEnds);
 	[nodeMap,edgeMap] = UGM_makeCRFmaps(Xnode,Xedge,edgeStruct,0,1,1);
+	F = makeVCTSMmap(Xnode,Xedge,nodeMap,edgeMap);
 	examples{i}.nNode = nNode;
 	examples{i}.nState = nStateY;
 	examples{i}.G = G;
@@ -76,8 +77,18 @@ for i = 1:nEx
 	examples{i}.Xedge = Xedge;
 	examples{i}.nodeMap = nodeMap;
 	examples{i}.edgeMap = edgeMap;
-	examples{i}.F = makeVCTSMmap(Xnode,Xedge,nodeMap,edgeMap);
+	examples{i}.F = F;
+	examples{i}.suffStat = F * overcompletePairwise(Y(:,i), edgeStruct);
 	examples{i}.Aeq = Aeq;
 	examples{i}.beq = beq;
 end
+
+% % check constraints using ground truth
+% err = 0;
+% for i = 1:nEx
+% 	y = overcompletePairwise(examples{i}.Y, edgeStruct);
+% 	err = err + sum(Aeq * y - beq);
+% end
+% err
+
 

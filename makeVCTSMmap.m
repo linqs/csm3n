@@ -12,28 +12,26 @@ function F = makeVCTSMmap(Xnode, Xedge, nodeMap, edgeMap)
 [~,~,nEdge,nEdgeFeat] = size(edgeMap);
 nParamLoc = double(max(nodeMap(:)));
 nParamRel = double(max(edgeMap(:))) - nParamLoc;
+nStateLoc = nNode * nState;
+nStateRel = nEdge * nState^2;
 
 % create local map
-F_loc = zeros(nParamLoc,nNode*nState);
+F_loc = zeros(nParamLoc,nStateLoc);
 for i = 1:nNode
-	for s = 1:nState
-		for f = 1:nNodeFeat
-			p = nodeMap(i,s,f);
-			F_loc(p,(i-1)*nState+s) = Xnode(1,f,i);
-		end
+	idx = localIndex(i,1:nState,nNode);
+	for f = 1:nNodeFeat
+		p = nodeMap(i,:,f);
+		F_loc(p,idx) = Xnode(1,f,i);
 	end
 end
 
 % create relational map
-F_rel = zeros(nParamRel,nEdge*nState^2);
-for s1 = 1:nState
-	for s2 = 1:nState
-		for e = 1:nEdge
-			for f = 1:nEdgeFeat
-				p = edgeMap(s1,s2,e,f) - nParamLoc;
-				F_rel(p,(i-1)*nState^2+(s1-1)*nState+s2) = Xedge(1,f,e);
-			end
-		end
+F_rel = zeros(nParamRel,nStateRel);
+for e = 1:nEdge
+	idx = pairwiseIndex(e,1:nState,1:nState,nNode,nState) - nStateLoc;
+	for f = 1:nEdgeFeat
+		p = edgeMap(:,:,e,f) - nParamLoc;
+		F_rel(p(:),idx) = Xedge(1,f,e);
 	end
 end
 
