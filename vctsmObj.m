@@ -1,4 +1,4 @@
-function [f, g] = vctsmObj(x, F, labels, scope, S, C, F_labels, varargin)
+function [f, g] = vctsmObj(examples, C, F_labels, varargin)
 
 % Outputs the objective value and gradient of the VCTSM learning objective
 % using the dual of loss-augmented inference to make the objective a

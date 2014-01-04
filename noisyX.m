@@ -61,8 +61,9 @@ G = latticeAdjMatrix(nRows,nCols);
 
 % convert to cell array of examples
 examples = cell(nEx,1);
+edgeStruct = UGM_makeEdgeStruct(G,nStateY,1);
+[Aeq,beq] = pairwiseConstraints(edgeStruct);
 for i = 1:nEx
-	edgeStruct = UGM_makeEdgeStruct(G,nStateY,1);
 	Xnode = X(i,:,:);
 	Xedge = UGM_makeEdgeFeatures(Xnode,edgeStruct.edgeEnds);
 	[nodeMap,edgeMap] = UGM_makeCRFmaps(Xnode,Xedge,edgeStruct,0,1,1);
@@ -75,5 +76,8 @@ for i = 1:nEx
 	examples{i}.Xedge = Xedge;
 	examples{i}.nodeMap = nodeMap;
 	examples{i}.edgeMap = edgeMap;
+	examples{i}.F = makeVCTSMmap(Xnode,Xedge,nodeMap,edgeMap);
+	examples{i}.Aeq = Aeq;
+	examples{i}.beq = beq;
 end
 

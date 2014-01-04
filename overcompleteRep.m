@@ -1,4 +1,4 @@
-function [ocrep] = overcompleteRep(vals, nState, vectorize)
+function [ocrep] = overcompleteRep(Y, nState, vectorize)
 
 % Converts a vector of values to overcomplete representation.
 %
@@ -13,12 +13,12 @@ if nargin < 3
 	vectorize = 1;
 end
 
-nNode = length(vals);
+nNode = length(Y);
 
 ocrep = zeros(nState,nNode);
 
 for i = 1:nNode
-	ocrep(vals(i),i) = 1;
+	ocrep(Y(i),i) = 1;
 end
 
 if vectorize
