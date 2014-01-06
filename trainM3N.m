@@ -41,6 +41,6 @@ for iter = 1:maxIter*nTrain
 	lossAvg = (1/iter)*loss + ((iter-1)/iter)*lossAvg;
 	w = w - stepSize*g;
 	
-	fprintf('Iter = %d of %d (ex %d: f = %f, fAvg = %f)\n',iter,maxIter*nTrain,i,f,fAvg);
+	%fprintf('Iter = %d of %d (ex %d: f = %f, fAvg = %f)\n',iter,maxIter*nTrain,i,f,fAvg);
 end
 
