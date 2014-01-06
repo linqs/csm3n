@@ -1,4 +1,4 @@
-function [w,nll] = trainMLE(examples,inferFunc,C,w)
+function [w, nll] = trainMLE(examples, inferFunc, C, w)
 %
 % Trains an MRF using MLE.
 %
@@ -14,7 +14,7 @@ if nargin < 3
 	C = examples{1}.nNode;
 end
 if nargin < 4
-	nParam = max(max(examples{1}.nodeMap(:)),max(examples{1}.edgeMap(:)));
+	nParam = max(examples{1}.edgeMap(:));
 	w = zeros(nParam,1);
 end
 
@@ -23,13 +23,17 @@ if length(C) == 1
 	C = C * ones(size(w));
 end
 if usePL
-	obj = @(w)penalizedL2(w,@UGM_CRFcell_PseudoNLL,C,examples);
+	obj = @(w) penalizedL2(w,@UGM_CRFcell_PseudoNLL,C,examples);
 else
-	obj = @(w)penalizedL2(w,@UGM_CRFcell_NLL,C,examples,inferFunc);
+	obj = @(w) penalizedL2(w,@UGM_CRFcell_NLL,C,examples,inferFunc);
 end
 
+% optimization options
+clear options;
+options.Display = 'off';
+
 % Optimize
-w = minFunc(obj,w);
+w = minFunc(obj,w,options);
 
 if usePL
 	nll = UGM_CRFcell_PseudoNLL(w,examples);

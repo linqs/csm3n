@@ -1,9 +1,10 @@
-function [f, g] = vctsmObj(examples, C, varargin)
+function [f, g] = vctsmObj(x, examples, C, varargin)
 
 % Outputs the objective value and gradient of the VCTSM learning objective
 % using the dual of loss-augmented inference to make the objective a
 % minimization.
 %
+% x : current point in optimization
 % examples : nEx x 1 cell array of examples, each containing:
 %	oc : full overcomplete vector representation of Y
 %		 (including high-order terms)
@@ -16,7 +17,7 @@ function [f, g] = vctsmObj(examples, C, varargin)
 % varargin : optional arguments (required by minFunc)
 
 nEx = length(examples);
-nParam = double(max(examples{1}.edgeMap));
+nParam = max(examples{1}.edgeMap(:));
 
 % parse current position
 w = x(1:nParam);
@@ -29,7 +30,7 @@ f = 0.5 * exp(-2*logkappa) * (C .* w)' * w;
 if nargout == 2
 	gradW = exp(-2*logkappa) * (C .* w);
 	gradKappa = -exp(-2*logkappa) * (C .* w)' * w;
-	gradLambda = zeros(length(lambda));
+	gradLambda = zeros(length(lambda),1);
 end
 
 for i = 1:nEx
@@ -48,7 +49,7 @@ for i = 1:nEx
 	ell = zeros(nAll,1);
 	ell(1:nLoc) = 1 - 2*mu(1:nLoc);
 	z = (F'*w + ell + A'*lam);
-	y = exp( exp(-logkappa)*z - 1 );
+	y = exp(exp(-logkappa)*z - 1);
 	
 	% objective
 	loss = exp(logkappa)*sum(y) - w'*ss - lam'*b + sum(mu(1:nLoc));
@@ -70,25 +71,3 @@ if nargout == 2
 end
 
 
-% OLD CODE
-
-% A = S.Aeq;
-% b = S.beq;
-% 
-% delta = sum(labels(scope));
-% ell = zeros(size(labels));
-% ell(scope) = 1-2*labels(scope);
-% wtw = w' * w;
-% z = (F'*w + ell + A'*lambda);
-% y = exp( exp(-logkappa)*z - 1 );
-% 
-% loss = exp(logkappa)*sum(y) - w'*F_labels - lambda'*b;
-% 
-% f = 0.5 * exp(-2*logkappa) * C * wtw + loss + delta;
-% 
-% if nargout == 2
-%     gradW = exp(-2*logkappa) * C * w + F * y - F_labels;
-%     gradKappa = -exp(-2*logkappa) * C * wtw +  y' * (exp(logkappa) - z);
-%     gradLambda = A * y - b;
-%     g = [gradW; gradKappa; gradLambda];
-% end

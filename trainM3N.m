@@ -1,4 +1,4 @@
-function [w,loss] = trainM3N(examples,decodeFunc,C,maxIter,w)
+function [w, lossAvg] = trainM3N(examples, decodeFunc, C, maxIter, w)
 %
 % Trains an MRF using max-margin formulation.
 %
@@ -18,29 +18,29 @@ if nargin < 4
 	maxIter = 10;
 end
 if nargin < 5
-	nParam = max(max(examples{1}.nodeMap(:)),max(examples{1}.edgeMap(:)));
+	nParam = max(examples{1}.edgeMap(:));
 	w = zeros(nParam,1);
 end
 
 % SGD
 stepSize = 1e-4;
 fAvg = 0;
+lossAvg = 0;
 for iter = 1:maxIter*nTrain
 	% Compute M3N objective and subgradient for random training example
 	i = ceil(rand*nTrain);
 	ex = examples{i};
-	[f,g] = UGM_M3N_Obj(w,ex.Xnode,ex.Xedge,ex.Y',ex.nodeMap,ex.edgeMap,ex.edgeStruct,decodeFunc);
+	[loss,g] = UGM_M3N_Obj(w,ex.Xnode,ex.Xedge,ex.Y',ex.nodeMap,ex.edgeMap,ex.edgeStruct,decodeFunc);
 	
 	% L2 regularization
-	f = f + 0.5 * (C.*w)' * w;
+	f = loss + 0.5 * (C.*w)' * w;
 	g = g + C.*w;
 	
 	% Update estimate of function value and parameters
 	fAvg = (1/iter)*f + ((iter-1)/iter)*fAvg;
+	lossAvg = (1/iter)*loss + ((iter-1)/iter)*lossAvg;
 	w = w - stepSize*g;
 	
 	fprintf('Iter = %d of %d (ex %d: f = %f, fAvg = %f)\n',iter,maxIter*nTrain,i,f,fAvg);
 end
-
-loss = fAvg;
 

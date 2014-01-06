@@ -2,21 +2,21 @@
 
 % experiment vars
 nEx = length(examples);
-nFold = 10;
+nFold = 1;
 nExFold = nEx / nFold;
-nTrain = nExFold - 2;
+nTrain = 3;%nExFold - 2;
 nCV = 1;
 nTest = 1;
 
 % algorithm vars
 algoNames = {'MLE', 'M3N', 'CSM3N'};
-algoTypes = 2:3;%1:5;
+algoTypes = [1 2 4];%1:5;
 
 % model parameters
-nParam = max(max(examples{1}.nodeMap(:)),max(examples{1}.edgeMap(:)));
+nParam = max(examples{1}.edgeMap(:));
 
 % crossvalidation vars
-Cvec = 1024;%10.^linspace(-2,6,9);
+Cvec = 100;%10.^linspace(-2,6,9);
 
 % stability vars
 % maxSamp = 10;
@@ -42,7 +42,7 @@ for fold = 1:nFold
 	fidx = (fold-1) * nExFold;
 	tridx = fidx+1:fidx+nTrain;
 	cvidx = fidx+nTrain+1:fidx+nTrain+nCV;
-	teidx = fidx+nTrain+nCV+1:fidx+nExFold;
+	teidx = fidx+nTrain+nCV+1:fidx+nTest;
 	ex_tr = examples(tridx);
 	ex_cv = examples(cvidx);
 	ex_te = examples(teidx);
@@ -55,46 +55,40 @@ for fold = 1:nFold
 
 			%% TRAINING
 
-			% none of the training methods seem to work with mex
-			for i = 1:nTrain
-				ex_tr{i}.edgeStruct.useMex = 0;
-			end
 			switch(algoTypes(a))
 				
-				% random weights (for bypassing learning)
-				case 0
-					w = rand(nParam,1);
-
 				% M(P)LE learning
 				case 1
-					%[w,nll] = trainMLE(ex_tr,@UGM_Infer_MeanField,C)
-					[w,nll] = trainMLE(ex_tr,0,C)
+					fprintf('Training MLE ...\n');
+					[w,nll] = trainMLE(ex_tr,@UGM_Infer_MeanField,C)
+					%[w,nll] = trainMLE(ex_tr,0,C)
 
 				% M3N learning
 				case 2
+					fprintf('Training M3N ...\n');
 					m3nDecoder = @(nodePot,edgePot,edgeStruct) UGM_Decode_MaxOfMarginals(nodePot,edgePot,edgeStruct,@UGM_Infer_LBP);
-					[w,loss] = trainM3N(ex_tr,m3nDecoder,C,2)
+					[w,loss] = trainM3N(ex_tr,m3nDecoder,C)
 
 				% CSM3N1 learning (M3N with separate local/relational regularization)
 				case 3
+					fprintf('Training M3N with local/relational regularization ...\n');
 					maxLocParamIdx = max(ex_tr{1}.nodeMap(:));
 					relMultiplier = 10; % hack
 					Csplit = C * ones(nParam,1);
 					Csplit(1:maxLocParamIdx) = Csplit(1:maxLocParamIdx) * 0.5*relMultiplier;
 					m3nDecoder = @(nodePot,edgePot,edgeStruct) UGM_Decode_MaxOfMarginals(nodePot,edgePot,edgeStruct,@UGM_Infer_LBP);
-					[w,loss] = trainM3N(ex_tr,m3nDecoder,Csplit,2)
+					[w,loss] = trainM3N(ex_tr,m3nDecoder,Csplit)
 
 				% CSM3N2 learning (convexity optimization)
 				case 4
+					fprintf('Training CSM3N ...\n');
+					[w,kappa,f] = trainVCTSM(ex_tr,C)
 
 				% CSM3N3 learning (stability regularization)
 				case 5
 
 			end
-			% turn mex back on
-			for i = 1:nTrain
-				ex_tr{i}.edgeStruct.useMex = 1;
-			end
+			continue;
 			
 			% training stats
 			errs = zeros(nTrain,1);
