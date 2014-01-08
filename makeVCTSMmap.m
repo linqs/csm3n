@@ -18,10 +18,10 @@ nStateRel = nEdge * nState^2;
 % create local map
 F_loc = zeros(nParamLoc,nStateLoc);
 for i = 1:nNode
-	idx = localIndex(i,1:nState,nNode);
+	idx = localIndex(i,1:nState,nState);
 	for f = 1:nNodeFeat
-		p = nodeMap(i,:,f);
-		F_loc(p,idx) = Xnode(1,f,i);
+		p = double(nodeMap(i,:,f));
+		F_loc(sub2ind(size(F_loc),p,idx)) = Xnode(1,f,i);
 	end
 end
 
@@ -30,8 +30,8 @@ F_rel = zeros(nParamRel,nStateRel);
 for e = 1:nEdge
 	idx = pairwiseIndex(e,1:nState,1:nState,nNode,nState) - nStateLoc;
 	for f = 1:nEdgeFeat
-		p = edgeMap(:,:,e,f) - nParamLoc;
-		F_rel(p(:),idx) = Xedge(1,f,e);
+		p = double(edgeMap(:,:,e,f)) - nParamLoc;
+		F_rel(sub2ind(size(F_rel),p(:),idx)) = Xedge(1,f,e);
 	end
 end
 

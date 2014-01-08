@@ -75,12 +75,3 @@ for i = 1:nEx
 	examples{i}.beq = beq;
 end
 
-% % check constraints using ground truth
-% err = 0;
-% for i = 1:nEx
-% 	y = overcompletePairwise(examples{i}.Y, edgeStruct);
-% 	err = err + sum(Aeq * y - beq);
-% end
-% err
-
-

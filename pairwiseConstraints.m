@@ -21,9 +21,8 @@ iter = 1;
 
 % local marginal constraints
 for i = 1:nNode
-    inds = localIndex(i,1:nState,nNode);
     AI(end+1:end+nState) = iter;
-    AJ(end+1:end+nState) = inds;
+    AJ(end+1:end+nState) = localIndex(i,1:nState,nState);
     AV(end+1:end+nState) = 1;
     beq(iter) = 1;
     iter = iter + 1;
@@ -50,7 +49,7 @@ for e = 1:nEdge
         AV(end+1:end+nState) = 1;
 
         AI(end+1) = iter;
-        AJ(end+1) = localIndex(n2,s,nNode);
+        AJ(end+1) = localIndex(n2,s,nState);
         AV(end+1) = -1;
         beq(iter) = 0;
         
@@ -62,7 +61,7 @@ for e = 1:nEdge
         AV(end+1:end+nState) = 1;
 
         AI(end+1) = iter;
-        AJ(end+1) = localIndex(n1,s,nNode);
+        AJ(end+1) = localIndex(n1,s,nState);
         AV(end+1) = -1;
         beq(iter) = 0;
         

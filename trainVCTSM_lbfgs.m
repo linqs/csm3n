@@ -1,4 +1,4 @@
-function [w, kappa, fAvg] = trainVCTSM(examples, C, maxIter, w, kappa)
+function [w, kappa, f] = trainVCTSM_lbfgs(examples, C, w, kappa)
 
 % Optimizes the VCTSM objective, learning the optimal (w,kappa).
 %
@@ -11,13 +11,8 @@ function [w, kappa, fAvg] = trainVCTSM(examples, C, maxIter, w, kappa)
 %	F : nParam x length(oc) feature map
 %	suffStat : nParam x 1 vector of sufficient statistics (i.e., F * oc)
 % C : regularization constant or vector
-% maxIter : max. number of iterations of SGD (optional: def=10*length(examples))
-% w : init weights (optional: def=zeros)
-% kappa : init kappa (optional: def=1)
 
-% parse input
-assert(nargin >= 1, 'USAGE: trainVCTSM(examples)')
-
+% dimensions
 nEx = length(examples);
 nParam = max(examples{1}.edgeMap(:));
 nCon = 0;
@@ -25,28 +20,31 @@ for i = 1:nEx
 	nCon = nCon + length(examples{i}.beq);
 end
 
-if nargin < 2
-	C = examples{1}.nNode;
+% initial point
+x0 = zeros(nParam+nCon+1,1);
+if nargin >= 3
+	x0(1:nParam) = w;
 end
-if nargin < 3
-	maxIter = 10 * length(examples);
-end
-if nargin < 4
-	w = zeros(nParam,1);
-end
-if nargin < 5
-	kappa = 1;
+if nargin >= 4
+	x0(nParam+1) = kappa;
+else
+	x0(nParam+1) = 1;
 end
 
-% initial position
-x0 = [w ; kappa ; zeros(nCon,1)];
+% optimization options
+options.Method = 'lbfgs';
+options.Corr = 200;
+options.LS_type = 0;
+options.LS_interp = 0;
+options.Display = 'off';
+options.maxIter = 200;
+% options.MaxFunEvals = 8000;
+options.progTol = 1e-6;
+options.optTol = 1e-3;
 
-% SGD
-options.maxIter = maxIter;
-options.stepSize = 1e-6;
-% options.verbose = 1;
-objFun = @(x,ex) vctsmObj(x,{ex},C);
-[x,fAvg] = sgd(examples,objFun,x0,options);
+% run optimization
+obj = @(y, varargin) vctsmObj(y, examples, C, varargin);
+[x,f] = minFunc(obj, x0, options);
 
 % parse optimization output
 w = x(1:nParam);

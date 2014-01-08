@@ -15,7 +15,7 @@ assert(nState == min(edgeStruct.nStates), 'overcompletePairwise assumes uniform 
 ocrep = zeros(nNode*nState + nEdge*nState^2, 1);
 
 for i = 1:nNode
-	ocrep(localIndex(i,Y(i),nNode)) = 1;
+	ocrep(localIndex(i,Y(i),nState)) = 1;
 end
 
 for e = 1:nEdge
