@@ -56,7 +56,7 @@ for t = 1:maxIter
 	
 	% Update estimate of function value and parameters
 	fAvg = (1/t) * f + ((t-1)/t) * fAvg;
-	x = x - stepSize * g;
+	x = x - (stepSize / t) * g;
 	
 	if verbose
 		fprintf('Iter = %d of %d (ex %d: f = %f, fAvg = %f)\n', t, maxIter*n, i, f, fAvg);

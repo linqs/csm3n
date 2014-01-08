@@ -134,6 +134,8 @@ for fold = 1:nFold
 					pred = decodeMarginals(mu, ex_te{i}.nNode, ex_te{i}.nState);
 				end
 				errs(i) = nnz(ex_te{i}.Y ~= pred(1:ex_te{i}.nNode)) / ex_te{i}.nNode;
+				figure(a)
+				imagesc(reshape(pred,32,32));
 			end
 			teErrs(a,c,fold) = sum(errs)/nTest;
 			fprintf('Avg test err = %.4f\n', teErrs(a,c,fold));
