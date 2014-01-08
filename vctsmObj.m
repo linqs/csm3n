@@ -11,8 +11,8 @@ function [f, g] = vctsmObj(x, examples, C, varargin)
 %	ocLocalScope : number of local terms in oc
 %	Aeq : nCon x length(oc) constraint A matrix
 %	beq : nCon x 1 constraint b vector
-%	F : nParam x length(oc) feature map
-%	suffStat : nParam x 1 vector of sufficient statistics (i.e., F * oc)
+%	Fx : nParam x length(oc) feature map
+%	suffStat : nParam x 1 vector of sufficient statistics (i.e., Fx * oc)
 % C : regularization constant or vector
 % varargin : optional arguments (required by minFunc)
 
@@ -39,7 +39,7 @@ for i = 1:nEx
 	mu = examples{i}.oc;
 	A = examples{i}.Aeq;
 	b = examples{i}.beq;
-	F = examples{i}.F;
+	Fx = examples{i}.Fx;
 	ss = examples{i}.suffStat;
 	nLoc = examples{i}.ocLocalScope;
 	[nCon,nAll] = size(A);
@@ -48,7 +48,7 @@ for i = 1:nEx
 	lam = lambda(iter:iter+nCon-1);
 	ell = zeros(nAll,1);
 	ell(1:nLoc) = 1 - 2*mu(1:nLoc);
-	z = (F'*w + ell + A'*lam);
+	z = (Fx'*w + ell + A'*lam);
 	y = exp(exp(-logkappa)*z - 1);
 	
 	% objective
@@ -57,7 +57,7 @@ for i = 1:nEx
 	
 	% gradient
 	if nargout == 2
-		gradW = gradW + F * y - ss;
+		gradW = gradW + Fx * y - ss;
 		gradKappa = gradKappa + y' * (exp(logkappa) - z);
 		gradLambda(iter:iter+nCon-1) = A * y - b;
 	end

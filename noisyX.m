@@ -55,23 +55,6 @@ edgeStruct = UGM_makeEdgeStruct(G,nStateY,1);
 for i = 1:nEx
 	Xnode = X(i,:,:);
 	Xedge = UGM_makeEdgeFeatures(Xnode,edgeStruct.edgeEnds);
-	[nodeMap,edgeMap] = UGM_makeCRFmaps(Xnode,Xedge,edgeStruct,0,1,1);
-	F = makeVCTSMmap(Xnode,Xedge,nodeMap,edgeMap);
-	oc = overcompletePairwise(Y(:,i), edgeStruct);
-	examples{i}.nNode = nNode;
-	examples{i}.nState = nStateY;
-	examples{i}.ocLocalScope = nNode * nStateY;
-	examples{i}.G = G;
-	examples{i}.Y = Y(:,i);
-	examples{i}.oc = oc;
-	examples{i}.edgeStruct = edgeStruct;
-	examples{i}.Xnode = Xnode;
-	examples{i}.Xedge = Xedge;
-	examples{i}.nodeMap = nodeMap;
-	examples{i}.edgeMap = edgeMap;
-	examples{i}.F = F;
-	examples{i}.suffStat = F * oc;
-	examples{i}.Aeq = Aeq;
-	examples{i}.beq = beq;
+	examples{i} = makeExample(Xnode,Xedge,Y(:,i),nStateY,edgeStruct,Aeq,beq);
 end
 

@@ -1,4 +1,4 @@
-function y = vctsmInfer(w, kappa, F, Aeq, beq)
+function y = vctsmInfer(w, kappa, Fx, Aeq, beq)
 %
 % Performs inference in a VCTSM model
 %
@@ -15,13 +15,13 @@ options.Display = 'off';
 % options.progTol = 1e-6;
 % options.optTol = 1e-3;
 
-z = F' * w / kappa - 1;
+z = Fx' * w / kappa - 1;
 lambda = zeros(size(beq));
 
 fun = @(x, varargin) obj(x, z, kappa, Aeq, beq, varargin);
 lambda = minFunc(fun, lambda, options, fun);
 
-y = exp((F'*w + Aeq'*lambda)/kappa - 1);
+y = exp((Fx'*w + Aeq'*lambda)/kappa - 1);
 
 
 

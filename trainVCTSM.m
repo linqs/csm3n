@@ -8,8 +8,8 @@ function [w, kappa, fAvg] = trainVCTSM(examples, C, maxIter, w, kappa)
 %	ocLocalScope : number of local terms in oc
 %	Aeq : nCon x length(oc) constraint A matrix
 %	beq : nCon x 1 constraint b vector
-%	F : nParam x length(oc) feature map
-%	suffStat : nParam x 1 vector of sufficient statistics (i.e., F * oc)
+%	Fx : nParam x length(oc) feature map
+%	suffStat : nParam x 1 vector of sufficient statistics (i.e., Fx * oc)
 % C : regularization constant or vector
 % maxIter : max. number of iterations of SGD (optional: def=10*length(examples))
 % w : init weights (optional: def=zeros)

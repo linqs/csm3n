@@ -98,7 +98,7 @@ for fold = 1:nFold
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex_tr{i}.Xnode,ex_tr{i}.Xedge,ex_tr{i}.nodeMap,ex_tr{i}.edgeMap,ex_tr{i}.edgeStruct);
 					pred = UGM_Decode_LBP(nodePot,edgePot,ex_tr{i}.edgeStruct);
 				else
-					mu = vctsmInfer(w,kappa,ex_tr{i}.F,ex_tr{i}.Aeq,ex_tr{i}.beq);
+					mu = vctsmInfer(w,kappa,ex_tr{i}.Fx,ex_tr{i}.Aeq,ex_tr{i}.beq);
 					pred = decodeMarginals(mu, ex_tr{i}.nNode, ex_tr{i}.nState);
 				end
 				errs(i) = nnz(ex_tr{i}.Y ~= pred(1:ex_tr{i}.nNode)) / ex_tr{i}.nNode;
@@ -114,7 +114,7 @@ for fold = 1:nFold
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex_cv{i}.Xnode,ex_cv{i}.Xedge,ex_cv{i}.nodeMap,ex_cv{i}.edgeMap,ex_cv{i}.edgeStruct);
 					pred = UGM_Decode_LBP(nodePot,edgePot,ex_cv{i}.edgeStruct);
 				else
-					mu = vctsmInfer(w,kappa,ex_cv{i}.F,ex_cv{i}.Aeq,ex_cv{i}.beq);
+					mu = vctsmInfer(w,kappa,ex_cv{i}.Fx,ex_cv{i}.Aeq,ex_cv{i}.beq);
 					pred = decodeMarginals(mu, ex_cv{i}.nNode, ex_cv{i}.nState);
 				end
 				errs(i) = nnz(ex_cv{i}.Y ~= pred(1:ex_cv{i}.nNode)) / ex_cv{i}.nNode;
@@ -130,7 +130,7 @@ for fold = 1:nFold
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex_te{i}.Xnode,ex_te{i}.Xedge,ex_te{i}.nodeMap,ex_te{i}.edgeMap,ex_te{i}.edgeStruct);
 					pred = UGM_Decode_LBP(nodePot,edgePot,ex_te{i}.edgeStruct);
 				else
-					mu = vctsmInfer(w,kappa,ex_te{i}.F,ex_te{i}.Aeq,ex_te{i}.beq);
+					mu = vctsmInfer(w,kappa,ex_te{i}.Fx,ex_te{i}.Aeq,ex_te{i}.beq);
 					pred = decodeMarginals(mu, ex_te{i}.nNode, ex_te{i}.nState);
 				end
 				errs(i) = nnz(ex_te{i}.Y ~= pred(1:ex_te{i}.nNode)) / ex_te{i}.nNode;
