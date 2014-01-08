@@ -150,3 +150,10 @@ for fold = 1:nFold
 	end
 
 end
+
+% generalization error
+geErrs = teErrs - trErrs;
+
+% display results
+[trErrs cvErrs teErrs geErrs]
+
