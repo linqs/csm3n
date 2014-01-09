@@ -18,7 +18,7 @@ g = g + C.*w;
 % stability regularization
 
 
-function [f, g] = stabilityObj(x, ex, w, decodeFunc)
+function [f, g] = stabilityObj(x, ex, w)
 
 	% compute prediction for unperturbed input
 	y_unperturb = zeros(10,1);
@@ -28,4 +28,15 @@ function [f, g] = stabilityObj(x, ex, w, decodeFunc)
 	
 	% L1 distance between predictions
 	f = norm(y_unperturb-y_perturb, 1);
+	
+function [f, g] = perturbObj(x, Wnode, Wedge, Ynode, Yedge, lag)
+	
+	% reconstruct Xnode from x
+	Xnode = zeros(nFeat,nNode);
+	
+	% compute objective and gradient for Y1,Y2
+	[f1, g1] = Xobj(Wnode,Wedge,Xnode,Ynode{1},Yedge{1});
+	[f2, g2] = Xobj(Wnode,Wedge,Xnode,Ynode{2},Yedge{2});
+	f = lag * (f1 + f2);
+	g = lag * (g1 + g2);
 	

@@ -24,8 +24,7 @@ w = x(1:nParam);
 logkappa = x(nParam+1);
 lambda = x((nParam+2):end);
 
-% loop variables
-iter = 1;
+% init outputs
 f = 0.5 * exp(-2*logkappa) * (C .* w)' * w;
 if nargout == 2
 	gradW = exp(-2*logkappa) * (C .* w);
@@ -33,6 +32,8 @@ if nargout == 2
 	gradLambda = zeros(length(lambda),1);
 end
 
+% main loop
+iter = 1;
 for i = 1:nEx
 	
 	% static variables for example i
