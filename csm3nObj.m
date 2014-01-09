@@ -20,10 +20,12 @@ g = g + C.*w;
 
 function [f, g] = stabilityObj(x, ex, w)
 
-	% compute prediction for unperturbed input
+	% find worst perturbation
+	
+	% loss-augmented inferfence for unperturbed input
 	y_unperturb = zeros(10,1);
 	
-	% compute prediction for perturbed input
+	% loss-augmented inference for perturbed input
 	y_perturb = zeros(10,1);
 	
 	% L1 distance between predictions
