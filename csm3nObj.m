@@ -2,34 +2,43 @@ function [f, g] = csm3nObj(w, examples_l, examples_u, decodeFunc, C, varargin)
 
 
 
-loss = 0;
-g = 0;
+% L2 weight regularization
+f = 0.5 * (C.*w)' * w;
+g = C.*w;
+
+% M3N objective
 for i = 1:length(examples_l)
-	% compute M3N objective
+	ex = examples_l{i};
 	[l,sg] = UGM_M3N_Obj(w,ex.Xnode,ex.Xedge,ex.Y',ex.nodeMap,ex.edgeMap,ex.edgeStruct,decodeFunc);
-	loss = loss + l;
+	f = f + l;
 	g = g + sg;
 end
 
-% L2 weight regularization
-f = loss + 0.5 * (C.*w)' * w;
-g = g + C.*w;
-
 % stability regularization
+for i = 1:length(examples_u)
+	ex = examples_u{i};
+	[stab,sg] = stability(w,ex,decodeFunc,varargin{:});
+	f = f + stab;
+	g = g + sg;
+end
 
 
-function [f, g] = stabilityObj(x, ex, w)
+function [stab, sg] = stabilityObj(w, ex, decodeFunc, varargin)
+	
+	% inferfence for unperturbed input
+	[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
+	y_unp = decodeFunc(nodePot,edgePot,ex.edgeStruct,varargin{:});
 
 	% find worst perturbation
-	
-	% loss-augmented inferfence for unperturbed input
-	y_unperturb = zeros(10,1);
+	Xnode = zeros(1,ex.nFeat,ex.nNode);
+	Xedge = zeros(ex.nState,ex.nState,ex.nEdge,ex.nFeat);
 	
 	% loss-augmented inference for perturbed input
-	y_perturb = zeros(10,1);
+	Ynode = overcompleteRep(y_unp,ex.nState,0);
+	y_per = lossAugInfer(w,Xnode,Xedge,Ynode,ex.nodeMap,ex.edgeMap,ex.edgeStruct,decodeFunc,varargin{:});
 	
 	% L1 distance between predictions
-	f = norm(y_unperturb-y_perturb, 1);
+	stab = norm(y_unp-y_per, 1);
 	
 function [f, g] = perturbObj(x, Wnode, Wedge, Ynode, Yedge, lag)
 	

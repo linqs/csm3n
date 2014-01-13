@@ -101,7 +101,7 @@ for fold = 1:nFold
 					mu = vctsmInfer(w,kappa,ex_tr{i}.Fx,ex_tr{i}.Aeq,ex_tr{i}.beq);
 					pred = decodeMarginals(mu, ex_tr{i}.nNode, ex_tr{i}.nState);
 				end
-				errs(i) = nnz(ex_tr{i}.Y ~= pred(1:ex_tr{i}.nNode)) / ex_tr{i}.nNode;
+				errs(i) = nnz(ex_tr{i}.Y ~= pred) / ex_tr{i}.nNode;
 			end
 			trErrs(a,c,fold) = sum(errs)/nTrain;
 			fprintf('Avg train err = %.4f\n', trErrs(a,c,fold));
@@ -117,7 +117,7 @@ for fold = 1:nFold
 					mu = vctsmInfer(w,kappa,ex_cv{i}.Fx,ex_cv{i}.Aeq,ex_cv{i}.beq);
 					pred = decodeMarginals(mu, ex_cv{i}.nNode, ex_cv{i}.nState);
 				end
-				errs(i) = nnz(ex_cv{i}.Y ~= pred(1:ex_cv{i}.nNode)) / ex_cv{i}.nNode;
+				errs(i) = nnz(ex_cv{i}.Y ~= pred()) / ex_cv{i}.nNode;
 			end
 			cvErrs(a,c,fold) = sum(errs)/nCV;
 			fprintf('Avg CV err = %.4f\n', cvErrs(a,c,fold));
@@ -133,7 +133,7 @@ for fold = 1:nFold
 					mu = vctsmInfer(w,kappa,ex_te{i}.Fx,ex_te{i}.Aeq,ex_te{i}.beq);
 					pred = decodeMarginals(mu, ex_te{i}.nNode, ex_te{i}.nState);
 				end
-				errs(i) = nnz(ex_te{i}.Y ~= pred(1:ex_te{i}.nNode)) / ex_te{i}.nNode;
+				errs(i) = nnz(ex_te{i}.Y ~= pred() / ex_te{i}.nNode;
 				% plot prediction
 				%subplot(length(runAlgos),1,a);
 				%imagesc(reshape(pred,32,32));

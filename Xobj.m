@@ -3,12 +3,12 @@ function [f, g] = Xobj(Wnode, Wedge, Xnode, Ynode, Yedge, edgeEnds)
 % Computes w'*f(x,y) and the gradient w.r.t. x.
 %
 % INPUT
-% Wnode : nFeat x nState node weights
-% Wedge : 2*nFeat x nState^2 edge weights
-% Xnode : nFeat x nNode X node values
-% Ynode : nState x nNode Y node values
-% Yedge : nState x nState x nEdge Y edge values
-% edgeEnds : nEdge x 2 matrix of edge ends
+% Wnode : nFeat x nState, node weights
+% Wedge : 2*nFeat x nState^2, edge weights
+% Xnode : nFeat x nNode, X node values
+% Ynode : nState x nNode, Y node values
+% Yedge : nState x nState x nEdge, Y edge values
+% edgeEnds : nEdge x 2, edge ends
 %
 % OUTPUT
 % g : nFeat x nNode gradient
