@@ -4,13 +4,13 @@
 nEx = length(examples);
 nFold = 1;
 nExFold = nEx / nFold;
-nTrain = nExFold - 2;
+nTrain = 3;%nExFold - 2;
 nCV = 1;
 nTest = 1;
 
 % algorithm vars
 algoNames = {'MLE', 'M3N', 'M3NLRR', 'VCTSM'};
-runAlgos = 1:4;
+runAlgos = 2;
 
 % model parameters
 nParam = max(examples{1}.edgeMap(:));
@@ -133,7 +133,7 @@ for fold = 1:nFold
 					mu = vctsmInfer(w,kappa,ex_te{i}.Fx,ex_te{i}.Aeq,ex_te{i}.beq);
 					pred = decodeMarginals(mu, ex_te{i}.nNode, ex_te{i}.nState);
 				end
-				errs(i) = nnz(ex_te{i}.Y ~= pred() / ex_te{i}.nNode;
+				errs(i) = nnz(ex_te{i}.Y ~= pred()) / ex_te{i}.nNode;
 				% plot prediction
 				%subplot(length(runAlgos),1,a);
 				%imagesc(reshape(pred,32,32));

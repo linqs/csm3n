@@ -50,7 +50,7 @@ end
 if dispPlot
 	figure;
 	subplot(2,1,1);
-	imagesc(reshape(Y(:),nRows,nCols));
+	imagesc(reshape(Y(:,1),nRows,nCols));
 	subplot(2,1,2);
 	if ~discretize
 		imagesc(reshape(obs(:,1),nRows,nCols));
