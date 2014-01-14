@@ -1,4 +1,4 @@
-function [f, g] = stabilityObj(w, ex, decodeFunc, varargin)
+function [f, g, x_per] = stabilityObj(w, ex, decodeFunc, varargin)
 
 Xnode = ex.Xnode;
 Xedge = ex.Xedge;
@@ -18,12 +18,14 @@ x0 = reshape(squeeze(Xnode(1,:,:)),[],1);
 A = ones(size(x0')) - 2*x0';
 b = 1 - sum(x0);
 lb = zeros(size(length(x0)));
+ub = ones(size(length(x0)));
 
 % perturbation objective
 obj = @(x,varargin) perturbObj(x,w,yoc_unp,nodeMap,edgeMap,edgeStruct,decodeFunc,varargin{:});
 
 % find worst perturbation as LP
-[x_per,f,~,~,~,g] = fmincon(obj,x0,A,b,[],[],lb);
+options = optimset('GradObj','on','Display','iter','MaxIter',10);
+[x_per,f,~,~,~,g] = fmincon(obj,x0,A,b,[],[],lb,ub,[],options);
 
 
 function [f, g] = perturbObj(x, w, yoc_unp, nodeMap, edgeMap, edgeStruct, decodeFunc, varargin)
@@ -40,10 +42,11 @@ function [f, g] = perturbObj(x, w, yoc_unp, nodeMap, edgeMap, edgeStruct, decode
 	yoc_per = overcompletePairwise(y_per,edgeStruct);
 
 	% L1 distance between predictions
-	f = norm(yoc_unp - yoc_per, 1);
+	stab = norm(yoc_unp - yoc_per, 1);
 	
 	% objective/gradient w.r.t. x
 	Xnode = squeeze(Xnode); % first dimension only has 1 entry
+	f = 0;
 	g = zeros(size(Xnode));
 	for i = 1:nNode
 		Wnode = squeeze(w(nodeMap(i,:,:)))';
@@ -53,19 +56,18 @@ function [f, g] = perturbObj(x, w, yoc_unp, nodeMap, edgeMap, edgeStruct, decode
 		g(:,i) = Wnode * dy;
 	end
 	for e = 1:size(edgeEnds,1)
-		Wedge = squeeze(w(edgeMap(:,:,e,:)));
+		Wedge = w(reshape(squeeze(edgeMap(:,:,e,:)),nState^2,2*nFeat)');
 		i = edgeEnds(e,1);
 		j = edgeEnds(e,2);
 		idx = pairwiseIndex(e,1:nState,1:nState,nNode,nState);
 		dy = yoc_per(idx) - yoc_unp(idx);
-		f = f + sum(sum( Wedge(:,:,1) .* (Xnode(:,i) * dy') )) ...
-			  + sum(sum( Wedge(:,:,2) .* (Xnode(:,j) * dy') ));
-		g(:,i) = g(:,i) + Wedge(:,:,1) * dy;
-		g(:,j) = g(:,j) + Wedge(:,:,2) * dy;
+		f = f + sum(sum( Wedge .* [(Xnode(:,i) * dy') ; (Xnode(:,j) * dy')] ));
+		g(:,i) = g(:,i) + Wedge(1:nFeat,:) * dy;
+		g(:,j) = g(:,j) + Wedge(nFeat+1:2*nFeat,:) * dy;
 	end
 
 	% turn the max into a min
-	f = -f;
-	g = -g;
+	f = -(f + stab);
+	g = -g(:);
 
 	
