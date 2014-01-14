@@ -1,5 +1,12 @@
 function [f, g] = csm3nObj(w, examples_l, examples_u, decodeFunc, C, varargin)
-
+% 
+% Computes the CSM3N objective and gradient.
+% 
+% w : nParam x 1 vector of weights
+% examples_l : cell array of labeled examples, used for M3N training
+% examples_u : cell array of unlabeled examples, used for stability regularization
+% decodeFunc : decoder function
+% C : regularization constant or nParam x 1 vector
 
 
 % L2 weight regularization
@@ -15,11 +22,12 @@ for i = 1:length(examples_l)
 end
 
 % stability regularization
+C_s = 0.1;
 for i = 1:length(examples_u)
 	ex = examples_u{i};
 	[stab,sg] = stabilityObj(w,ex,decodeFunc,varargin{:});
-	f = f + stab;
-	g = g + sg;
+	f = f + C_s * stab;
+	g = g + C_s * sg;
 end
 
 

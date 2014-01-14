@@ -4,13 +4,14 @@
 nEx = length(examples);
 nFold = 1;
 nExFold = nEx / nFold;
-nTrain = 3;%nExFold - 2;
+nTrain = 1;
+nUnlab = 1;
 nCV = 1;
 nTest = 1;
 
 % algorithm vars
-algoNames = {'MLE', 'M3N', 'M3NLRR', 'VCTSM'};
-runAlgos = 2;
+algoNames = {'MLE', 'M3N', 'M3NLRR', 'VCTSM', 'CSM3N'};
+runAlgos = 1:5;
 
 % model parameters
 nParam = max(examples{1}.edgeMap(:));
@@ -41,9 +42,11 @@ for fold = 1:nFold
 	% separate training/CV/testing
 	fidx = (fold-1) * nExFold;
 	tridx = fidx+1:fidx+nTrain;
-	cvidx = fidx+nTrain+1:fidx+nTrain+nCV;
-	teidx = fidx+nTrain+nCV+1:fidx+nTrain+nCV++nTest;
+	ulidx = fidx+nTrain+1:fidx+nTrain+nUnlab;
+	cvidx = fidx+nTrain+nUnlab+1:fidx+nTrain+nUnlab+nCV;
+	teidx = fidx+nTrain+nUnlab+nCV+1:fidx+nTrain+nUnlab+nCV++nTest;
 	ex_tr = examples(tridx);
+	ex_ul = examples(ulidx);
 	ex_cv = examples(cvidx);
 	ex_te = examples(teidx);
 	
@@ -60,13 +63,13 @@ for fold = 1:nFold
 				% M(P)LE learning
 				case 1
 					fprintf('Training MLE ...\n');
-					[w,nll] = trainMLE(ex_tr,@UGM_Infer_MeanField,C)
+					[w,nll] = trainMLE(ex_tr,@UGM_Infer_MeanField,C);
 					params{a,c,fold}.w = w;
 
 				% M3N learning
 				case 2
 					fprintf('Training M3N ...\n');
-					[w,fAvg] = trainM3N(ex_tr,@UGM_Decode_LBP,C)
+					[w,fAvg] = trainM3N(ex_tr,@UGM_Decode_LBP,C);
 					params{a,c,fold}.w = w;
 
 				% M3NLRR learning (M3N with separate local/relational regularization)
@@ -76,25 +79,28 @@ for fold = 1:nFold
 					relMultiplier = 100; % hack
 					Csplit = C * ones(nParam,1);
 					Csplit(maxLocParamIdx+1:end) = Csplit(maxLocParamIdx+1:end) * relMultiplier;
-					[w,fAvg] = trainM3N(ex_tr,@UGM_Decode_LBP,Csplit)
+					[w,fAvg] = trainM3N(ex_tr,@UGM_Decode_LBP,Csplit);
 					params{a,c,fold}.w = w;
 
 				% VCTSM learning (convexity optimization)
 				case 4
 					fprintf('Training VCTSM ...\n');
-					[w,kappa,f] = trainVCTSM(ex_tr,C)
+					[w,kappa,f] = trainVCTSM(ex_tr,C);
 					params{a,c,fold}.w = w;
 					params{a,c,fold}.kappa = kappa;
 
 				% CSM3N learning (stability regularization)
 				case 5
-
+					fprintf('Training CSM3N ...\n');
+					[w,fAvg] = trainCSM3N(ex_tr,ex_ul,@UGM_Decode_LBP,C);
+					params{a,c,fold}.w = w;
+					
 			end
 			
 			% training stats
 			errs = zeros(nTrain,1);
 			for i = 1:nTrain
-				if ismember(runAlgos(a),1:3)
+				if ismember(runAlgos(a),[1 2 3 5])
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex_tr{i}.Xnode,ex_tr{i}.Xedge,ex_tr{i}.nodeMap,ex_tr{i}.edgeMap,ex_tr{i}.edgeStruct);
 					pred = UGM_Decode_LBP(nodePot,edgePot,ex_tr{i}.edgeStruct);
 				else
@@ -110,7 +116,7 @@ for fold = 1:nFold
 			
 			errs = zeros(nCV,1);
 			for i = 1:nCV
-				if ismember(runAlgos(a),1:3)
+				if ismember(runAlgos(a),[1 2 3 5])
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex_cv{i}.Xnode,ex_cv{i}.Xedge,ex_cv{i}.nodeMap,ex_cv{i}.edgeMap,ex_cv{i}.edgeStruct);
 					pred = UGM_Decode_LBP(nodePot,edgePot,ex_cv{i}.edgeStruct);
 				else
@@ -126,7 +132,7 @@ for fold = 1:nFold
 			
 			errs = zeros(nTest,1);
 			for i = 1:nTest
-				if ismember(runAlgos(a),1:3)
+				if ismember(runAlgos(a),[1 2 3 5])
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex_te{i}.Xnode,ex_te{i}.Xedge,ex_te{i}.nodeMap,ex_te{i}.edgeMap,ex_te{i}.edgeStruct);
 					pred = UGM_Decode_LBP(nodePot,edgePot,ex_te{i}.edgeStruct);
 				else

@@ -59,7 +59,7 @@ for t = 1:maxIter
 	x = x - (stepSize / t) * g;
 	
 	if verbose
-		fprintf('Iter = %d of %d (ex %d: f = %f, fAvg = %f)\n', t, maxIter*n, i, f, fAvg);
+		fprintf('Iter = %d of %d (ex %d: f = %f, fAvg = %f)\n', t, maxIter, i, f, fAvg);
 	end
 end
 
