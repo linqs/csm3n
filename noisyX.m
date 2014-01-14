@@ -1,4 +1,4 @@
-function examples = noisyX(nEx, obsNoise, addBias, dispPlot)
+function examples = noisyX(nEx, obsNoise, addBias, discretize, dispPlot)
 %
 % Creates a "noisy X" image segmentation dataset, per Mark Schmidt.
 %
@@ -13,6 +13,9 @@ if nargin < 3
 	addBias = 0;
 end
 if nargin < 4
+	discretize = 0;
+end
+if nargin < 5
 	dispPlot = 0;
 end
 
@@ -30,26 +33,32 @@ Y = Y + 1;
 
 % noisy observations
 obs = (double(Y) - 1) * 2 - 1 + obsNoise * randn(size(Y));
-X = zeros(nEx,1+addBias,nNode);
+X = zeros(nEx,addBias+1+discretize,nNode);
 for i = 1:nEx
-	if addBias
-		X(i,:,:) = [ones(1,nNode) ; obs(:,i)'];
+	if ~discretize
+		xi = obs(:,i);
 	else
-		X(i,:,:) = obs(:,i)';
+		xi = [(obs(:,i) < 0) (obs(:,i) >= 0)];
 	end
+	if addBias
+		xi = [ones(nNode,1) xi];
+	end
+	X(i,:,:) = xi';
 end
 
-% plot some examples
+% plot first example
 if dispPlot
 	figure;
-	for i = 1:2
-		subplot(2,2,i);
-		imagesc(reshape(Y(:,i),nRows,nCols));
-		subplot(2,2,i+2);
-		imagesc(reshape(obs(:,i),nRows,nCols));
-		colormap gray
+	subplot(2,1,1);
+	imagesc(reshape(Y(:),nRows,nCols));
+	subplot(2,1,2);
+	if ~discretize
+		imagesc(reshape(obs(:,1),nRows,nCols));
+	else
+		imagesc(reshape(obs(:,1) >= 0,nRows,nCols));
 	end
-	suptitle('Examples of Noisy Xs');
+	colormap gray
+	suptitle('Example of Noisy X');
 end
 
 % adjacency graph
