@@ -24,8 +24,10 @@ ub = ones(size(x0));
 obj = @(x,varargin) perturbObj(x,w,yoc_unp,nodeMap,edgeMap,edgeStruct,decodeFunc,varargin{:});
 
 % find worst perturbation as LP
+x0 = min(max(x0,.00001),.99999);
 options = optimset('GradObj','on','Algorithm','interior-point' ...
-				  ,'Display','iter','MaxIter',100,'TolFun',1);
+				  ,'Display','iter','MaxIter',100 ...
+				  ,'TolFun',1e-3,'TolX',1e-8,'TolCon',1e-5);
 [x_per,f,~,~,~,g] = fmincon(obj,x0,A,b,[],[],lb,ub,[],options);
 f = -f;
 g = -g;
@@ -52,23 +54,23 @@ function [f, g] = perturbObj(x, w, yoc_unp, nodeMap, edgeMap, edgeStruct, decode
 	f = 0;
 	g = zeros(size(Xnode));
 	Wnode = squeeze(w(nodeMap(1,:,:)))';
+	idx = localIndex(1,1:nState,nState);
 	for i = 1:nNode
-		%Wnode = squeeze(w(nodeMap(i,:,:)))';
-		idx = localIndex(i,1:nState,nState);
 		dy = yoc_per(idx) - yoc_unp(idx);
 		f = f + sum(sum( Wnode .* (Xnode(:,i) * dy') ));
 		g(:,i) = Wnode * dy;
+		idx = idx + nState;
 	end
 	Wedge = w(reshape(squeeze(edgeMap(:,:,1,:)),nState^2,2*nFeat)');
+	idx = pairwiseIndex(1,1:nState,1:nState,nNode,nState);
 	for e = 1:size(edgeEnds,1)
-		%Wedge = w(reshape(squeeze(edgeMap(:,:,e,:)),nState^2,2*nFeat)');
 		i = edgeEnds(e,1);
 		j = edgeEnds(e,2);
-		idx = pairwiseIndex(e,1:nState,1:nState,nNode,nState);
 		dy = yoc_per(idx) - yoc_unp(idx);
 		f = f + sum(sum( Wedge .* [(Xnode(:,i) * dy') ; (Xnode(:,j) * dy')] ));
 		g(:,i) = g(:,i) + Wedge(1:nFeat,:) * dy;
 		g(:,j) = g(:,j) + Wedge(nFeat+1:2*nFeat,:) * dy;
+		idx = idx + nState^2;
 	end
 
 	% turn the max into a min

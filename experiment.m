@@ -159,5 +159,6 @@ end
 geErrs = teErrs - trErrs;
 
 % display results
-[trErrs cvErrs teErrs geErrs]
+fprintf('Train\tVal.\tTest\tGen.\n');
+disp([trErrs cvErrs teErrs geErrs]);
 
