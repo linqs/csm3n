@@ -40,6 +40,10 @@ objFun = @(x,varargin) perturbObj(x,w,yoc_u,Ynode_u,nodeMap,edgeMap,edgeStruct,d
 % projection function
 projFun = @(x) perturbProj(x,x_u);
 
+% % check gradient calculations
+% fastDerivativeCheck(objFun,x0);
+% return;
+
 % % find worst perturbation using IPM
 % options = optimset('GradObj','on','Algorithm','interior-point' ...
 % 				  ,'Display','iter','MaxIter',100 ...

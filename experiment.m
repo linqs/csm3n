@@ -2,7 +2,7 @@
 
 % experiment vars
 nEx = length(examples);
-nFold = nEx / 4;
+nFold = 1;
 nExFold = nEx / nFold;
 nTrain = 1;
 nUnlab = 1;
