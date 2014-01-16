@@ -23,7 +23,7 @@ y_u = decodeFunc(nodePot,edgePot,edgeStruct,varargin{:});
 yoc_u = overcompletePairwise(y_u,edgeStruct);
 Ynode_u = reshape(yoc_u(1:(nNode*nState)),nState,nNode);
 
-%% OPTIMIZE WORST PERTURBATION
+%% FIND WORST PERTURBATION
 
 % init perturbation to current x, with buffer
 x0 = min(max(x_u,.00001),.99999);
@@ -35,18 +35,27 @@ lb = zeros(size(x0));
 ub = ones(size(x0));
 
 % perturbation objective
-obj = @(x,varargin) perturbObj(x,w,yoc_u,Ynode_u,nodeMap,edgeMap,edgeStruct,decodeFunc,varargin{:});
+objFun = @(x,varargin) perturbObj(x,w,yoc_u,Ynode_u,nodeMap,edgeMap,edgeStruct,decodeFunc,varargin{:});
 
-% find worst perturbation as LP
-options = optimset('GradObj','on','Algorithm','interior-point' ...
-				  ,'Display','iter','MaxIter',100 ...
-				  ,'TolFun',1e-3,'TolX',1e-8,'TolCon',1e-5);
-[x_p,f] = fmincon(obj,x0,A,b,[],[],lb,ub,[],options);
+% projection function
+projFun = @(x) perturbProj(x,x_u);
+
+% % find worst perturbation using IPM
+% options = optimset('GradObj','on','Algorithm','interior-point' ...
+% 				  ,'Display','iter','MaxIter',100 ...
+% 				  ,'TolFun',1e-3,'TolX',1e-8,'TolCon',1e-5);
+% [x_p,f] = fmincon(objFun,x0,A,b,[],[],lb,ub,[],options);
+
+% find worst perturbation using PGD
+options.maxIter = 10;
+options.stepSize = 1e-3;
+options.fTol = 1e-4;
+% options.verbose = 1;
+[x_p,f] = pgd(objFun,projFun,x0,options);
+
+% convert min to max
 f = -f;
 
-% worst perturbation
-[mxv,mxi] = max(abs(x_u-x_p));
-fprintf('Worst perturbation: (%d,%f)\n', mxi,mxv);
 
 %% GRADIENT w.r.t. WEIGHTS
 
@@ -57,8 +66,6 @@ Xedge_p = UGM_makeEdgeFeatures(Xnode_p,edgeEnds);
 % loss-augmented inference for perturbed input
 y_p = lossAugInfer(w,Xnode_p,Xedge_p,Ynode_u,nodeMap,edgeMap,edgeStruct,decodeFunc,varargin{:});
 yoc_p = overcompletePairwise(y_p,edgeStruct);
-
-fprintf('Stability (L1-distance): %f\n', norm(yoc_u-yoc_p,1));
 
 % only 1 example
 Xnode_p = squeeze(Xnode_p);
@@ -84,6 +91,17 @@ for e = 1:size(edgeEnds,1)
 end
 
 
+%% LOG
+
+% worst perturbation
+[mxv,mxi] = max(abs(x_u-x_p));
+
+% fprintf('Worst perturbation: (%d, %f)\n', mxi,mxv);
+% fprintf('Perturbation objective: %f\n', f);
+% fprintf('Stability (L1-distance): %f\n', norm(yoc_u-yoc_p,1));
+
+
+%% PERTURBATION OBJECTIVE
 
 function [f, g] = perturbObj(x, w, yoc_u, Ynode_u, nodeMap, edgeMap, edgeStruct, decodeFunc, varargin)
 
@@ -127,8 +145,15 @@ function [f, g] = perturbObj(x, w, yoc_u, Ynode_u, nodeMap, edgeMap, edgeStruct,
 		idx = idx + nState^2;
 	end
 
-	% turn the max into a min
+	% convert max to min
 	f = -(f + stab);
 	g = -g(:);
+
+%% PERTURBATION PROJECTION
+
+function x_p = perturbProj(v, x_u)
+
+	x_p = projectOntoL1Ball(v - x_u, 1);
+	x_p = x_p + x_u;
 
 	

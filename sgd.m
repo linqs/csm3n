@@ -4,18 +4,20 @@ function [x, fAvg] = sgd(data, objFun, x0, options)
 % 
 % data : n x 1 cell array of data points
 % objFun : objective function of the form:
-%			 function [f, g] = objFun(x, ex), where
+%			 function [f, g] = objFun(x, ex, varargin), where
 %			   x : current position
-% 			   ex : random example
+%			   ex : random example
+%			   f : function value
+%			   g : gradient w.r.t. x
 % x0 : initial position
 % options : optional arguments
 % 			  maxIter : max iterations (def=n)
-% 			  stepSize : step size (def=1e-4)
+% 			  stepSize : step size (def=1)
 % 			  verbose : display iteration info (def=0)
 		  
 %% Parse input
 
-assert(nargin >= 3, 'USAGE: sgd(data,obj,x0)');
+assert(nargin >= 3, 'USAGE: sgd(data,objFun,x0)');
 
 n = length(data);
 
@@ -32,7 +34,7 @@ end
 if isfield(options,'stepSize')
 	stepSize = options.stepSize;
 else
-	stepSize = 1e-4;
+	stepSize = 1;
 end
 
 if isfield(options,'verbose')
@@ -52,15 +54,18 @@ for t = 1:maxIter
 	% Compute objective for random data point
 	i = ceil(rand() * n);
 	ex = data{i};
-	[f, g] = objFun(x, ex); % TODO: support variable argument functions
+	[f, g] = objFun(x, ex); % TODO: support variable output functions
 	
-	% Update estimate of function value and parameters
+	% Update estimate of function value
 	fAvg = (1/t) * f + ((t-1)/t) * fAvg;
+	
+	% Update point
 	x = x - (stepSize / t) * g;
 	
 	if verbose
 		fprintf('Iter = %d of %d (ex %d: f = %f, fAvg = %f)\n', t, maxIter, i, f, fAvg);
 	end
+	
 end
 
 

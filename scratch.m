@@ -31,5 +31,5 @@ ex_u = examples(6:10);
 
 
 clear;
-examples = noisyX(4,1,0,1,0);
+examples = noisyX(16,1,0,1,0);
 experiment;

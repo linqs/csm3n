@@ -29,7 +29,7 @@ end
 % SGD
 options.maxIter = maxIter;
 options.stepSize = 1e-4;
-options.verbose = 1;
+% options.verbose = 1;
 objFun = @(x,ex) csm3nSGDObj(x,ex,examples_u,decodeFunc,C_w,C_s);
 [w,fAvg] = sgd(examples_l,objFun,w,options);
 

@@ -2,7 +2,7 @@
 
 % experiment vars
 nEx = length(examples);
-nFold = 1;
+nFold = nEx / 4;
 nExFold = nEx / nFold;
 nTrain = 1;
 nUnlab = 1;
@@ -92,7 +92,7 @@ for fold = 1:nFold
 				% CSM3N learning (stability regularization)
 				case 5
 					fprintf('Training CSM3N ...\n');
-					[w,fAvg] = trainCSM3N(ex_tr,ex_ul,@UGM_Decode_LBP,C,.25);
+					[w,fAvg] = trainCSM3N(ex_tr,ex_ul,@UGM_Decode_LBP,0,.25);
 					params{a,c,fold}.w = w;
 					
 			end
