@@ -19,7 +19,7 @@ fprintf('Num. permutations >= .01: %d\n', nnz(abs(x-x_p)>=.01));
 fprintf('CSM3N objective = %f\n', f);
 
 
-%% Derivative check for stabilityObj (note: uncomment lines in function)
+%% Derivative check for stabilityObj (note: uncomment lines in stabilityObj)
 clear;
 examples = noisyX(20,1,0,1,0);
 experiment;
@@ -27,6 +27,15 @@ wnoisy = randn(size(w));
 for i = 1:length(examples)
 	stabilityObj(w,examples{i},@UGM_Decode_LBP);
 	stabilityObj(wnoisy,examples{i},@UGM_Decode_LBP);
+end
+
+for i = 1:length(examples)
+	stabObj = @(x,varargin) stabilityObj(x,examples{i},@UGM_Decode_LBP,varargin{:});
+	fastDerivativeCheck(stabObj,w);
+	for j = 1:3
+		wnoisy = w + randn(size(w));
+		fastDerivativeCheck(stabObj,wnoisy);
+	end
 end
 
 

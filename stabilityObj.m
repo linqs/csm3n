@@ -87,8 +87,6 @@ end
 widx = reshape(squeeze(edgeMap(:,:,1,:)),nState^2,2*nFeat)';
 idx = pairwiseIndex(1,1:nState,1:nState,nNode,nState);
 for e = 1:size(edgeEnds,1)
-	i = edgeEnds(e,1);
-	j = edgeEnds(e,2);
 	dy = yoc_p(idx) - yoc_u(idx);
 	sg(widx) = sg(widx) + Xedge_p(:,e) * dy';
 	idx = idx + nState^2;
