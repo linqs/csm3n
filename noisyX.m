@@ -67,6 +67,7 @@ G = latticeAdjMatrix(nRows,nCols);
 % convert to cell array of examples
 examples = cell(nEx,1);
 edgeStruct = UGM_makeEdgeStruct(G,nStateY,1);
+edgeStruct.edgeDist = makeEdgeDistribution(edgeStruct);
 [Aeq,beq] = pairwiseConstraints(edgeStruct);
 for i = 1:nEx
 	Xnode = X(i,:,:);
