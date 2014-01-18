@@ -21,7 +21,7 @@ if nargin < 5
 	dispPlot = 0;
 end
 
-load Ximage.mat
+load data/Ximage.mat
 [nRows,nCols] = size(Ximage);
 nNode = nRows * nCols;
 nStateY = 2;
