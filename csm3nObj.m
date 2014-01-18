@@ -25,7 +25,7 @@ end
 % stability regularization
 for i = 1:length(examples_u)
 	ex = examples_u{i};
-	[stab,sg] = stabilityObj(w,ex,decodeFunc,varargin{:});
+	[stab,sg] = stabilityObj(w,ex,decodeFunc,[],varargin{:});
 	f = f + C_s * stab;
 	g = g + C_s * sg;
 end

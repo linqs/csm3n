@@ -1,12 +1,14 @@
 %% Test stabilityObj and csm3nObj
 clear;
 examples = noisyX(10,1,0,1,0);
+expSetup = struct('nFold',1,'foldDist',[1 1 1 1],'runAlgos',2,'Cvec',100);
 experiment;
 w = w + 4*randn(size(w));
+options = struct('verbose',1,'plotObj',1);
 for i = 1:length(examples)
 	ex = examples{i};
 	x = reshape(squeeze(ex.Xnode(1,:,:)),[],1);
-	[f,g,x_p] = stabilityObj(w,ex,@UGM_Decode_TRBP);
+	[f,g,x_p] = stabilityObj(w,ex,@UGM_Decode_LBP,options);
 	fprintf('Stability objective = %f\n', f);
 % 	fprintf('First 20 entries of x,x''\n');
 % 	disp([x(1:20) x_p(1:20)]);

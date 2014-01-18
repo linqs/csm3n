@@ -1,4 +1,4 @@
-function [x, f] = pgd(objFun, projFun, x0, options)
+function [x, f, fVec] = pgd(objFun, projFun, x0, options)
 % 
 % Performs projected gradient descent (PGD).
 % 
@@ -15,7 +15,6 @@ function [x, f] = pgd(objFun, projFun, x0, options)
 % options : optional arguments
 % 			  maxIter : max iterations (def=100)
 % 			  stepSize : step size (def=1)
-% 			  fTol : function tolerance (def=1e-4)
 % 			  verbose : display iteration info (def=0)
 		  
 %% Parse input
@@ -26,28 +25,16 @@ if nargin < 4
 	options = {};
 end
 
-if isfield(options,'maxIter')
-	maxIter = options.maxIter;
-else
-	maxIter = 100;
+if ~isfield(options,'maxIter')
+	options.maxIter = 100;
 end
 
-if isfield(options,'stepSize')
-	stepSize = options.stepSize;
-else
-	stepSize = 1;
+if ~isfield(options,'stepSize')
+	options.stepSize = 1;
 end
 
-if isfield(options,'fTol')
-	fTol = options.fTol;
-else
-	fTol = 1e-4;
-end
-
-if isfield(options,'verbose')
-	verbose = options.verbose;
-else
-	verbose = 0;
+if ~isfield(options,'verbose')
+	options.verbose = 0;
 end
 
 
@@ -56,15 +43,19 @@ end
 % Initial point
 x = x0;
 [f, g] = objFun(x);
-if verbose
+if options.verbose
 	fprintf('Initial point: f = %f\n', f);
+end
+if nargout >= 3
+	fVec = zeros(options.maxIter+1,1);
+	fVec(1) = f;
 end
 
 % Iterative updates
-for t = 1:maxIter
+for t = 1:options.maxIter
 	
 	% Update point
-	x = x - (stepSize / t) * g;
+	x = x - (options.stepSize / t) * g;
 	
 	% Project new point into feasible region
 	x = projFun(x);
@@ -72,8 +63,12 @@ for t = 1:maxIter
 	% Compute objective
 	[f, g] = objFun(x);
 
-	if verbose
-		fprintf('Iter = %d of %d: f = %f\n', t, maxIter, f);
+	if nargout >= 3
+		fVec(t+1) = f;
+	end
+	
+	if options.verbose
+		fprintf('Iter = %d of %d: f = %f\n', t, options.maxIter, f);
 	end
 		
 end

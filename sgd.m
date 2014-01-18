@@ -1,4 +1,4 @@
-function [x, fAvg] = sgd(data, objFun, x0, options)
+function [x, fAvg, fVec] = sgd(data, objFun, x0, options)
 % 
 % Performs stochastic gradient descent (SGD).
 % 
@@ -22,25 +22,19 @@ assert(nargin >= 3, 'USAGE: sgd(data,objFun,x0)');
 n = length(data);
 
 if nargin < 4
-	options = {};
+	options = struct();
 end
 
-if isfield(options,'maxIter')
-	maxIter = options.maxIter;
-else
-	maxIter = n;
+if ~isfield(options,'maxIter')
+	options.maxIter = n;
 end
 
-if isfield(options,'stepSize')
-	stepSize = options.stepSize;
-else
-	stepSize = 1;
+if ~isfield(options,'stepSize')
+	options.stepSize = 1;
 end
 
-if isfield(options,'verbose')
-	verbose = options.verbose;
-else
-	verbose = 0;
+if ~isfield(options,'verbose')
+	options.verbose = 0;
 end
 
 
@@ -48,8 +42,11 @@ end
 
 fAvg = 0;
 x = x0;
+if nargout >= 3
+	fVec = zeros(options.maxIter,1);
+end
 
-for t = 1:maxIter
+for t = 1:options.maxIter
 	
 	% Compute objective for random data point
 	i = ceil(rand() * n);
@@ -60,10 +57,14 @@ for t = 1:maxIter
 	fAvg = (1/t) * f + ((t-1)/t) * fAvg;
 	
 	% Update point
-	x = x - (stepSize / t) * g;
+	x = x - (options.stepSize / t) * g;
 	
-	if verbose
-		fprintf('Iter = %d of %d (ex %d: f = %f, fAvg = %f)\n', t, maxIter, i, f, fAvg);
+	if nargout >= 3
+		fVec(t) = f;
+	end
+	
+	if options.verbose
+		fprintf('Iter = %d of %d (ex %d: f = %f, fAvg = %f)\n', t, options.maxIter, i, f, fAvg);
 	end
 	
 end

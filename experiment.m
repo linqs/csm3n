@@ -1,30 +1,59 @@
 % Experimental testing harness
+%
+% Requires 1 variable, 1 optional:
+% 	examples : cell array of (labeled) examples
+% 	expSetup : (optional) structure containing experimental setup
+
+assert(exist('examples','var') && iscell(examples), 'experiment requires cell array of examples.');
+nEx = length(examples);
+nParam = max(examples{1}.edgeMap(:));
 
 % experiment vars
-nEx = length(examples);
-nFold = 4;
-nExFold = nEx / nFold;
-nTrain = 1;
-nUnlab = 1;
-nCV = 1;
-nTest = 1;
+if ~exist('expSetup','var')
+	expSetup = struct();
+end
+if isfield(expSetup,'nFold')
+	nFold = expSetup.nFold;
+else
+	nFold = 1;
+end
+if isfield(expSetup,'foldDist')
+	foldDist = expSetup.foldDist;
+	nExFold = sum(foldDist);
+	assert(nExFold <= nEx, 'Number of examples per fold greater than examples.');
+	nTrain = foldDist(1);
+	nUnlab = foldDist(2);
+	nCV = foldDist(3);
+	nTest = foldDist(4);
+else
+	nExFold = nEx / nFold;
+	nTrain = 1;
+	nUnlab = 1;
+	nCV = 1;
+	nTest = nExFold - 3;
+end
+if isfield(expSetup,'runAlgos')
+	runAlgos = expSetup.runAlgos;
+else
+	runAlgos = 1:5;
+end
+if isfield(expSetup,'Cvec')
+	Cvec = expSetup.Cvec;
+else
+	Cvec = 10.^linspace(-2,6,9);
+end
+if isfield(expSetup,'decoder')
+	decoder = expSetup.decoder;
+else
+	decoder = @UGM_Decode_LBP;
+end
 
 % algorithm vars
 algoNames = {'MLE', 'M3N', 'M3NLRR', 'VCTSM', 'CSM3N'};
-runAlgos = 1:5;
-
-% model parameters
-nParam = max(examples{1}.edgeMap(:));
-
-% crossvalidation vars
-Cvec = 100;%10.^linspace(-2,6,9);
 
 % stability vars
 % maxSamp = 10;
 % nStabSamp = min(maxSamp, nNode*(nState-1));
-
-% decoder function
-decoder = @UGM_Decode_LBP;
 
 
 %% MAIN LOOP
@@ -41,6 +70,10 @@ cvErrs = zeros(length(runAlgos), length(Cvec), nFold);
 teErrs = zeros(length(runAlgos), length(Cvec), nFold);
 
 for fold = 1:nFold
+	
+	if (fold * nExFold) > nEx
+		break;
+	end
 	
 	% separate training/CV/testing
 	fidx = (fold-1) * nExFold;

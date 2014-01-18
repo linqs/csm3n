@@ -1,10 +1,31 @@
-function [f, sg, x_p, y_p] = stabilityObj(w, ex, decodeFunc, varargin)
+function [f, sg, x_p, y_p] = stabilityObj(w, ex, decodeFunc, options, varargin)
 % 
 % Computes the stability regularization objective and gradient.
 % 
 % w : nParam x 1 vector of weights
 % ex : an unlabeled example
 % decodeFunc : decoder function
+% options : optional struct of options:
+% 			maxIter : iterations of PGD (def: 10)
+% 			stepSize : PGD step size (def: 1e-3)
+% 			verbose : verbose mode (def: 0)
+% 			plotObj : plot stability objective (def: 0)
+
+if nargin < 4 || ~isstruct(options)
+	options = struct();
+end
+if ~isfield(options,'maxIter')
+	options.maxIter = 10;
+end
+if ~isfield(options,'stepSize')
+	options.stepSize = 1e-3;
+end
+if ~isfield(options,'verbose')
+	options.verbose = 0;
+end
+if ~isfield(options,'plotObj')
+	options.plotObj = 0;
+end
 
 nodeMap = ex.nodeMap;
 edgeMap = ex.edgeMap;
@@ -51,11 +72,7 @@ projFun = @(x) perturbProj(x,x_u);
 % [x_p,f] = fmincon(objFun,x0,A,b,[],[],lb,ub,[],options);
 
 % find worst perturbation using PGD
-options.maxIter = 10;
-options.stepSize = 1e-3;
-options.fTol = 1e-4;
-% options.verbose = 1;
-[x_p,f] = pgd(objFun,projFun,x0,options);
+[x_p,f,fVec] = pgd(objFun,projFun,x0,options);
 
 % convert min to max
 f = -f;
@@ -95,12 +112,16 @@ end
 
 %% LOG
 
-% worst perturbation
-[mxv,mxi] = max(abs(x_u-x_p));
+if options.verbose
+	[mxv,mxi] = max(abs(x_u-x_p));
+	fprintf('Worst perturbation: (%d, %f)\n', mxi,mxv);
+	fprintf('Perturbation objective: %f\n', f);
+	fprintf('Stability (L1-distance): %f\n', norm(yoc_u-yoc_p,1));
+end
 
-% fprintf('Worst perturbation: (%d, %f)\n', mxi,mxv);
-% fprintf('Perturbation objective: %f\n', f);
-% fprintf('Stability (L1-distance): %f\n', norm(yoc_u-yoc_p,1));
+if options.plotObj
+	plot(1:length(fVec),fVec);
+end
 
 
 %% PERTURBATION OBJECTIVE
