@@ -47,13 +47,7 @@ Ynode_u = reshape(yoc_u(1:(nNode*nState)),nState,nNode);
 %% FIND WORST PERTURBATION
 
 % init perturbation to current x, with buffer
-x0 = min(max(x_u,.00001),.99999);
-
-% create constraints on perturbation
-A = ones(size(x0')) - 2*x0';
-b = 1 - sum(x0);
-lb = zeros(size(x0));
-ub = ones(size(x0));
+x0 = x_u;%min(max(x_u,.00001),.99999);
 
 % perturbation objective
 objFun = @(x,varargin) perturbObj(x,w,yoc_u,Ynode_u,nodeMap,edgeMap,edgeStruct,decodeFunc,varargin{:});
@@ -66,6 +60,10 @@ projFun = @(x) perturbProj(x,x_u);
 % return;
 
 % % find worst perturbation using IPM
+% A = ones(size(x0')) - 2*x0';
+% b = 1 - sum(x0);
+% lb = zeros(size(x0));
+% ub = ones(size(x0));
 % options = optimset('GradObj','on','Algorithm','interior-point' ...
 % 				  ,'Display','iter','MaxIter',100 ...
 % 				  ,'TolFun',1e-3,'TolX',1e-8,'TolCon',1e-5);

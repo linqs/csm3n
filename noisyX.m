@@ -1,9 +1,11 @@
-function examples = noisyX(nEx, obsNoise, addBias, discretize, dispPlot)
+function examples = noisyX(nEx, obsNoise, addBias, binarizeX, dispPlot)
 %
 % Creates a "noisy X" image segmentation dataset, per Mark Schmidt.
 %
 % nEx : number of examples to generate
 % obsNoise : noise rate for observed variables
+% addBias : add bias term to features
+% binarizeX : binarize the X values (threshold at 0)
 % dispPlot : whether to plot first 2 examples
 
 if nargin < 2
@@ -13,7 +15,7 @@ if nargin < 3
 	addBias = 0;
 end
 if nargin < 4
-	discretize = 0;
+	binarizeX = 0;
 end
 if nargin < 5
 	dispPlot = 0;
@@ -33,9 +35,9 @@ Y = Y + 1;
 
 % noisy observations
 obs = (double(Y) - 1) * 2 - 1 + obsNoise * randn(size(Y));
-X = zeros(nEx,addBias+1+discretize,nNode);
+X = zeros(nEx,addBias+1+binarizeX,nNode);
 for i = 1:nEx
-	if ~discretize
+	if ~binarizeX
 		xi = obs(:,i);
 	else
 		xi = [(obs(:,i) < 0) (obs(:,i) >= 0)];
@@ -52,7 +54,7 @@ if dispPlot
 	subplot(2,1,1);
 	imagesc(reshape(Y(:,1),nRows,nCols));
 	subplot(2,1,2);
-	if ~discretize
+	if ~binarizeX
 		imagesc(reshape(obs(:,1),nRows,nCols));
 	else
 		imagesc(reshape(obs(:,1) >= 0,nRows,nCols));
