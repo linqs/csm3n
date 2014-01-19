@@ -1,6 +1,6 @@
 %% Test stabilityObj and csm3nObj
 clear;
-examples = noisyX(10,1,0,1,0);
+examples = noisyX(4,1,0,1,0);
 expSetup = struct('nFold',1,'foldDist',[1 1 1 1],'runAlgos',2,'Cvec',100);
 experiment;
 w = w + 4*randn(size(w));
@@ -53,5 +53,6 @@ ex_u = examples(6:10);
 %% Run experiment
 clear;
 examples = noisyX(16,1,0,1,0);
+expSetup = struct('nFold',1,'foldDist',[1 1 1 1],'runAlgos',1:4,'Cvec',100);
 experiment;
 

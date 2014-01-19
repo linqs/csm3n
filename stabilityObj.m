@@ -32,13 +32,14 @@ edgeMap = ex.edgeMap;
 edgeStruct = ex.edgeStruct;
 edgeEnds = edgeStruct.edgeEnds;
 [nNode,nState,nFeat] = size(nodeMap);
+nEdge = size(edgeEnds,1);
 
 %% INFER UNPERTURBED EXAMPLE
 
 % inferfence for unperturbed input
 Xnode_u = ex.Xnode;
 Xedge_u = ex.Xedge;
-x_u = reshape(squeeze(Xnode_u(1,:,:)),[],1);
+x_u = Xnode_u(:);
 [nodePot,edgePot] = UGM_CRF_makePotentials(w,Xnode_u,Xedge_u,nodeMap,edgeMap,edgeStruct);
 y_u = decodeFunc(nodePot,edgePot,edgeStruct,varargin{:});
 yoc_u = overcompletePairwise(y_u,edgeStruct);
@@ -87,24 +88,24 @@ y_p = lossAugInfer(w,Xnode_p,Xedge_p,Ynode_u,nodeMap,edgeMap,edgeStruct,decodeFu
 yoc_p = overcompletePairwise(y_p,edgeStruct);
 
 % only 1 example
-Xnode_p = squeeze(Xnode_p);
-Xedge_p = squeeze(Xedge_p);
+Xnode_p = reshape(Xnode_p,nFeat,nNode);
+Xedge_p = reshape(Xedge_p,2*nFeat,nEdge);
 
 % compute (sub)gradient w.r.t. w
 sg = zeros(size(w));
-widx = squeeze(nodeMap(1,:,:))';
-idx = localIndex(1,1:nState,nState);
+widx = reshape(nodeMap(1,:,:),nState,nFeat);
+yidx = localIndex(1,1:nState,nState);
 for i = 1:nNode
-	dy = yoc_p(idx) - yoc_u(idx);
-	sg(widx) = sg(widx) + Xnode_p(:,i) * dy';
-	idx = idx + nState;
+	dy = yoc_p(yidx) - yoc_u(yidx);
+	sg(widx) = sg(widx) + dy * Xnode_p(:,i)';
+	yidx = yidx + nState;
 end
-widx = reshape(squeeze(edgeMap(:,:,1,:)),nState^2,2*nFeat)';
-idx = pairwiseIndex(1,1:nState,1:nState,nNode,nState);
+widx = reshape(edgeMap(:,:,1,:),nState^2,2*nFeat);
+yidx = pairwiseIndex(1,1:nState,1:nState,nNode,nState);
 for e = 1:size(edgeEnds,1)
-	dy = yoc_p(idx) - yoc_u(idx);
-	sg(widx) = sg(widx) + Xedge_p(:,e) * dy';
-	idx = idx + nState^2;
+	dy = yoc_p(yidx) - yoc_u(yidx);
+	sg(widx) = sg(widx) + dy * Xedge_p(:,e)';
+	yidx = yidx + nState^2;
 end
 
 
@@ -126,9 +127,11 @@ end
 
 function [f, g] = perturbObj(x, w, yoc_u, Ynode_u, nodeMap, edgeMap, edgeStruct, decodeFunc, varargin)
 
-	% reconstruct Xnode,Xedge from x
-	[nNode,nState,nFeat] = size(nodeMap);
 	edgeEnds = edgeStruct.edgeEnds;
+	[nNode,nState,nFeat] = size(nodeMap);
+	nEdge = size(edgeEnds,1);
+
+	% reconstruct Xnode,Xedge from x
 	Xnode_p = reshape(x, 1, nFeat, nNode);
 	Xedge_p = UGM_makeEdgeFeatures(Xnode_p,edgeEnds);
 	
@@ -140,30 +143,30 @@ function [f, g] = perturbObj(x, w, yoc_u, Ynode_u, nodeMap, edgeMap, edgeStruct,
 	stab = norm(yoc_u - yoc_p, 1);
 	
 	% only 1 example
-	Xnode_p = squeeze(Xnode_p);
-	Xedge_p = squeeze(Xedge_p);
+	Xnode_p = reshape(Xnode_p,nFeat,nNode);
+	Xedge_p = reshape(Xedge_p,2*nFeat,nEdge);
 	
 	% objective/gradient w.r.t. x
 	f = 0;
 	g = zeros(size(Xnode_p));
-	Wnode = squeeze(w(nodeMap(1,:,:)))';
-	idx = localIndex(1,1:nState,nState);
+	Wnode = reshape(w(nodeMap(1,:,:)),nState,nFeat)';
+	yidx = localIndex(1,1:nState,nState);
 	for i = 1:nNode
-		dy = yoc_p(idx) - yoc_u(idx);
+		dy = yoc_p(yidx) - yoc_u(yidx);
 		f = f + sum(sum( Wnode .* (Xnode_p(:,i) * dy') ));
 		g(:,i) = Wnode * dy;
-		idx = idx + nState;
+		yidx = yidx + nState;
 	end
-	Wedge = w(reshape(squeeze(edgeMap(:,:,1,:)),nState^2,2*nFeat)');
-	idx = pairwiseIndex(1,1:nState,1:nState,nNode,nState);
+	Wedge = w(reshape(edgeMap(:,:,1,:),nState^2,2*nFeat)');
+	yidx = pairwiseIndex(1,1:nState,1:nState,nNode,nState);
 	for e = 1:size(edgeEnds,1)
 		i = edgeEnds(e,1);
 		j = edgeEnds(e,2);
-		dy = yoc_p(idx) - yoc_u(idx);
+		dy = yoc_p(yidx) - yoc_u(yidx);
 		f = f + sum(sum( Wedge .* (Xedge_p(:,e) * dy') ));
 		g(:,i) = g(:,i) + Wedge(1:nFeat,:) * dy;
 		g(:,j) = g(:,j) + Wedge(nFeat+1:2*nFeat,:) * dy;
-		idx = idx + nState^2;
+		yidx = yidx + nState^2;
 	end
 
 	% convert max to min

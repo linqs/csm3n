@@ -1,4 +1,4 @@
-function [f, g] = csm3nObj(w, examples_l, examples_u, decodeFunc, C_w, C_s, varargin)
+function [f, g] = csm3nObj(w, examples_l, examples_u, decodeFunc, C_w, C_s, options, varargin)
 % 
 % Computes the CSM3N objective and gradient.
 % 
@@ -8,7 +8,11 @@ function [f, g] = csm3nObj(w, examples_l, examples_u, decodeFunc, C_w, C_s, vara
 % decodeFunc : decoder function
 % C_w : weight regularization constant or nParam x 1 vector
 % C_s : stability regularization constant
+% options : optional struct of optimization options for stabilityObj
 
+if nargin < 7
+	options = struct();
+end
 
 % L2 weight regularization
 f = 0.5 * (C_w.*w)' * w;
@@ -25,7 +29,7 @@ end
 % stability regularization
 for i = 1:length(examples_u)
 	ex = examples_u{i};
-	[stab,sg] = stabilityObj(w,ex,decodeFunc,[],varargin{:});
+	[stab,sg] = stabilityObj(w,ex,decodeFunc,options,varargin{:});
 	f = f + C_s * stab;
 	g = g + C_s * sg;
 end

@@ -1,4 +1,4 @@
-function [w, kappa, fAvg] = trainVCTSM(examples, C, maxIter, w, kappa)
+function [w, kappa, fAvg] = trainVCTSM(examples, C, options, w, kappa)
 
 % Optimizes the VCTSM objective, learning the optimal (w,kappa).
 %
@@ -11,7 +11,10 @@ function [w, kappa, fAvg] = trainVCTSM(examples, C, maxIter, w, kappa)
 %	Fx : nParam x length(oc) feature map
 %	suffStat : nParam x 1 vector of sufficient statistics (i.e., Fx * oc)
 % C : regularization constant or vector
-% maxIter : max. number of iterations of SGD (optional: def=10*length(examples))
+% options : optional struct of optimization options for SGD:
+% 			maxIter : iterations of SGD (def: 10*length(examples))
+% 			stepSize : SGD step size (def: 1e-6)
+% 			verbose : verbose mode (def: 0)
 % w : init weights (optional: def=zeros)
 % kappa : init kappa (optional: def=1)
 
@@ -24,12 +27,20 @@ nCon = 0;
 for i = 1:nEx
 	nCon = nCon + length(examples{i}.beq);
 end
-
 if nargin < 2
 	C = examples{1}.nNode;
 end
-if nargin < 3
-	maxIter = 10 * length(examples);
+if nargin < 3 || ~isstruct(options)
+	options = struct();
+end
+if ~isfield(options,'maxIter')
+	options.maxIter = 10 * length(examples);
+end
+if ~isfield(options,'stepSize')
+	options.stepSize = 1e-6;
+end
+if ~isfield(options,'verbose')
+	options.verbose = 0;
 end
 if nargin < 4
 	w = zeros(nParam,1);
@@ -42,9 +53,6 @@ end
 x0 = [w ; kappa ; zeros(nCon,1)];
 
 % SGD
-options.maxIter = maxIter;
-options.stepSize = 1e-6;
-% options.verbose = 1;
 objFun = @(x,ex) vctsmObj(x,{ex},C);
 [x,fAvg] = sgd(examples,objFun,x0,options);
 

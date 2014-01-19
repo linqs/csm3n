@@ -1,11 +1,14 @@
-function [w, nll] = trainMLE(examples, inferFunc, C, maxIter, w)
+function [w, nll] = trainMLE(examples, inferFunc, C, options, w)
 %
 % Trains an MRF using MLE.
 %
 % examples : cell array of examples
 % inferFunc : inference function (0: use pseudolikelihood)
 % C : regularization constant or nParam x 1 vector (optional: def=nNode of first example)
-% maxIter : max. number of iterations of SGD (optional: def=10*length(examples))
+% options : optional struct of optimization options for SGD:
+% 			maxIter : iterations of SGD (def: 10*length(examples))
+% 			stepSize : SGD step size (def: 1e-4)
+% 			verbose : verbose mode (def: 0)
 % w : init weights (optional: def=zeros)
 
 % parse input
@@ -14,8 +17,17 @@ usePL = ~isa(inferFunc,'function_handle');
 if nargin < 3
 	C = examples{1}.nNode;
 end
-if nargin < 4
-	maxIter = 10 * length(examples);
+if nargin < 4 || ~isstruct(options)
+	options = struct();
+end
+if ~isfield(options,'maxIter')
+	options.maxIter = 10 * length(examples);
+end
+if ~isfield(options,'stepSize')
+	options.stepSize = 1e-4;
+end
+if ~isfield(options,'verbose')
+	options.verbose = 0;
 end
 if nargin < 5
 	nParam = max(examples{1}.edgeMap(:));
@@ -33,9 +45,6 @@ else
 end
 
 % SGD
-options.maxIter = maxIter;
-options.stepSize = 1e-4;
-% options.verbose = 1;
 [w,fAvg] = sgd(examples,objFun,w,options);
 
 % NLL of learned model

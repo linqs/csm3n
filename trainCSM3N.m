@@ -1,4 +1,4 @@
-function [w, fAvg] = trainCSM3N(examples_l, examples_u, decodeFunc, C_w, C_s, maxIter, w)
+function [w, fAvg] = trainCSM3N(examples_l, examples_u, decodeFunc, C_w, C_s, optSGD, optPGD, w)
 %
 % M3N training with stability regularization.
 %
@@ -7,7 +7,11 @@ function [w, fAvg] = trainCSM3N(examples_l, examples_u, decodeFunc, C_w, C_s, ma
 % decodeFunc : decoder function
 % C_w : weight regularization constant or nParam x 1 vector (optional: def=nNode of first example)
 % C_s : stability regularization constant (optional: def=0.1)
-% maxIter : max. number of iterations of SGD (optional: def=10*length(examples))
+% optSGD : optional struct of optimization options for SGD:
+% 			maxIter : iterations of SGD (def: 10*length(examples_l))
+% 			stepSize : SGD step size (def: 1e-4)
+% 			verbose : verbose mode (def: 0)
+% optPGD : optional struct of optimization options for stabilityObj
 % w : init weights (optional: def=zeros)
 
 % parse input
@@ -18,29 +22,38 @@ end
 if nargin < 5
 	C_s = 0.1;
 end
-if nargin < 6
-	maxIter = 10 * length(examples_l);
+if nargin < 6 || ~isstruct(optSGD)
+	optSGD = struct();
+end
+if ~isfield(optSGD,'maxIter')
+	optSGD.maxIter = 10 * length(examples_l);
+end
+if ~isfield(optSGD,'stepSize')
+	optSGD.stepSize = 1e-4;
+end
+if ~isfield(optSGD,'verbose')
+	optSGD.verbose = 0;
 end
 if nargin < 7
+	optPGD = struct();
+end
+if nargin < 8
 	nParam = max(examples_l{1}.edgeMap(:));
 	w = zeros(nParam,1);
 end
 
 % SGD
-options.maxIter = maxIter;
-options.stepSize = 1e-4;
-% options.verbose = 1;
-objFun = @(x,ex) csm3nSGDObj(x,ex,examples_u,decodeFunc,C_w,C_s);
-[w,fAvg] = sgd(examples_l,objFun,w,options);
+objFun = @(x,ex) csm3nSGDObj(x,ex,examples_u,decodeFunc,C_w,C_s,optPGD);
+[w,fAvg] = sgd(examples_l,objFun,w,optSGD);
 
 
 % Subroutine for L2-regularized M3N objective
-function [f, g] = csm3nSGDObj(w, ex_l, examples_u, decodeFunc, C_w, C_s)
+function [f, g] = csm3nSGDObj(w, ex_l, examples_u, decodeFunc, C_w, C_s, optPGD)
 	
 	% pick random unlabeled point
 	i = ceil(rand() * length(examples_u));
 	ex_u = examples_u{i};
 	
 	% compute CSM3N objective
-	[f,g] = csm3nObj(w,{ex_l},{ex_u},decodeFunc,C_w,C_s);
+	[f,g] = csm3nObj(w,{ex_l},{ex_u},decodeFunc,C_w,C_s,optPGD);
 
