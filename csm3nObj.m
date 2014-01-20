@@ -15,23 +15,27 @@ if nargin < 7
 end
 
 % L2 weight regularization
-f = 0.5 * (C_w.*w)' * w;
-g = C_w.*w;
+f = 0.5 * (C_w .* w)' * w;
+g = C_w .* w;
 
 % M3N objective
-for i = 1:length(examples_l)
+nEx_l = length(examples_l);
+for i = 1:nEx_l
 	ex = examples_l{i};
-	[l,sg] = UGM_M3N_Obj(w,ex.Xnode,ex.Xedge,ex.Y',ex.nodeMap,ex.edgeMap,ex.edgeStruct,decodeFunc);
-	f = f + l;
-	g = g + sg;
+	[l,sg] = UGM_M3N_Obj(w,ex.Xnode,ex.Xedge,ex.Y',ex.nodeMap,ex.edgeMap,ex.edgeStruct,decodeFunc,varargin{:});
+	f = f + l / nEx_l;
+	g = g + sg / nEx_l;
 end
 
 % stability regularization
-for i = 1:length(examples_u)
+nEx_u = length(examples_u);
+for i = 1:nEx_u
 	ex = examples_u{i};
-	[stab,sg] = stabilityObj(w,ex,decodeFunc,options,varargin{:});
-	f = f + C_s * stab;
-	g = g + C_s * sg;
+	[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
+	y = decodeFunc(nodePot,edgePot,ex.edgeStruct,varargin{:});
+	[stab,sg] = stabilityObj(w,ex,y,decodeFunc,options,varargin{:});
+	f = f + C_s * stab / nEx_u;
+	g = g + C_s * sg / nEx_u;
 end
 
 

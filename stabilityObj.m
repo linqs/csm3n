@@ -1,9 +1,10 @@
-function [f, sg, x_p, y_p] = stabilityObj(w, ex, decodeFunc, options, varargin)
+function [f, sg, x_p, y_p] = stabilityObj(w, ex, y_u, decodeFunc, options, varargin)
 % 
 % Computes the stability regularization objective and gradient.
 % 
 % w : nParam x 1 vector of weights
-% ex : an unlabeled example
+% ex : an (unlabeled) example
+% y_u : predicted (or true) label for ex
 % decodeFunc : decoder function
 % options : optional struct of options:
 % 			maxIter : iterations of PGD (def: 10)
@@ -11,7 +12,7 @@ function [f, sg, x_p, y_p] = stabilityObj(w, ex, decodeFunc, options, varargin)
 % 			verbose : verbose mode (def: 0)
 % 			plotObj : plot stability objective (def: 0)
 
-if nargin < 4 || ~isstruct(options)
+if nargin < 5 || ~isstruct(options)
 	options = struct();
 end
 if ~isfield(options,'maxIter')
@@ -34,14 +35,7 @@ edgeEnds = edgeStruct.edgeEnds;
 [nNode,nState,nFeat] = size(nodeMap);
 nEdge = size(edgeEnds,1);
 
-%% INFER UNPERTURBED EXAMPLE
-
-% inferfence for unperturbed input
-Xnode_u = ex.Xnode;
-Xedge_u = ex.Xedge;
-x_u = Xnode_u(:);
-[nodePot,edgePot] = UGM_CRF_makePotentials(w,Xnode_u,Xedge_u,nodeMap,edgeMap,edgeStruct);
-y_u = decodeFunc(nodePot,edgePot,edgeStruct,varargin{:});
+x_u = ex.Xnode(:);
 yoc_u = overcompletePairwise(y_u,edgeStruct);
 Ynode_u = reshape(yoc_u(1:(nNode*nState)),nState,nNode);
 
