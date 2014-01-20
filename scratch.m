@@ -58,7 +58,7 @@ ex_u = examples(6:10);
 
 %% Run experiment
 clear;
-examples = noisyX(16,1,0,1,0);
-expSetup = struct('nFold',1,'foldDist',[1 1 1 1],'runAlgos',1:4,'Cvec',100);
+examples = noisyX(16,1,0,0,0);
+expSetup = struct('nFold',1,'foldDist',[1 1 1 1],'runAlgos',1:6,'Cvec',100);
 experiment;
 

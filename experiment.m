@@ -35,7 +35,7 @@ end
 if isfield(expSetup,'runAlgos')
 	runAlgos = expSetup.runAlgos;
 else
-	runAlgos = 1:5;
+	runAlgos = 1:6;
 end
 if isfield(expSetup,'Cvec')
 	Cvec = expSetup.Cvec;
@@ -49,7 +49,7 @@ else
 end
 
 % algorithm vars
-algoNames = {'MLE', 'M3N', 'M3NLRR', 'VCTSM', 'CSM3N'};
+algoNames = {'MLE', 'M3N', 'M3NLRR', 'VCTSM', 'CACC', 'CSM3N'};
 
 % stability vars
 % maxSamp = 10;
@@ -125,8 +125,14 @@ for fold = 1:nFold
 					params{a,c,fold}.w = w;
 					params{a,c,fold}.kappa = kappa;
 
-				% CSM3N learning (stability regularization)
+				% CACC learning (robust M3N)
 				case 5
+					fprintf('Training CACC ...\n');
+					[w,fAvg] = trainCACC(ex_tr,decoder,C);
+					params{a,c,fold}.w = w;
+					
+				% CSM3N learning (stability regularization)
+				case 6
 					fprintf('Training CSM3N ...\n');
 					[w,fAvg] = trainCSM3N(ex_tr,ex_ul,decoder,0,.25);
 					params{a,c,fold}.w = w;
@@ -136,7 +142,7 @@ for fold = 1:nFold
 			% training stats
 			errs = zeros(nTrain,1);
 			for i = 1:nTrain
-				if ismember(runAlgos(a),[1 2 3 5])
+				if a ~= 4
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex_tr{i}.Xnode,ex_tr{i}.Xedge,ex_tr{i}.nodeMap,ex_tr{i}.edgeMap,ex_tr{i}.edgeStruct);
 					pred = decoder(nodePot,edgePot,ex_tr{i}.edgeStruct);
 				else
@@ -152,7 +158,7 @@ for fold = 1:nFold
 			
 			errs = zeros(nCV,1);
 			for i = 1:nCV
-				if ismember(runAlgos(a),[1 2 3 5])
+				if a ~= 4
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex_cv{i}.Xnode,ex_cv{i}.Xedge,ex_cv{i}.nodeMap,ex_cv{i}.edgeMap,ex_cv{i}.edgeStruct);
 					pred = decoder(nodePot,edgePot,ex_cv{i}.edgeStruct);
 				else
@@ -168,7 +174,7 @@ for fold = 1:nFold
 			
 			errs = zeros(nTest,1);
 			for i = 1:nTest
-				if ismember(runAlgos(a),[1 2 3 5])
+				if a ~= 4
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex_te{i}.Xnode,ex_te{i}.Xedge,ex_te{i}.nodeMap,ex_te{i}.edgeMap,ex_te{i}.edgeStruct);
 					pred = decoder(nodePot,edgePot,ex_te{i}.edgeStruct);
 				else
@@ -201,6 +207,6 @@ end
 geErrs = teErrs - trErrs;
 
 % display results
-fprintf('Train\tVal.\tTest\tGen.\n');
-disp([trErrs cvErrs teErrs geErrs]);
+colStr = {'Train','Valid','Test','Gen Err'};
+disptable([trErrs cvErrs teErrs geErrs],colStr,algoNames,'%.5f');
 
