@@ -75,6 +75,8 @@ for fold = 1:nFold
 		break;
 	end
 	
+	fprintf('Starting fold %d of %d.\n', fold, nFold);
+	
 	% separate training/CV/testing
 	fidx = (fold-1) * nExFold;
 	tridx = fidx+1:fidx+nTrain;
@@ -200,13 +202,17 @@ for fold = 1:nFold
 		end
 
 	end
+	
+	fprintf('\n');
 
 end
 
 % generalization error
 geErrs = teErrs - trErrs;
 
-% display results
+% display results at end
 colStr = {'Train','Valid','Test','Gen Err'};
-disptable([trErrs cvErrs teErrs geErrs],colStr,algoNames,'%.5f');
+for fold = 1:nFold
+	disptable([trErrs(:,:,fold) cvErrs(:,:,fold) teErrs(:,:,fold) geErrs(:,:,fold)],colStr,algoNames,'%.5f');
+end
 
