@@ -2,8 +2,8 @@ function F = makeVCTSMmap(Xnode, Xedge, nodeMap, edgeMap)
 %
 % Creates the feature map for VCTSM learning.
 %
-% Xnode : nFeat x nNode matrix of observed node features.
-% Xedge : nFeat x nEdge matrix of observed edge features.
+% Xnode : 1 x nFeat x nNode matrix of observed node features.
+% Xedge : 1 x nFeat x nEdge matrix of observed edge features.
 % nodeMap : UGM parameter map for nodes
 % edgeMap : UGM parameter map for edges
 
@@ -21,7 +21,8 @@ for i = 1:nNode
 	idx = localIndex(i,1:nState,nState);
 	for f = 1:nNodeFeat
 		p = double(nodeMap(i,:,f));
-		F_loc(sub2ind(size(F_loc),p,idx)) = Xnode(1,f,i);
+		F_loc((idx-1)*nParamLoc+p) = Xnode(1,f,i);
+% 		F_loc(sub2ind(size(F_loc),p,idx)) = Xnode(1,f,i);
 	end
 end
 
@@ -31,7 +32,8 @@ for e = 1:nEdge
 	idx = pairwiseIndex(e,1:nState,1:nState,nNode,nState) - nStateLoc;
 	for f = 1:nEdgeFeat
 		p = double(edgeMap(:,:,e,f)) - nParamLoc;
-		F_rel(sub2ind(size(F_rel),p(:),idx)) = Xedge(1,f,e);
+		F_rel((idx-1)*nParamRel+p(:)) = Xedge(1,f,e);
+% 		F_rel(sub2ind(size(F_rel),p(:),idx)) = Xedge(1,f,e);
 	end
 end
 

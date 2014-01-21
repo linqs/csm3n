@@ -1,79 +1,84 @@
-function [stab_mu, stab_y] = measureStabilityRand2(w, X, k, F, S, nSamp, type, kappa)
+function [stabMax,stabAvg] = measureStabilityRand2(params, ex, discreteX, nSamp, decoder, y0)
 
-% w : weight vector.
-% X : d x n matrix, representing n nodes taking d values.
-% k : number of labels in the hidden states.
-% F : features
-% S : constraints structure.
+% params : cell array of model parameters, where
+%			params{1} = w; params{2} = kappa (optional)
+% ex : example structure
+% discreteX : whether X is discrete
 % nSamp : number of samples
-% type : type of inference to use: 0 for dual, 1 for CRF
-% kappa : modulus of convexity
+% decoder : decoder function
+% y0 : (optional) initial predictions
 %
-% stab_mu : 1-norm stability of marginals
-% stab_y : Hamming stability of decoding
+% stab : Hamming stability of decoding
 
 % dimensions
-[d,n] = size(X);
+[nNode,nState,nFeat] = size(ex.nodeMap);
+nEdge = ex.nEdge;
 
-% initialize stability to 0
-stab_mu = 0;
-stab_y = 0;
-			
-% run initial inference
-if type == 1
-	y_0 = crfInference(w, F, n*k, S);
-else
-	y_0 = dualInference(w, F, kappa, S);
+% params
+w = params{1};
+vc = 0;
+if length(params) == 2
+	kappa = params{2};
+	vc = 1;
 end
-pred_0 = predictMax(y_0(1:k*n), n, k);
+			
+if nargin < 6
+	% run initial inference
+	if vc == 1
+		mu = vctsmInfer(w,kappa,ex.Fx,ex.Aeq,ex.beq);
+		y0 = decodeMarginals(mu,nNode,nState);
+	else
+		[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
+		y0 = decoder(nodePot,edgePot,ex.edgeStruct);
+	end
+end
 
 % select random subset of (node,value) combinations
-offVals = find(~X);
-otherVals = randsample(offVals,nSamp);
-[I,J] = ind2sub(size(X), otherVals);
+if discreteX
+	otherVals = randsample(find(~ex.Xnode),nSamp);
+	[I,J] = ind2sub([nFeat nNode], otherVals);
+else
+	
+end
 
 % random perturbations
-for s=1:nSamp
+stabMax = 0;
+stabAvg = 0;
+Xnode = ex.Xnode;
+for samp=1:nSamp
 	
-	% get i,j (NOTE: swap I,J)
-	j = I(s);
-	i = J(s);
-	
-	% store original value
-	x_i = find(X(:,i));
-	
-	% perturb x_i in X
-	X(:,i) = zeros(d,1);
-	X(j,i) = 1;
-
-	% recompute local features
-	localF = localFeatures(X,k);
-	[localm,localn] = size(localF);
-	F(1:localm,1:localn) = localF;
+	% perturb X
+	n = J(samp);
+	x_old = Xnode(1,:,n);
+	if discreteX
+		s = I(samp);
+		x_new = zeros(size(x_old));
+		x_new(s) = 1;
+	else
+		
+	end
+	Xnode(1,:,n) = x_new;
+	Xedge = UGM_makeEdgeFeatures(Xnode,ex.edgeStruct.edgeEnds);
 
 	% run inference
-	if type == 1
-		y_1 = crfInference(w, F, n*k, S);
+	if vc == 1
+		Fx = makeVCTSMmap(Xnode,Xedge,ex.nodeMap,ex.edgeMap);
+		mu = vctsmInfer(w,kappa,Fx,ex.Aeq,ex.beq);
+		y1 = decodeMarginals(mu,nNode,nState);
 	else
-		y_1 = dualInference(w, F, kappa, S);
+		[nodePot,edgePot] = UGM_CRF_makePotentials(w,Xnode,Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
+		y1 = decoder(nodePot,edgePot,ex.edgeStruct);
 	end
 
-	% measure 1-norm of marginals and store max
-	delta = norm(y_0(1:k*n)-y_1(1:k*n), 1);
-	if stab_mu < delta
-		stab_mu = delta;
-	end
-	
 	% measure Hamming distance of decoding and store max
-	pred_1 = predictMax(y_1(1:k*n), n, k);
-	delta = nnz(pred_0 ~= pred_1);
-	if stab_y < delta
-		stab_y = delta;
+	delta = nnz(y0 ~= y1);
+	if stabMax < delta
+		stabMax = delta;
 	end
+	stabAvg = (1/samp) * delta + ((samp-1)/samp) * stabAvg;
 	
 	% replace perturbed value
-	X(j,i) = 0;
-	X(x_i,i) = 1;
+	Xnode(1,:,n) = x_old;
 	
 end
 

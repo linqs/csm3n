@@ -52,8 +52,8 @@ end
 algoNames = {'MLE', 'M3N', 'M3NLRR', 'VCTSM', 'CACC', 'CSM3N'};
 
 % stability vars
-% maxSamp = 10;
-% nStabSamp = min(maxSamp, nNode*(nState-1));
+maxSamp = 10;
+nStabSamp = min(maxSamp, nNode);
 
 
 %% MAIN LOOP
@@ -158,6 +158,7 @@ for fold = 1:nFold
 			
 			%% CROSS-VALIDATION
 			
+			% CV error
 			errs = zeros(nCV,1);
 			for i = 1:nCV
 				if a ~= 4
@@ -171,6 +172,9 @@ for fold = 1:nFold
 			end
 			cvErrs(a,c,fold) = sum(errs)/nCV;
 			fprintf('Avg CV err = %.4f\n', cvErrs(a,c,fold));
+			
+			% CV stability
+			
 			
 			%% TESTING
 			
@@ -213,6 +217,6 @@ geErrs = teErrs - trErrs;
 % display results at end
 colStr = {'Train','Valid','Test','Gen Err'};
 for fold = 1:nFold
-	disptable([trErrs(:,:,fold) cvErrs(:,:,fold) teErrs(:,:,fold) geErrs(:,:,fold)],colStr,algoNames,'%.5f');
+	disptable([trErrs(:,:,fold) cvErrs(:,:,fold) teErrs(:,:,fold) geErrs(:,:,fold)],colStr,algoNames(runAlgos),'%.5f');
 end
 
