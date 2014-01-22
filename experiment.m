@@ -35,39 +35,52 @@ end
 if isfield(expSetup,'runAlgos')
 	runAlgos = expSetup.runAlgos;
 else
-	runAlgos = 1:6;
+	runAlgos = 1:7;
 end
 if isfield(expSetup,'Cvec')
 	Cvec = expSetup.Cvec;
 else
-	Cvec = 10.^linspace(-2,6,9);
+	Cvec = [0; reshape([.5*10.^linspace(0,4,5);10.^linspace(0,4,5)],[],1)];
 end
 if isfield(expSetup,'decoder')
 	decoder = expSetup.decoder;
 else
 	decoder = @UGM_Decode_LBP;
 end
+if isfield(expSetup,'discreteX')
+	discreteX = expSetup.discreteX;
+else
+	discreteX = 1;
+end
+if isfield(expSetup,'nStabSamp')
+	nStabSamp = expSetup.nStabSamp;
+else
+	nStabSamp = 10;
+end
 
-% algorithm vars
-algoNames = {'MLE', 'M3N', 'M3NLRR', 'VCTSM', 'CACC', 'CSM3N'};
-
-% stability vars
-maxSamp = 10;
-nStabSamp = min(maxSamp, nNode);
+algoNames = {'MLE','M3N','M3NLRR','VCTSM','CACC','CSM3N','CSCACC'};
+nRunAlgos = length(runAlgos);
+nCvals = length(Cvec);
 
 
 %% MAIN LOOP
 
 % job metadata
-nJobs = length(runAlgos) * length(Cvec) * nFold;
+nJobs = nRunAlgos * nCvals * nFold;
 totalTimer = tic;
 count = 0;
 
 % storage
-params = cell(length(runAlgos), length(Cvec), nFold);
-trErrs = zeros(length(runAlgos), length(Cvec), nFold);
-cvErrs = zeros(length(runAlgos), length(Cvec), nFold);
-teErrs = zeros(length(runAlgos), length(Cvec), nFold);
+params = cell(nRunAlgos,nCvals,nFold);
+trErrs = zeros(nRunAlgos,nCvals,nFold);
+cvErrs = zeros(nRunAlgos,nCvals,nFold);
+teErrs = zeros(nRunAlgos,nCvals,nFold);
+cvStab = zeros(nRunAlgos,nCvals,nFold,2);
+
+% best parameters based on {CV,stab,test)
+bestParamCV = zeros(nRunAlgos,nFold);
+bestParamStab = zeros(nRunAlgos,nFold);
+bestParamTest = zeros(nRunAlgos,nFold);
 
 for fold = 1:nFold
 	
@@ -75,7 +88,7 @@ for fold = 1:nFold
 		break;
 	end
 	
-	fprintf('Starting fold %d of %d.\n', fold, nFold);
+	fprintf('Starting fold %d of %d.\n', fold,nFold);
 	
 	% separate training/CV/testing
 	fidx = (fold-1) * nExFold;
@@ -88,11 +101,13 @@ for fold = 1:nFold
 	ex_cv = examples(cvidx);
 	ex_te = examples(teidx);
 	
+	% init perturbations for stability measurement
+	perturbs = [];
 	
-	for c = 1:length(Cvec)
+	for c = 1:nCvals
 		C = Cvec(c);
 		
-		for a = 1:length(runAlgos)
+		for a = 1:nRunAlgos
 
 			%% TRAINING
 
@@ -110,11 +125,11 @@ for fold = 1:nFold
 					[w,fAvg] = trainM3N(ex_tr,decoder,C);
 					params{a,c,fold}.w = w;
 
-				% M3NLRR learning (M3N with separate local/relational regularization)
+				% M3NLRR learning (M3N with separate local/relational reg.)
 				case 3
 					fprintf('Training M3N with local/relational regularization ...\n');
 					maxLocParamIdx = max(ex_tr{1}.nodeMap(:));
-					relMultiplier = 100; % hack
+					relMultiplier = 10; % hack
 					Csplit = C * ones(nParam,1);
 					Csplit(maxLocParamIdx+1:end) = Csplit(maxLocParamIdx+1:end) * relMultiplier;
 					[w,fAvg] = trainM3N(ex_tr,decoder,Csplit);
@@ -133,10 +148,16 @@ for fold = 1:nFold
 					[w,fAvg] = trainCACC(ex_tr,decoder,C);
 					params{a,c,fold}.w = w;
 					
-				% CSM3N learning (stability regularization)
+				% CSM3N learning (M3N + stability reg.)
 				case 6
 					fprintf('Training CSM3N ...\n');
-					[w,fAvg] = trainCSM3N(ex_tr,ex_ul,decoder,0,.25);
+					[w,fAvg] = trainCSM3N(ex_tr,ex_ul,decoder,C,.25);
+					params{a,c,fold}.w = w;
+					
+				% CSCACC learning (CACC + stability reg.)
+				case 7
+					fprintf('Training CSCACC ...\n');
+					[w,fAvg] = trainCSCACC(ex_tr,ex_ul,decoder,C,.25);
 					params{a,c,fold}.w = w;
 					
 			end
@@ -144,52 +165,56 @@ for fold = 1:nFold
 			% training stats
 			errs = zeros(nTrain,1);
 			for i = 1:nTrain
+				ex = ex_tr{i};
 				if a ~= 4
-					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex_tr{i}.Xnode,ex_tr{i}.Xedge,ex_tr{i}.nodeMap,ex_tr{i}.edgeMap,ex_tr{i}.edgeStruct);
-					pred = decoder(nodePot,edgePot,ex_tr{i}.edgeStruct);
+					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
+					pred = decoder(nodePot,edgePot,ex.edgeStruct);
 				else
-					mu = vctsmInfer(w,kappa,ex_tr{i}.Fx,ex_tr{i}.Aeq,ex_tr{i}.beq);
-					pred = decodeMarginals(mu, ex_tr{i}.nNode, ex_tr{i}.nState);
+					mu = vctsmInfer(w,kappa,ex.Fx,ex.Aeq,ex.beq);
+					pred = decodeMarginals(mu,ex.nNode,ex.nState);
 				end
-				errs(i) = nnz(ex_tr{i}.Y ~= pred) / ex_tr{i}.nNode;
+				errs(i) = nnz(ex.Y ~= pred) / ex.nNode;
 			end
 			trErrs(a,c,fold) = sum(errs)/nTrain;
 			fprintf('Avg train err = %.4f\n', trErrs(a,c,fold));
 			
 			%% CROSS-VALIDATION
 			
-			% CV error
 			errs = zeros(nCV,1);
+			stab = zeros(nCV,2);
 			for i = 1:nCV
+				ex = ex_cv{i};
 				if a ~= 4
-					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex_cv{i}.Xnode,ex_cv{i}.Xedge,ex_cv{i}.nodeMap,ex_cv{i}.edgeMap,ex_cv{i}.edgeStruct);
-					pred = decoder(nodePot,edgePot,ex_cv{i}.edgeStruct);
+					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
+					pred = decoder(nodePot,edgePot,ex.edgeStruct);
+					[stab(i,1),stab(i,2),perturbs] = measureStabilityRand({w},ex,discreteX,nStabSamp,decoder,pred,perturbs);
 				else
-					mu = vctsmInfer(w,kappa,ex_cv{i}.Fx,ex_cv{i}.Aeq,ex_cv{i}.beq);
-					pred = decodeMarginals(mu, ex_cv{i}.nNode, ex_cv{i}.nState);
+					mu = vctsmInfer(w,kappa,ex.Fx,ex.Aeq,ex.beq);
+					pred = decodeMarginals(mu,ex.nNode,ex.nState);
+					[stab(i,1),stab(i,2),perturbs] = measureStabilityRand({w,kappa},ex,discreteX,nStabSamp,[],pred,perturbs);
 				end
-				errs(i) = nnz(ex_cv{i}.Y ~= pred()) / ex_cv{i}.nNode;
+				errs(i) = nnz(ex.Y ~= pred()) / ex.nNode;
 			end
-			cvErrs(a,c,fold) = sum(errs)/nCV;
+			cvErrs(a,c,fold) = mean(errs);
+			cvStab(a,c,fold,:) = [max(stab(:,1)) mean(stab(:,2))];
 			fprintf('Avg CV err = %.4f\n', cvErrs(a,c,fold));
-			
-			% CV stability
-			
-			
+			fprintf('CV stab: max = %d, avg = %.4f\n', cvStab(a,c,fold,1),cvStab(a,c,fold,2));
+
 			%% TESTING
 			
 			errs = zeros(nTest,1);
 			for i = 1:nTest
+				ex = ex_te{i};
 				if a ~= 4
-					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex_te{i}.Xnode,ex_te{i}.Xedge,ex_te{i}.nodeMap,ex_te{i}.edgeMap,ex_te{i}.edgeStruct);
-					pred = decoder(nodePot,edgePot,ex_te{i}.edgeStruct);
+					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
+					pred = decoder(nodePot,edgePot,ex.edgeStruct);
 				else
-					mu = vctsmInfer(w,kappa,ex_te{i}.Fx,ex_te{i}.Aeq,ex_te{i}.beq);
-					pred = decodeMarginals(mu, ex_te{i}.nNode, ex_te{i}.nState);
+					mu = vctsmInfer(w,kappa,ex.Fx,ex.Aeq,ex.beq);
+					pred = decodeMarginals(mu,ex.nNode,ex.nState);
 				end
-				errs(i) = nnz(ex_te{i}.Y ~= pred()) / ex_te{i}.nNode;
+				errs(i) = nnz(ex.Y ~= pred()) / ex.nNode;
 				% plot prediction
-				%subplot(length(runAlgos),1,a);
+				%subplot(nRunAlgos,1,a);
 				%imagesc(reshape(pred,32,32));
 				%title(algoNames(a));
 			end
@@ -207,6 +232,13 @@ for fold = 1:nFold
 
 	end
 	
+	% choose best parameters
+	for a = 1:nRunAlgos
+		bestParamCV(a,fold) = find(cvErrs(a,:,fold)==min(cvErrs(a,:,fold)),1,'last');
+		bestParamStab(a,fold) = find(cvStab(a,:,fold,1)==min(cvStab(a,:,fold,1)),1,'last');
+		bestParamTest(a,fold) = find(teErrs(a,:,fold)==min(teErrs(a,:,fold)),1,'last');
+	end
+	
 	fprintf('\n');
 
 end
@@ -215,8 +247,12 @@ end
 geErrs = teErrs - trErrs;
 
 % display results at end
-colStr = {'Train','Valid','Test','Gen Err'};
+colStr = {'Train','Valid','Test','GenErr','MaxStab','AvgStab','C'};
+bestParam = bestParamCV;
 for fold = 1:nFold
-	disptable([trErrs(:,:,fold) cvErrs(:,:,fold) teErrs(:,:,fold) geErrs(:,:,fold)],colStr,algoNames(runAlgos),'%.5f');
+	idx = sub2ind([nRunAlgos nCvals nFold],(1:nRunAlgos)',bestParam(:,fold),fold*ones(nRunAlgos,1));
+	disptable( ...
+		[trErrs(idx) cvErrs(idx) teErrs(idx) geErrs(idx) cvStab(idx) cvStab(idx+numel(teErrs)) Cvec(bestParam(:,fold))'], ...
+		colStr,algoNames(runAlgos),'%.5f');
 end
 

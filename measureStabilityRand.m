@@ -1,4 +1,4 @@
-function [stabMax,stabAvg] = measureStabilityRand2(params, ex, discreteX, nSamp, decoder, y0)
+function [stabMax,stabAvg,perturbs] = measureStabilityRand(params, ex, discreteX, nSamp, decoder, y0, perturbs)
 
 % params : cell array of model parameters, where
 %			params{1} = w; params{2} = kappa (optional)
@@ -21,7 +21,8 @@ if length(params) == 2
 	kappa = params{2};
 	vc = 1;
 end
-			
+
+% unperturbed y
 if nargin < 6
 	% run initial inference
 	if vc == 1
@@ -33,30 +34,32 @@ if nargin < 6
 	end
 end
 
-% select random subset of (node,value) combinations
-if discreteX
-	otherVals = randsample(find(~ex.Xnode),nSamp);
-	[I,J] = ind2sub([nFeat nNode], otherVals);
+% perturbations
+if nargin < 7 || isempty(perturbs)
+	% select random subset of (node,value) combinations
+	if discreteX
+		otherVals = randsample(find(~ex.Xnode),nSamp);
+		[I,J] = ind2sub([nFeat nNode], otherVals);
+		perturbs = zeros(nFeat+1,nSamp);
+		perturbs(1,:) = J;
+		perturbs(sub2ind(size(perturbs),I+1,(1:nSamp)')) = 1;
+	else
+
+	end
 else
-	
+	nSamp = size(perturbs,2);
 end
 
 % random perturbations
 stabMax = 0;
 stabAvg = 0;
 Xnode = ex.Xnode;
-for samp=1:nSamp
+for samp = 1:nSamp
 	
 	% perturb X
-	n = J(samp);
+	n = perturbs(1,samp);
 	x_old = Xnode(1,:,n);
-	if discreteX
-		s = I(samp);
-		x_new = zeros(size(x_old));
-		x_new(s) = 1;
-	else
-		
-	end
+	x_new = perturbs(2:end,samp);
 	Xnode(1,:,n) = x_new;
 	Xedge = UGM_makeEdgeFeatures(Xnode,ex.edgeStruct.edgeEnds);
 
