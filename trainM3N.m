@@ -34,7 +34,7 @@ if nargin < 5
 end
 
 % SGD
-objFun = @(x,ex) l2M3N(x,ex,decodeFunc,C); % TODO: get avg loss from l2M3N
+objFun = @(x,ex,t) l2M3N(x,ex,decodeFunc,C); % TODO: get avg loss from l2M3N
 [w,fAvg] = sgd(examples,objFun,w,options);
 
 
@@ -45,7 +45,7 @@ function [f, g] = l2M3N(w, ex, decodeFunc, C)
 	[loss,g] = UGM_M3N_Obj(w,ex.Xnode,ex.Xedge,ex.Y',ex.nodeMap,ex.edgeMap,ex.edgeStruct,decodeFunc);
 
 	% average loss
-% 	lossAvg = (1/t) * loss + ((t-1)/t) * lossAvg;
+	%lossAvg = (1/t) * loss + ((t-1)/t) * lossAvg;
 	
 	% L2 regularization
 	f = loss + 0.5 * (C.*w)' * w;

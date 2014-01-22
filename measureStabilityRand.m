@@ -38,7 +38,7 @@ end
 if nargin < 7 || isempty(perturbs)
 	% select random subset of (node,value) combinations
 	if discreteX
-		otherVals = randsample(find(~ex.Xnode),nSamp);
+		otherVals = randsample(find(~(ex.Xnode)),nSamp);
 		[I,J] = ind2sub([nFeat nNode], otherVals);
 		perturbs = zeros(nFeat+1,nSamp);
 		perturbs(1,:) = J;

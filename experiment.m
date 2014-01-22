@@ -32,10 +32,11 @@ else
 	nCV = 1;
 	nTest = nExFold - 3;
 end
+algoNames = {'MLE','M3N','M3NLRR','VCTSM','CACC','CSM3N','CSCACC','DLM'};
 if isfield(expSetup,'runAlgos')
 	runAlgos = expSetup.runAlgos;
 else
-	runAlgos = 1:7;
+	runAlgos = 1:length(algoNames);
 end
 if isfield(expSetup,'Cvec')
 	Cvec = expSetup.Cvec;
@@ -58,7 +59,6 @@ else
 	nStabSamp = 10;
 end
 
-algoNames = {'MLE','M3N','M3NLRR','VCTSM','CACC','CSM3N','CSCACC'};
 nRunAlgos = length(runAlgos);
 nCvals = length(Cvec);
 
@@ -159,6 +159,12 @@ for fold = 1:nFold
 					fprintf('Training CSCACC ...\n');
 					[w,fAvg] = trainCSCACC(ex_tr,ex_ul,decoder,C,.25);
 					params{a,c,fold}.w = w;
+				
+				% DLM learning
+				case 8
+					fprintf('Training DLM ...\n');
+					[w,fAvg] = trainDLM(ex_tr,decoder,C);
+					params{a,c,fold}.w = w;
 					
 			end
 			
@@ -234,9 +240,9 @@ for fold = 1:nFold
 	
 	% choose best parameters
 	for a = 1:nRunAlgos
-		bestParamCV(a,fold) = find(cvErrs(a,:,fold)==min(cvErrs(a,:,fold)),1,'last');
-		bestParamStab(a,fold) = find(cvStab(a,:,fold,1)==min(cvStab(a,:,fold,1)),1,'last');
-		bestParamTest(a,fold) = find(teErrs(a,:,fold)==min(teErrs(a,:,fold)),1,'last');
+		bestParamCV(a,fold) = find(cvErrs(a,:,fold)==min(cvErrs(a,:,fold)),1,'first');
+		bestParamStab(a,fold) = find(cvStab(a,:,fold,1)==min(cvStab(a,:,fold,1)),1,'first');
+		bestParamTest(a,fold) = find(teErrs(a,:,fold)==min(teErrs(a,:,fold)),1,'first');
 	end
 	
 	fprintf('\n');
@@ -249,10 +255,16 @@ geErrs = teErrs - trErrs;
 % display results at end
 colStr = {'Train','Valid','Test','GenErr','MaxStab','AvgStab','C'};
 bestParam = bestParamCV;
+bestResults = zeros(nRunAlgos,length(colStr),nFold);
 for fold = 1:nFold
 	idx = sub2ind([nRunAlgos nCvals nFold],(1:nRunAlgos)',bestParam(:,fold),fold*ones(nRunAlgos,1));
-	disptable( ...
-		[trErrs(idx) cvErrs(idx) teErrs(idx) geErrs(idx) cvStab(idx) cvStab(idx+numel(teErrs)) Cvec(bestParam(:,fold))'], ...
-		colStr,algoNames(runAlgos),'%.5f');
+	bestResults(:,:,fold) = [trErrs(idx) cvErrs(idx) teErrs(idx) geErrs(idx) cvStab(idx) cvStab(idx+numel(teErrs)) Cvec(bestParam(:,fold))];
+	disptable(bestResults(:,:,fold),colStr,algoNames(runAlgos),'%.5f');
 end
+
+% compute mean/stdev across folds
+avgResults = mean(bestResults,3);
+stdResults = std(bestResults,[],3);
+
+
 

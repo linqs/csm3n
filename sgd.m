@@ -4,9 +4,10 @@ function [x, fAvg, fVec] = sgd(data, objFun, x0, options)
 % 
 % data : n x 1 cell array of data points
 % objFun : objective function of the form:
-%			 function [f, g] = objFun(x, ex, varargin), where
+%			 function [f, g] = objFun(x, ex, t), where
 %			   x : current position
 %			   ex : random example
+%			   t : current iteration
 %			   f : function value
 %			   g : gradient w.r.t. x
 % x0 : initial position
@@ -51,7 +52,7 @@ for t = 1:options.maxIter
 	% Compute objective for random data point
 	i = ceil(rand() * n);
 	ex = data{i};
-	[f, g] = objFun(x, ex); % TODO: support variable output functions
+	[f, g] = objFun(x, ex, t); % TODO: support variable output functions
 	
 	% Update estimate of function value
 	fAvg = (1/t) * f + ((t-1)/t) * fAvg;

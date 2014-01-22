@@ -43,7 +43,7 @@ if nargin < 8
 end
 
 % SGD
-objFun = @(x,ex) cscaccSGDObj(x,ex,examples_u,decodeFunc,C_w,C_s,optPGD);
+objFun = @(x,ex,t) cscaccSGDObj(x,ex,examples_u,decodeFunc,C_w,C_s,optPGD);
 [w,fAvg] = sgd(examples_l,objFun,w,optSGD);
 
 

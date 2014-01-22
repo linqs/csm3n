@@ -38,6 +38,6 @@ if nargin < 6
 end
 
 % SGD
-objFun = @(x,ex) caccObj(x,{ex},decodeFunc,C,optPGD);
+objFun = @(x,ex,t) caccObj(x,{ex},decodeFunc,C,optPGD);
 [w,fAvg] = sgd(examples,objFun,w,optSGD);
 		

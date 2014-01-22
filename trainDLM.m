@@ -1,9 +1,9 @@
-function [w, nll] = trainMLE(examples, inferFunc, C, options, w)
+function [w, fAvg] = trainDLM(examples, decodeFunc, C, options, w)
 %
-% Trains an MRF using MLE.
+% Trains an MRF using direct loss minimization.
 %
 % examples : cell array of examples
-% inferFunc : inference function (0: use pseudolikelihood)
+% decodeFunc : decoder function
 % C : regularization constant or nParam x 1 vector (optional: def=nNode of first example)
 % options : optional struct of optimization options for SGD:
 % 			maxIter : iterations of SGD (def: 10*length(examples))
@@ -12,8 +12,7 @@ function [w, nll] = trainMLE(examples, inferFunc, C, options, w)
 % w : init weights (optional: def=zeros)
 
 % parse input
-assert(nargin >= 2, 'USAGE: trainM3N(examples,inferFunc)')
-usePL = ~isa(inferFunc,'function_handle');
+assert(nargin >= 2, 'USAGE: trainM3N(examples,decodeFunc)')
 if nargin < 3
 	C = examples{1}.nNode;
 end
@@ -24,7 +23,7 @@ if ~isfield(options,'maxIter')
 	options.maxIter = 10 * length(examples);
 end
 if ~isfield(options,'stepSize')
-	options.stepSize = 1e-4;
+	options.stepSize = 1;
 end
 if ~isfield(options,'verbose')
 	options.verbose = 0;
@@ -34,24 +33,7 @@ if nargin < 5
 	w = zeros(nParam,1);
 end
 
-% L2-regularized NLL objective
-if length(C) == 1
-	C = C * ones(size(w));
-end
-if usePL
-	objFun = @(w,ex,t) penalizedL2(w,@UGM_CRFcell_PseudoNLL,C,{ex});
-else
-	objFun = @(w,ex,t) penalizedL2(w,@UGM_CRFcell_NLL,C,{ex},inferFunc);
-end
-
 % SGD
+objFun = @(x,ex,t) dlmObj(x,ex,t,decodeFunc,C);
 [w,fAvg] = sgd(examples,objFun,w,options);
 
-% NLL of learned model
-if usePL
-	nll = UGM_CRFcell_PseudoNLL(w,examples);
-else
-	nll = UGM_CRFcell_NLL(w,examples,inferFunc);
-end
-
-		

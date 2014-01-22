@@ -53,7 +53,7 @@ end
 x0 = [w ; kappa ; zeros(nCon,1)];
 
 % SGD
-objFun = @(x,ex) vctsmObj(x,{ex},C);
+objFun = @(x,ex,t) vctsmObj(x,{ex},C);
 [x,fAvg] = sgd(examples,objFun,x0,options);
 
 % parse optimization output
