@@ -48,6 +48,11 @@ if isfield(expSetup,'decoder')
 else
 	decoder = @UGM_Decode_LBP;
 end
+if isfield(expSetup,'edgeFeatFunc')
+	edgeFeatFunc = expSetup.edgeFeatFunc;
+else
+	edgeFeatFunc = @UGM_makeEdgeFeatures;
+end
 if isfield(expSetup,'discreteX')
 	discreteX = expSetup.discreteX;
 else
@@ -193,18 +198,26 @@ for fold = 1:nFold
 				if a ~= 4
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
 					pred = decoder(nodePot,edgePot,ex.edgeStruct);
-					[stab(i,1),stab(i,2),perturbs] = measureStabilityRand({w},ex,discreteX,nStabSamp,decoder,pred,perturbs);
+					if nStabSamp > 0
+						[stab(i,1),stab(i,2),perturbs] = measureStabilityRand({w},ex,discreteX,nStabSamp,decoder,edgeFeatFunc,pred,perturbs);
+					end
 				else
 					mu = vctsmInfer(w,kappa,ex.Fx,ex.Aeq,ex.beq);
 					pred = decodeMarginals(mu,ex.nNode,ex.nState);
-					[stab(i,1),stab(i,2),perturbs] = measureStabilityRand({w,kappa},ex,discreteX,nStabSamp,[],pred,perturbs);
+					if nStabSamp > 0
+						[stab(i,1),stab(i,2),perturbs] = measureStabilityRand({w,kappa},ex,discreteX,nStabSamp,[],edgeFeatFunc,pred,perturbs);
+					end
 				end
 				errs(i) = nnz(ex.Y ~= pred()) / ex.nNode;
 			end
 			cvErrs(a,c,fold) = mean(errs);
-			cvStab(a,c,fold,:) = [max(stab(:,1)) mean(stab(:,2))];
 			fprintf('Avg CV err = %.4f\n', cvErrs(a,c,fold));
-			fprintf('CV stab: max = %d, avg = %.4f\n', cvStab(a,c,fold,1),cvStab(a,c,fold,2));
+			if nStabSamp > 0
+				cvStab(a,c,fold,:) = [max(stab(:,1)) mean(stab(:,2))];
+				fprintf('CV stab: max = %d, avg = %.4f\n', cvStab(a,c,fold,1),cvStab(a,c,fold,2));
+			else
+				cvStab(a,c,fold,:) = [0 0];
+			end
 
 			%% TESTING
 			

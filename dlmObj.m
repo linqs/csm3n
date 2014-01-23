@@ -5,7 +5,8 @@ function [f, sg] = dlmObj(w, ex, t, decodeFunc, C, varargin)
 eps = 1 / sqrt(t);
 nNode = ex.nNode;
 nEdge = ex.nEdge;
-nFeat = ex.nFeat;
+nNodeFeat = ex.nNodeFeat;
+nEdgeFeat = ex.nEdgeFeat;
 nState = ex.nState;
 Ynode = overcompleteRep(ex.Y,nState,0);
 Xnode = ex.Xnode;
@@ -42,7 +43,7 @@ yhat_oc = overcompletePairwise(yhat,edgeStruct);
 ydir_oc = overcompletePairwise(ydir,edgeStruct);
 
 % Nodes
-widx = reshape(nodeMap(1,:,:),nState,nFeat);
+widx = reshape(nodeMap(1,:,:),nState,nNodeFeat);
 yidx = localIndex(1,1:nState,nState);
 Wnode = w(widx);
 for i = 1:nNode
@@ -54,7 +55,7 @@ for i = 1:nNode
 end
 
 % Edges
-widx = reshape(edgeMap(:,:,1,:),nState^2,2*nFeat);
+widx = reshape(edgeMap(:,:,1,:),nState^2,nEdgeFeat);
 yidx = pairwiseIndex(1,1:nState,1:nState,nNode,nState);
 Wedge = w(widx);
 for e = 1:nEdge

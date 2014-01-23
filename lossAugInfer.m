@@ -2,8 +2,8 @@ function y = lossAugInfer(w, Xnode, Xedge, Ynode, nodeMap, edgeMap, edgeStruct, 
 %
 % Performs loss-augmented inference, using the supplied decoder function.
 % 
-% Xnode : nFeat x nNode, X node values
-% Xedge : 2*nFeat x nEdge, X edge features
+% Xnode : nNodeFeat x nNode, X node values
+% Xedge : nEdgeFeat x nEdge, X edge features
 % Ynode : nState x nNode, Y node values
 % nodeMap : nNode x nState x nFeat, maps nodes to parameters
 % edgeMap : nState x nState x nEdge x 2*nFeat, maps edges to parameters

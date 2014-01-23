@@ -1,4 +1,4 @@
-function [stabMax,stabAvg,perturbs] = measureStabilityRand(params, ex, discreteX, nSamp, decoder, y0, perturbs)
+function [stabMax,stabAvg,perturbs] = measureStabilityRand(params, ex, discreteX, nSamp, decoder, edgeFeatFunc, y0, perturbs)
 
 % params : cell array of model parameters, where
 %			params{1} = w; params{2} = kappa (optional)
@@ -6,7 +6,10 @@ function [stabMax,stabAvg,perturbs] = measureStabilityRand(params, ex, discreteX
 % discreteX : whether X is discrete
 % nSamp : number of samples
 % decoder : decoder function
+% edgeFeatFunc : (optional) function to generate edge features (def: UGM_makeEdgeFeatures)
 % y0 : (optional) initial predictions
+% perturbs: (optional) nFeat+1 x nSamp matrix, where first element in each
+%				column is index of perturbed node.
 %
 % stab : Hamming stability of decoding
 
@@ -22,8 +25,13 @@ if length(params) == 2
 	vc = 1;
 end
 
-% unperturbed y
+% edge feature function
 if nargin < 6
+	edgeFeatFunc = @UGM_makeEdgeFeatures;
+end
+
+% unperturbed y
+if nargin < 7
 	% run initial inference
 	if vc == 1
 		mu = vctsmInfer(w,kappa,ex.Fx,ex.Aeq,ex.beq);
@@ -35,7 +43,7 @@ if nargin < 6
 end
 
 % perturbations
-if nargin < 7 || isempty(perturbs)
+if nargin < 8 || isempty(perturbs)
 	% select random subset of (node,value) combinations
 	if discreteX
 		otherVals = randsample(find(~(ex.Xnode)),nSamp);
@@ -61,7 +69,7 @@ for samp = 1:nSamp
 	x_old = Xnode(1,:,n);
 	x_new = perturbs(2:end,samp);
 	Xnode(1,:,n) = x_new;
-	Xedge = UGM_makeEdgeFeatures(Xnode,ex.edgeStruct.edgeEnds);
+	Xedge = edgeFeatFunc(Xnode,ex.edgeStruct.edgeEnds);
 
 	% run inference
 	if vc == 1

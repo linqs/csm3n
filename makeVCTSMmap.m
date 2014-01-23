@@ -2,8 +2,8 @@ function F = makeVCTSMmap(Xnode, Xedge, nodeMap, edgeMap)
 %
 % Creates the feature map for VCTSM learning.
 %
-% Xnode : 1 x nFeat x nNode matrix of observed node features.
-% Xedge : 1 x nFeat x nEdge matrix of observed edge features.
+% Xnode : 1 x nNodeFeat x nNode matrix of observed node features.
+% Xedge : 1 x nEdgeFeat x nEdge matrix of observed edge features.
 % nodeMap : UGM parameter map for nodes
 % edgeMap : UGM parameter map for edges
 
