@@ -4,11 +4,11 @@
 clear
 
 % dataset 1
-% load file1.mat
-% actions = 1:5;
+load file1.mat
+actions = 1:5;
 % dataset 2
-load file2.mat
-actions = [1 2 3 5 6 7];
+% load file2.mat
+% actions = [1 2 3 5 6 7];
 
 % constants
 maxFrames = 1000;
