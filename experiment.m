@@ -73,6 +73,11 @@ if isfield(expSetup,'nStabSamp')
 else
 	nStabSamp = 10;
 end
+if isfield(expSetup,'save2file')
+	save2file = expSetup.save2file;
+else
+	save2file = [];
+end
 
 nRunAlgos = length(runAlgos);
 nCvals1 = length(Cvec);
@@ -277,7 +282,7 @@ for fold = 1:nFold
 				curTime = toc(totalTimer);
 				fprintf('Finished %d of %d; elapsed: %.2f min; ETA: %.2f min\n', ...
 					count, nJobs, curTime/60, (nJobs-count)*(curTime/count)/60);
-
+				
 			end
 
 		end
@@ -291,6 +296,11 @@ for fold = 1:nFold
 		bestParamTest(a,fold) = find(teErrs(a,fold,:)==min(teErrs(a,fold,:)),1,'first');
 	end
 	
+	% save results
+	if ~isempty(save2file)
+		save save2file;
+	end
+
 	fprintf('\n');
 
 end
@@ -299,12 +309,22 @@ end
 geErrs = teErrs - trErrs;
 
 % display results at end
-colStr = {'Train','Valid','Test','GenErr','MaxStab','AvgStab'};
+colStr = {'Train','Valid','Test','GenErr','MaxStab','AvgStab','C_w','C_r/C_s'};
 bestParam = bestParamCVerr;
 bestResults = zeros(nRunAlgos,length(colStr),nFold);
 for fold = 1:nFold
 	idx = sub2ind([nRunAlgos nFold nCvals1 nCvals2],(1:nRunAlgos)',fold*ones(nRunAlgos,1),bestParam(:,fold));
-	bestResults(:,:,fold) = [trErrs(idx) cvErrs(idx) teErrs(idx) geErrs(idx) cvStabMax(idx) cvStabAvg(idx)];
+	[c1idx,c2idx] = ind2sub([nCvals1,nCvals2], bestParam(:,fold));
+	bestC1 = Cvec(c1idx)';
+	bestC2 = zeros(nRunAlgos,1);
+	for a = 1:nRunAlgos
+		if runAlgos(a) == 3
+			bestC2(a) = CvecRel(c2idx(a));
+		elseif runAlgos(a) == 6 || runAlgos(a) == 7
+			bestC2(a) = CvecStab(c2idx(a));
+		end
+	end
+	bestResults(:,:,fold) = [trErrs(idx) cvErrs(idx) teErrs(idx) geErrs(idx) cvStabMax(idx) cvStabAvg(idx) bestC1 bestC2];
 	disptable(bestResults(:,:,fold),colStr,algoNames(runAlgos),'%.5f');
 end
 
