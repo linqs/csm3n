@@ -64,7 +64,7 @@ if dispPlot
 end
 
 % adjacency graph
-G = latticeAdjMatrix(nRows,nCols);
+G = latticeAdjMatrix4(nRows,nCols);
 
 % convert to cell array of examples
 examples = cell(nEx,1);
@@ -73,7 +73,7 @@ edgeStruct.edgeDist = makeEdgeDistribution(edgeStruct);
 [Aeq,beq] = pairwiseConstraints(edgeStruct);
 for i = 1:nEx
 	Xnode = X(i,:,:);
-	Xedge = UGM_makeEdgeFeatures(Xnode,edgeStruct.edgeEnds);
+	Xedge = makeEdgeFeatures(Xnode,edgeStruct.edgeEnds);
 	examples{i} = makeExample(Xnode,Xedge,Y(:,i),nStateY,edgeStruct,Aeq,beq);
 end
 

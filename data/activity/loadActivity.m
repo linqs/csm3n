@@ -90,7 +90,7 @@ for s = 1:length(anno)
 		edgeStruct.edgeDist = makeEdgeDistribution(edgeStruct);
 	end
 	[Aeq,beq] = pairwiseConstraints(edgeStruct);
-	Xedge = makeEdgeFeatures(Xnode,nodeId,edgeStruct.edgeEnds);
+	Xedge = makeEdgeFeatures(Xnode,edgeStruct.edgeEnds,nodeId);
 	examples{s} = makeExample(Xnode,Xedge,y',nState,edgeStruct,Aeq,beq);
 	
 end

@@ -17,7 +17,7 @@ if nargin < 5 || ~isstruct(options)
 	options = struct();
 end
 if ~isfield(options,'edgeFeatFunc')
-	options.edgeFeatFunc = @UGM_makeEdgeFeatures;
+	options.edgeFeatFunc = makeEdgeFeatures;
 end
 if ~isfield(options,'maxIter')
 	options.maxIter = 10;

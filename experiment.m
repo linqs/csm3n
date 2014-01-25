@@ -51,7 +51,7 @@ end
 if isfield(expSetup,'edgeFeatFunc')
 	edgeFeatFunc = expSetup.edgeFeatFunc;
 else
-	edgeFeatFunc = @UGM_makeEdgeFeatures;
+	edgeFeatFunc = makeEdgeFeatures;
 end
 if isfield(expSetup,'discreteX')
 	discreteX = expSetup.discreteX;

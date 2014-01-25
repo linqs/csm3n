@@ -1,10 +1,10 @@
-function Xedge = makeEdgeFeatures(Xnode,nodeId,edgeEnds)
+function Xedge = makeEdgeFeatures(Xnode,edgeEnds,nodeId)
 %
 % Computes the edge features for the Activity Detection dataset.
 %
 % Xnode : 1 x nFeat x nNode matrix of node features
-% nodeId : nNode x 1 vector of node IDs
 % edgeEnds : nEdge x 2 matrix of edge ends
+% nodeId : nNode x 1 vector of node IDs
 
 nEdge = size(edgeEnds,1);
 nFeat = size(Xnode,2);
