@@ -1,20 +1,24 @@
-function [examples,foldIdx] = loadPoliBlog()
+function [examples,foldIdx] = loadPoliBlog(makeEdgeDist)
 %
 % Loads and formats the Political Blog data
 %
 
+if nargin < 1
+	makeEdgeDist = 0;
+end
+
 % Load 4 examples
 fprintf('Reading Feb1 ... ');
-examples{1} = readExample('Feb_1');
+examples{1} = readExample('Feb_1',makeEdgeDist);
 fprintf('done.\n');
 fprintf('Reading Feb2 ... ');
-examples{2} = readExample('Feb_2');
+examples{2} = readExample('Feb_2',makeEdgeDist);
 fprintf('done.\n');
 fprintf('Reading May1 ... ');
-examples{3} = readExample('May_1');
+examples{3} = readExample('May_1',makeEdgeDist);
 fprintf('done.\n');
 fprintf('Reading May2 ... ');
-examples{4} = readExample('May_2');
+examples{4} = readExample('May_2',makeEdgeDist);
 fprintf('done.\n');
 
 % Generate all permutations for 24 folds of size 4

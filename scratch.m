@@ -56,12 +56,23 @@ ex_u = examples(6:10);
 [w,fAvg] = trainCSM3N(ex_l,ex_u,@UGM_Decode_LBP,100)
 
 
-%% Run experiment
+%% Run noisyX experiment
 clear;
 examples = noisyX(16,1,0,1,0);
-expSetup = struct('nFold',4,'foldDist',[1 1 1 1],...
-				  'runAlgos',1:7,'Cvec',[0 100 200 500 1000],...
-				  'decoder',@UGM_Decode_LBP,'nStabSamp',20);
+expSetup = struct('nFold',4,'foldDist',[1 1 1 1],'runAlgos',1:7,...
+				  'Cvec',[0 100 200 500 1000],'nStabSamp',10,...
+				  'decodeFunc',@UGM_Decode_LBP,'inferFunc',@UGM_Infer_LBP);
+experiment;
+
+
+%% Run PoliBlog experiment
+clear;
+cd data/poliblog/Processed;
+[examples,foldIdx] = loadPoliBlog();
+cd ../../..;
+expSetup = struct('foldIdx',foldIdx,'runAlgos',1:2,...
+				  'Cvec',[0 100 1000],'nStabSamp',10,...
+				  'decodeFunc',@UGM_Decode_LBP,'inferFunc',@UGM_Infer_LBP);
 experiment;
 
 

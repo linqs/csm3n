@@ -62,10 +62,15 @@ end
 nCvals1 = length(Cvec);
 nCvals2 = max(length(CvecRel),length(CvecStab));
 
-if isfield(expSetup,'decoder')
-	decoder = expSetup.decoder;
+if isfield(expSetup,'decodeFunc')
+	decodeFunc = expSetup.decodeFunc;
 else
-	decoder = @UGM_Decode_LBP;
+	decodeFunc = @UGM_Decode_LBP;
+end
+if isfield(expSetup,'inferFunc')
+	inferFunc = expSetup.inferFunc;
+else
+	inferFunc = @UGM_Infer_LBP;
 end
 if isfield(expSetup,'edgeFeatFunc')
 	edgeFeatFunc = expSetup.edgeFeatFunc;
@@ -107,6 +112,7 @@ params = cell(nRunAlgos,nFold,nCvals1,nCvals2);
 trErrs = inf(nRunAlgos,nFold,nCvals1,nCvals2);
 cvErrs = inf(nRunAlgos,nFold,nCvals1,nCvals2);
 teErrs = inf(nRunAlgos,nFold,nCvals1,nCvals2);
+perturbs = cell(nFold,1);
 cvStabMax = inf(nRunAlgos,nFold,nCvals1,nCvals2,2);
 cvStabAvg = inf(nRunAlgos,nFold,nCvals1,nCvals2,2);
 
@@ -134,7 +140,7 @@ for fold = 1:nFold
 	ex_te = examples(teidx);
 	
 	% init perturbations for stability measurement
-	perturbs = [];
+	pert = [];
 	
 	for c1 = 1:nCvals1
 		C_w = Cvec(c1);
@@ -167,13 +173,13 @@ for fold = 1:nFold
 					% M(P)LE learning
 					case 1
 						fprintf('Training MLE ...\n');
-						[w,nll] = trainMLE(ex_tr,@UGM_Infer_MeanField,C_w);
+						[w,nll] = trainMLE(ex_tr,inferFunc,C_w);
 						params{a,fold,c1,c2}.w = w;
 
 					% M3N learning
 					case 2
 						fprintf('Training M3N ...\n');
-						[w,fAvg] = trainM3N(ex_tr,decoder,C_w);
+						[w,fAvg] = trainM3N(ex_tr,decodeFunc,C_w);
 						params{a,fold,c1,c2}.w = w;
 
 					% M3NLRR learning (M3N with separate local/relational reg.)
@@ -181,7 +187,7 @@ for fold = 1:nFold
 						fprintf('Training M3N with local/relational regularization ...\n');
 						maxLocParamIdx = max(ex_tr{1}.nodeMap(:));
 						Csplit = [C_w * ones(maxLocParamIdx,1) ; C_r * ones(nParam-maxLocParamIdx,1)];
-						[w,fAvg] = trainM3N(ex_tr,decoder,Csplit);
+						[w,fAvg] = trainM3N(ex_tr,decodeFunc,Csplit);
 						params{a,fold,c1,c2}.w = w;
 
 					% VCTSM learning (convexity optimization)
@@ -194,25 +200,25 @@ for fold = 1:nFold
 					% CACC learning (robust M3N)
 					case 5
 						fprintf('Training CACC ...\n');
-						[w,fAvg] = trainCACC(ex_tr,decoder,C_w);
+						[w,fAvg] = trainCACC(ex_tr,decodeFunc,C_w);
 						params{a,fold,c1,c2}.w = w;
 
 					% CSM3N learning (M3N + stability reg.)
 					case 6
 						fprintf('Training CSM3N ...\n');
-						[w,fAvg] = trainCSM3N(ex_tr,ex_ul,decoder,C_w,C_s);
+						[w,fAvg] = trainCSM3N(ex_tr,ex_ul,decodeFunc,C_w,C_s);
 						params{a,c1,fold}.w = w;
 
 					% CSCACC learning (CACC + stability reg.)
 					case 7
 						fprintf('Training CSCACC ...\n');
-						[w,fAvg] = trainCSCACC(ex_tr,ex_ul,decoder,C_w,C_s);
+						[w,fAvg] = trainCSCACC(ex_tr,ex_ul,decodeFunc,C_w,C_s);
 						params{a,fold,c1,c2}.w = w;
 
 					% DLM learning
 					case 8
 						fprintf('Training DLM ...\n');
-						[w,fAvg] = trainDLM(ex_tr,decoder,C_w);
+						[w,fAvg] = trainDLM(ex_tr,decodeFunc,C_w);
 						params{a,fold,c1,c2}.w = w;
 
 				end
@@ -223,7 +229,7 @@ for fold = 1:nFold
 					ex = ex_tr{i};
 					if a ~= 4
 						[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
-						pred = decoder(nodePot,edgePot,ex.edgeStruct);
+						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
 					else
 						mu = vctsmInfer(w,kappa,ex.Fx,ex.Aeq,ex.beq);
 						pred = decodeMarginals(mu,ex.nNode,ex.nState);
@@ -241,15 +247,15 @@ for fold = 1:nFold
 					ex = ex_cv{i};
 					if a ~= 4
 						[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
-						pred = decoder(nodePot,edgePot,ex.edgeStruct);
+						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
 						if nStabSamp > 0
-							[stab(i,1),stab(i,2),perturbs] = measureStabilityRand({w},ex,discreteX,nStabSamp,decoder,edgeFeatFunc,pred,perturbs);
+							[stab(i,1),stab(i,2),pert] = measureStabilityRand({w},ex,discreteX,nStabSamp,decodeFunc,edgeFeatFunc,pred,pert);
 						end
 					else
 						mu = vctsmInfer(w,kappa,ex.Fx,ex.Aeq,ex.beq);
 						pred = decodeMarginals(mu,ex.nNode,ex.nState);
 						if nStabSamp > 0
-							[stab(i,1),stab(i,2),perturbs] = measureStabilityRand({w,kappa},ex,discreteX,nStabSamp,[],edgeFeatFunc,pred,perturbs);
+							[stab(i,1),stab(i,2),pert] = measureStabilityRand({w,kappa},ex,discreteX,nStabSamp,[],edgeFeatFunc,pred,pert);
 						end
 					end
 					errs(i) = nnz(ex.Y ~= pred()) / ex.nNode;
@@ -269,7 +275,7 @@ for fold = 1:nFold
 					ex = ex_te{i};
 					if a ~= 4
 						[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
-						pred = decoder(nodePot,edgePot,ex.edgeStruct);
+						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
 					else
 						mu = vctsmInfer(w,kappa,ex.Fx,ex.Aeq,ex.beq);
 						pred = decodeMarginals(mu,ex.nNode,ex.nState);
@@ -303,9 +309,12 @@ for fold = 1:nFold
 		bestParamTest(a,fold) = find(teErrs(a,fold,:)==min(teErrs(a,fold,:)),1,'first');
 	end
 	
+	% store perturbations
+	perturbs{fold} = pert;
+	
 	% save results
 	if ~isempty(save2file)
-		save save2file;
+		save(save2file);
 	end
 
 	fprintf('\n');

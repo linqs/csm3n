@@ -1,8 +1,12 @@
-function ex = readExample(prefix)
+function ex = readExample(prefix,makeEdgeDist)
 %
 % Loads and formats an example from the Political Blog data
 %
 % prefix : file prefix, e.g., 'Feb_1'
+
+if nargin < 2
+	makeEdgeDist = 0;
+end
 
 Ynode = csvread([prefix '.Y.csv']);
 nNode = size(Ynode,1);
@@ -15,6 +19,10 @@ G = sparse(edgeEnds(:,1),edgeEnds(:,2),ones(nEdge,1),nNode,nNode);
 G = G - diag(diag(G));
 G = G | G';
 edgeStruct = UGM_makeEdgeStruct(G,2,1);
+
+if makeEdgeDist
+	edgeStruct.edgeDist = makeEdgeDistribution(edgeStruct);
+end
 
 [Aeq,beq] = pairwiseConstraints(edgeStruct);
 
