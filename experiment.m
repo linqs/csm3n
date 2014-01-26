@@ -78,10 +78,10 @@ else
 	edgeFeatFunc = @makeEdgeFeatures;
 end
 
-if isfield(expSetup,'discreteX')
-	discreteX = expSetup.discreteX;
+if isfield(expSetup,'Xdesc')
+	Xdesc = expSetup.Xdesc;
 else
-	discreteX = 1;
+	Xdesc = [];
 end
 
 if isfield(expSetup,'nStabSamp')
@@ -249,13 +249,13 @@ for fold = 1:nFold
 						[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
 						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
 						if nStabSamp > 0
-							[stab(i,1),stab(i,2),pert] = measureStabilityRand({w},ex,discreteX,nStabSamp,decodeFunc,edgeFeatFunc,pred,pert);
+							[stab(i,1),stab(i,2),pert] = measureStabilityRand({w},ex,Xdesc,nStabSamp,decodeFunc,edgeFeatFunc,pred,pert);
 						end
 					else
 						mu = vctsmInfer(w,kappa,ex.Fx,ex.Aeq,ex.beq);
 						pred = decodeMarginals(mu,ex.nNode,ex.nState);
 						if nStabSamp > 0
-							[stab(i,1),stab(i,2),pert] = measureStabilityRand({w,kappa},ex,discreteX,nStabSamp,[],edgeFeatFunc,pred,pert);
+							[stab(i,1),stab(i,2),pert] = measureStabilityRand({w,kappa},ex,Xdesc,nStabSamp,[],edgeFeatFunc,pred,pert);
 						end
 					end
 					errs(i) = nnz(ex.Y ~= pred()) / ex.nNode;

@@ -1,9 +1,9 @@
-function [stabMax,stabAvg,perturbs] = measureStabilityRand(params, ex, discreteX, nSamp, decoder, edgeFeatFunc, y0, perturbs)
+function [stabMax,stabAvg,perturbs] = measureStabilityRand(params, ex, Xdesc, nSamp, decoder, edgeFeatFunc, y0, perturbs)
 
 % params : cell array of model parameters, where
 %			params{1} = w; params{2} = kappa (optional)
 % ex : example structure
-% discreteX : whether X is discrete
+% Xdesc : X descriptor struct
 % nSamp : number of samples
 % decoder : decoder function
 % edgeFeatFunc : (optional) function to generate edge features (def: UGM_makeEdgeFeatures)
@@ -25,6 +25,11 @@ if length(params) == 2
 	vc = 1;
 end
 
+% X descriptor
+if ~isstruct(Xdesc)
+	Xdesc = struct('discreteX',1);
+end
+
 % edge feature function
 if nargin < 6
 	edgeFeatFunc = @UGM_makeEdgeFeatures;
@@ -44,15 +49,26 @@ end
 
 % perturbations
 if nargin < 8 || isempty(perturbs)
-	% select random subset of (node,value) combinations
-	if discreteX
+	perturbs = zeros(nFeat+1,nSamp);
+	if Xdesc.discreteX
+		% select random subset of (node,value) combinations
 		otherVals = randsample(find(~(ex.Xnode)),nSamp);
-		[I,J] = ind2sub([nFeat nNode], otherVals);
-		perturbs = zeros(nFeat+1,nSamp);
-		perturbs(1,:) = J;
-		perturbs(sub2ind(size(perturbs),I+1,(1:nSamp)')) = 1;
+		[featIdx,nodeIdx] = ind2sub([nFeat nNode], otherVals);
+		perturbs(1,:) = nodeIdx;
+		perturbs(sub2ind(size(perturbs),featIdx+1,(1:nSamp)')) = 1;
 	else
-
+		% select iid random (node,feature) combinations
+		nodeIdx = randsample(nNode,nSamp,1);
+		featIdx = randsample(nFeat,nSamp,1);
+		perturbs(1,:) = nodeIdx;
+		% uniform random perturbations in [-1,1]
+		perturbs(2:end,:) = squeeze(ex.Xnode(1,:,nodeIdx));
+		idx = sub2ind([nFeat+1 nSamp],featIdx+1,(1:nSamp)');
+		perturbs(idx) = perturbs(idx) + 2*rand(nSamp,1)-1;
+		% (might want to project onto L1 ball around original x)
+		if isfield(Xdesc,'nonneg') && Xdesc.nonneg
+			perturbs(idx) = max(perturbs(idx), zeros(nSamp,1));
+		end
 	end
 else
 	nSamp = size(perturbs,2);
