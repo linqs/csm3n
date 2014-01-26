@@ -58,11 +58,10 @@ ex_u = examples(6:10);
 
 %% Run experiment
 clear;
-decoder = @UGM_Decode_LBP;
 examples = noisyX(16,1,0,1,0);
 expSetup = struct('nFold',4,'foldDist',[1 1 1 1],...
 				  'runAlgos',1:7,'Cvec',[0 100 200 500 1000],...
-				  'decoder',decoder,'nStabSamp',20);
+				  'decoder',@UGM_Decode_LBP,'nStabSamp',20);
 experiment;
 
 

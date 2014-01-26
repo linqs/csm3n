@@ -1,9 +1,9 @@
-function examples = loadPoliBlog()
+function [examples,foldIdx] = loadPoliBlog()
 %
 % Loads and formats the Political Blog data
 %
 
-examples = cell(16,1);
+% Load 4 examples
 fprintf('Reading Feb1 ... ');
 examples{1} = readExample('Feb_1');
 fprintf('done.\n');
@@ -17,7 +17,12 @@ fprintf('Reading May2 ... ');
 examples{4} = readExample('May_2');
 fprintf('done.\n');
 
-for shift = 1:3
-	examples(4*shift+1:4*(shift+1)) = circshift(examples(1:4),shift);
+% Generate all permutations for 24 folds of size 4
+idx = perms(1:4);
+for fold = 1:size(idx,1)
+	foldIdx(fold).tridx = idx(fold,1);
+	foldIdx(fold).ulidx = idx(fold,2);
+	foldIdx(fold).cvidx = idx(fold,3);
+	foldIdx(fold).teidx = idx(fold,4);
 end
 

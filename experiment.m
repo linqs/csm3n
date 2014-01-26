@@ -12,32 +12,38 @@ nParam = max(examples{1}.edgeMap(:));
 if ~exist('expSetup','var')
 	expSetup = struct();
 end
+
 if isfield(expSetup,'nFold')
 	nFold = expSetup.nFold;
 else
 	nFold = 1;
 end
-if isfield(expSetup,'foldDist')
+if isfield(expSetup,'foldIdx')
+	foldIdx = expSetup.foldIdx;
+	nFold = length(foldIdx);
+elseif isfield(expSetup,'foldDist')
 	foldDist = expSetup.foldDist;
-	nExFold = sum(foldDist);
-	assert(nExFold <= nEx, 'Number of examples per fold greater than examples.');
-	nTrain = foldDist(1);
-	nUnlab = foldDist(2);
-	nCV = foldDist(3);
-	nTest = foldDist(4);
+	assert(sum(foldDist) <= nEx, 'Number of examples per fold greater than examples.');
+	foldIdx = makeFolds(nEx,nFold,foldDist);
+	nFold = min(nFold,length(foldIdx));
 else
-	nExFold = nEx / nFold;
+	nExFold = int(nEx / nFold);
 	nTrain = 1;
 	nUnlab = 1;
 	nCV = 1;
 	nTest = nExFold - 3;
+	foldIdx = makeFolds(nFold,nTrain,nUnlab,nCV,nTest);
+	nFold = min(nEx,nFold,length(foldIdx));
 end
+
 algoNames = {'MLE','M3N','M3NLRR','VCTSM','CACC','CSM3N','CSCACC','DLM'};
 if isfield(expSetup,'runAlgos')
 	runAlgos = expSetup.runAlgos;
 else
 	runAlgos = 1:length(algoNames);
 end
+nRunAlgos = length(runAlgos);
+
 if isfield(expSetup,'Cvec')
 	Cvec = expSetup.Cvec;
 else
@@ -53,6 +59,9 @@ if isfield(expSetup,'CvecStab')
 else
 	CvecStab = [.01 .05 .1 .25 .5 .75 1 2];
 end
+nCvals1 = length(Cvec);
+nCvals2 = max(length(CvecRel),length(CvecStab));
+
 if isfield(expSetup,'decoder')
 	decoder = expSetup.decoder;
 else
@@ -63,25 +72,24 @@ if isfield(expSetup,'edgeFeatFunc')
 else
 	edgeFeatFunc = @makeEdgeFeatures;
 end
+
 if isfield(expSetup,'discreteX')
 	discreteX = expSetup.discreteX;
 else
 	discreteX = 1;
 end
+
 if isfield(expSetup,'nStabSamp')
 	nStabSamp = expSetup.nStabSamp;
 else
 	nStabSamp = 10;
 end
+
 if isfield(expSetup,'save2file')
 	save2file = expSetup.save2file;
 else
 	save2file = [];
 end
-
-nRunAlgos = length(runAlgos);
-nCvals1 = length(Cvec);
-nCvals2 = max(length(CvecRel),length(CvecStab));
 
 
 %% MAIN LOOP
@@ -109,18 +117,17 @@ bestParamTest = zeros(nRunAlgos,nFold);
 
 for fold = 1:nFold
 	
-	if (fold * nExFold) > nEx
-		break;
-	end
-	
 	fprintf('Starting fold %d of %d.\n', fold,nFold);
 	
 	% separate training/CV/testing
-	fidx = (fold-1) * nExFold;
-	tridx = fidx+1:fidx+nTrain;
-	ulidx = fidx+nTrain+1:fidx+nTrain+nUnlab;
-	cvidx = fidx+nTrain+nUnlab+1:fidx+nTrain+nUnlab+nCV;
-	teidx = fidx+nTrain+nUnlab+nCV+1:fidx+nTrain+nUnlab+nCV++nTest;
+	tridx = foldIdx(fold).tridx;
+	ulidx = foldIdx(fold).ulidx;
+	cvidx = foldIdx(fold).cvidx;
+	teidx = foldIdx(fold).teidx;
+	nTrain = length(tridx);
+	nUnlab = length(ulidx);
+	nCV = length(cvidx);
+	nTest = length(teidx);
 	ex_tr = examples(tridx);
 	ex_ul = examples(ulidx);
 	ex_cv = examples(cvidx);
@@ -315,7 +322,7 @@ bestResults = zeros(nRunAlgos,length(colStr),nFold);
 for fold = 1:nFold
 	idx = sub2ind([nRunAlgos nFold nCvals1 nCvals2],(1:nRunAlgos)',fold*ones(nRunAlgos,1),bestParam(:,fold));
 	[c1idx,c2idx] = ind2sub([nCvals1,nCvals2], bestParam(:,fold));
-	bestC1 = Cvec(c1idx)';
+	bestC1 = Cvec(c1idx);
 	bestC2 = zeros(nRunAlgos,1);
 	for a = 1:nRunAlgos
 		if runAlgos(a) == 3
@@ -324,7 +331,7 @@ for fold = 1:nFold
 			bestC2(a) = CvecStab(c2idx(a));
 		end
 	end
-	bestResults(:,:,fold) = [trErrs(idx) cvErrs(idx) teErrs(idx) geErrs(idx) cvStabMax(idx) cvStabAvg(idx) bestC1 bestC2];
+	bestResults(:,:,fold) = [trErrs(idx) cvErrs(idx) teErrs(idx) geErrs(idx) cvStabMax(idx) cvStabAvg(idx) bestC1(:) bestC2(:)];
 	disptable(bestResults(:,:,fold),colStr,algoNames(runAlgos),'%.5f');
 end
 

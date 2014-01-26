@@ -21,7 +21,7 @@ edgeStruct = UGM_makeEdgeStruct(G,2,1);
 Xnode = csvread([prefix '.Word.csv']);
 nFeat = size(Xnode,2);
 Xnode = reshape(Xnode',1,nFeat,nNode);
-Xedge = UGM_makeEdgeFeatures(Xnode,edgeStruct.edgeEnds);
+Xedge = makeEdgeFeatures(Xnode,edgeStruct.edgeEnds);
 
 ex = makeExample(Xnode,Xedge,Y,2,edgeStruct,Aeq,beq);
 
