@@ -149,7 +149,7 @@ for fold = 1:nFold
 			
 			for a = 1:nRunAlgos
 
-				if (nnz(runAlgos(a) == [3 6 7]) == 0) && c2 > 1
+				if ~ismember(runAlgos(a),[3 6 7]) && c2 > 1
 					% Some algorithms don't use second reg. param.
 					continue;
 				elseif runAlgos(a) == 3
@@ -158,7 +158,7 @@ for fold = 1:nFold
 						continue;
 					end
 					C_r = CvecRel(c2);
-				elseif runAlgos(a) == 6 || runAlgos(a) == 7
+				elseif ismember(runAlgos(a),[6 7])
 					% CSM3N or CSCACC
 					if c2 > length(CvecStab)
 						continue;
@@ -227,7 +227,7 @@ for fold = 1:nFold
 				errs = zeros(nTrain,1);
 				for i = 1:nTrain
 					ex = ex_tr{i};
-					if a ~= 4
+					if runAlgos(a) ~= 4
 						[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
 						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
 					else
@@ -245,7 +245,7 @@ for fold = 1:nFold
 				stab = zeros(nCV,2);
 				for i = 1:nCV
 					ex = ex_cv{i};
-					if a ~= 4
+					if runAlgos(a) ~= 4
 						[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
 						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
 						if nStabSamp > 0
@@ -273,7 +273,7 @@ for fold = 1:nFold
 				errs = zeros(nTest,1);
 				for i = 1:nTest
 					ex = ex_te{i};
-					if a ~= 4
+					if runAlgos(a) ~= 4
 						[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
 						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
 					else
@@ -324,12 +324,35 @@ end
 % generalization error
 geErrs = teErrs - trErrs;
 
+% choose which "best parameters" to use
+% bestParam = zeros(nRunAlgos,nFold);
+% for a = 1:nRunAlgos
+% 	for fold = 1:nFold
+% 		if ismember(runAlgos(a),[1 2 5 8])
+% 			% algos that only 1 weight regularizer
+% 			bestParam(a,fold) = find(cvErrs(a,fold,:)==min(cvErrs(a,fold,:)),1,'first');
+% % 			bestParam(a,fold) = find(cvErrs(a,fold,2:end,1)==min(cvErrs(a,fold,2:end,1)),1,'first') + 1;
+% 		elseif runAlgos(a) == 3
+% 			% M3NLRR
+% 			bestParam(a,fold) = find(cvErrs(a,fold,:)==min(cvErrs(a,fold,:)),1,'first');
+% 		elseif runAlgos(a) == 4
+% 			% VCTSM
+% 			% must use some regularization
+% 			bestParam(a,fold) = find(cvErrs(a,fold,2:end,1)==min(cvErrs(a,fold,2:end,1)),1,'first') + 1;
+% 		else
+% 			% CS algos
+% 			bestParam(a,fold) = find(cvErrs(a,fold,1,:)==min(cvErrs(a,fold,1,:)),1,'first')*nCvals2 + 1;
+% 		end
+% 	end
+% end
+% or just use whatever is best according to CV error
+bestParam = bestParamCVerr;
+
 % display results at end
 colStr = {'Train','Valid','Test','GenErr','MaxStab','AvgStab','C_w','C_r/C_s'};
-bestParam = bestParamCVerr;
 bestResults = zeros(nRunAlgos,length(colStr),nFold);
 for fold = 1:nFold
-	idx = sub2ind([nRunAlgos nFold nCvals1 nCvals2],(1:nRunAlgos)',fold*ones(nRunAlgos,1),bestParam(:,fold));
+	% choose best params for fold
 	[c1idx,c2idx] = ind2sub([nCvals1,nCvals2], bestParam(:,fold));
 	bestC1 = Cvec(c1idx);
 	bestC2 = zeros(nRunAlgos,1);
@@ -340,6 +363,8 @@ for fold = 1:nFold
 			bestC2(a) = CvecStab(c2idx(a));
 		end
 	end
+	% display results for fold
+	idx = sub2ind([nRunAlgos nFold nCvals1 nCvals2],(1:nRunAlgos)',fold*ones(nRunAlgos,1),c1idx,c2idx);
 	bestResults(:,:,fold) = [trErrs(idx) cvErrs(idx) teErrs(idx) geErrs(idx) cvStabMax(idx) cvStabAvg(idx) bestC1(:) bestC2(:)];
 	disptable(bestResults(:,:,fold),colStr,algoNames(runAlgos),'%.5f');
 end
@@ -348,5 +373,9 @@ end
 avgResults = mean(bestResults,3);
 stdResults = std(bestResults,[],3);
 
-
-
+endTime = toc(totalTimer);
+fprintf('-------------\n');
+fprintf('FINAL RESULTS\n');
+fprintf('-------------\n');
+disptable(avgResults,colStr,algoNames(runAlgos),'%.5f');
+fprintf('elapsed time: %.2f min\n',endTime/60);
