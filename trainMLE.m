@@ -6,7 +6,7 @@ function [w, nll] = trainMLE(examples, inferFunc, C, options, w)
 % inferFunc : inference function (0: use pseudolikelihood)
 % C : regularization constant or nParam x 1 vector (optional: def=nNode of first example)
 % options : optional struct of optimization options for SGD:
-% 			maxIter : iterations of SGD (def: 10*length(examples))
+% 			maxIter : iterations of SGD (def: 100*length(examples))
 % 			stepSize : SGD step size (def: 1e-4)
 % 			verbose : verbose mode (def: 0)
 % w : init weights (optional: def=zeros)
@@ -21,7 +21,7 @@ if nargin < 4 || ~isstruct(options)
 	options = struct();
 end
 if ~isfield(options,'maxIter')
-	options.maxIter = 10 * length(examples);
+	options.maxIter = 100 * length(examples);
 end
 if ~isfield(options,'stepSize')
 	options.stepSize = 1e-4;

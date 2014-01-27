@@ -6,7 +6,7 @@ function [w, fAvg] = trainCACC(examples, decodeFunc, C, optSGD, optPGD, w)
 % decodeFunc : decoder function
 % C : regularization constant or nParam x 1 vector (optional: def=nNode of first example)
 % optSGD : optional struct of optimization options for SGD:
-% 			maxIter : iterations of SGD (def: 10*length(examples_l))
+% 			maxIter : iterations of SGD (def: 100*length(examples_l))
 % 			stepSize : SGD step size (def: 1e-4)
 % 			verbose : verbose mode (def: 0)
 % optPGD : optional struct of optimization options for stabilityObj
@@ -21,7 +21,7 @@ if nargin < 4 || ~isstruct(optSGD)
 	optSGD = struct();
 end
 if ~isfield(optSGD,'maxIter')
-	optSGD.maxIter = 10 * length(examples);
+	optSGD.maxIter = 100 * length(examples);
 end
 if ~isfield(optSGD,'stepSize')
 	optSGD.stepSize = 1e-4;

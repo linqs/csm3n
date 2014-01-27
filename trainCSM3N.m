@@ -8,7 +8,7 @@ function [w, fAvg] = trainCSM3N(examples_l, examples_u, decodeFunc, C_w, C_s, op
 % C_w : weight regularization constant or nParam x 1 vector (optional: def=nNode of first example)
 % C_s : stability regularization constant (optional: def=0.1)
 % optSGD : optional struct of optimization options for SGD:
-% 			maxIter : iterations of SGD (def: 10*length(examples_l))
+% 			maxIter : iterations of SGD (def: 100*length(examples_l))
 % 			stepSize : SGD step size (def: 1e-4)
 % 			verbose : verbose mode (def: 0)
 % optPGD : optional struct of optimization options for stabilityObj
@@ -26,7 +26,7 @@ if nargin < 6 || ~isstruct(optSGD)
 	optSGD = struct();
 end
 if ~isfield(optSGD,'maxIter')
-	optSGD.maxIter = 10 * length(examples_l);
+	optSGD.maxIter = 100 * length(examples_l);
 end
 if ~isfield(optSGD,'stepSize')
 	optSGD.stepSize = 1e-4;

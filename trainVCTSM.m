@@ -12,7 +12,7 @@ function [w, kappa, fAvg] = trainVCTSM(examples, C, options, w, kappa)
 %	suffStat : nParam x 1 vector of sufficient statistics (i.e., Fx * oc)
 % C : regularization constant or vector
 % options : optional struct of optimization options for SGD:
-% 			maxIter : iterations of SGD (def: 10*length(examples))
+% 			maxIter : iterations of SGD (def: 100*length(examples))
 % 			stepSize : SGD step size (def: 1e-6)
 % 			verbose : verbose mode (def: 0)
 % w : init weights (optional: def=zeros)
@@ -34,10 +34,10 @@ if nargin < 3 || ~isstruct(options)
 	options = struct();
 end
 if ~isfield(options,'maxIter')
-	options.maxIter = 10 * length(examples);
+	options.maxIter = 100 * length(examples);
 end
 if ~isfield(options,'stepSize')
-	options.stepSize = 1e-6;
+	options.stepSize = 1e-4;
 end
 if ~isfield(options,'verbose')
 	options.verbose = 0;

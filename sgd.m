@@ -58,7 +58,7 @@ for t = 1:options.maxIter
 	fAvg = (1/t) * f + ((t-1)/t) * fAvg;
 	
 	% Update point
-	x = x - (options.stepSize / t) * g;
+	x = x - (options.stepSize / sqrt(t)) * g;
 	
 	if nargout >= 3
 		fVec(t) = f;

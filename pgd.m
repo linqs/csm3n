@@ -55,7 +55,7 @@ end
 for t = 1:options.maxIter
 	
 	% Update point
-	x = x - (options.stepSize / t) * g;
+	x = x - (options.stepSize / sqrt(t)) * g;
 	
 	% Project new point into feasible region
 	x = projFun(x);
