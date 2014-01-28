@@ -96,6 +96,12 @@ else
 	save2file = [];
 end
 
+if isfield(expSetup,'optSGD')
+	optSGD = expSetup.optSGD;
+else
+	optSGD = struct();
+end
+
 
 %% MAIN LOOP
 
@@ -173,13 +179,13 @@ for fold = 1:nFold
 					% M(P)LE learning
 					case 1
 						fprintf('Training MLE ...\n');
-						[w,nll] = trainMLE(ex_tr,inferFunc,C_w);
+						[w,nll] = trainMLE(ex_tr,inferFunc,C_w,optSGD);
 						params{a,fold,c1,c2}.w = w;
 
 					% M3N learning
 					case 2
 						fprintf('Training M3N ...\n');
-						[w,fAvg] = trainM3N(ex_tr,decodeFunc,C_w);
+						[w,fAvg] = trainM3N(ex_tr,decodeFunc,C_w,optSGD);
 						params{a,fold,c1,c2}.w = w;
 
 					% M3NLRR learning (M3N with separate local/relational reg.)
@@ -187,7 +193,7 @@ for fold = 1:nFold
 						fprintf('Training M3N with local/relational regularization ...\n');
 						maxLocParamIdx = max(ex_tr{1}.nodeMap(:));
 						Csplit = [C_w * ones(maxLocParamIdx,1) ; C_r * ones(nParam-maxLocParamIdx,1)];
-						[w,fAvg] = trainM3N(ex_tr,decodeFunc,Csplit);
+						[w,fAvg] = trainM3N(ex_tr,decodeFunc,Csplit,optSGD);
 						params{a,fold,c1,c2}.w = w;
 
 					% VCTSM learning (convexity optimization)
@@ -200,25 +206,25 @@ for fold = 1:nFold
 					% CACC learning (robust M3N)
 					case 5
 						fprintf('Training CACC ...\n');
-						[w,fAvg] = trainCACC(ex_tr,decodeFunc,C_w);
+						[w,fAvg] = trainCACC(ex_tr,decodeFunc,C_w,optSGD);
 						params{a,fold,c1,c2}.w = w;
 
 					% CSM3N learning (M3N + stability reg.)
 					case 6
 						fprintf('Training CSM3N ...\n');
-						[w,fAvg] = trainCSM3N(ex_tr,ex_ul,decodeFunc,C_w,C_s);
+						[w,fAvg] = trainCSM3N(ex_tr,ex_ul,decodeFunc,C_w,C_s,optSGD);
 						params{a,c1,fold}.w = w;
 
 					% CSCACC learning (CACC + stability reg.)
 					case 7
 						fprintf('Training CSCACC ...\n');
-						[w,fAvg] = trainCSCACC(ex_tr,ex_ul,decodeFunc,C_w,C_s);
+						[w,fAvg] = trainCSCACC(ex_tr,ex_ul,decodeFunc,C_w,C_s,optSGD);
 						params{a,fold,c1,c2}.w = w;
 
 					% DLM learning
 					case 8
 						fprintf('Training DLM ...\n');
-						[w,fAvg] = trainDLM(ex_tr,decodeFunc,C_w);
+						[w,fAvg] = trainDLM(ex_tr,decodeFunc,C_w,optSGD);
 						params{a,fold,c1,c2}.w = w;
 
 				end
@@ -379,3 +385,8 @@ fprintf('FINAL RESULTS\n');
 fprintf('-------------\n');
 disptable(avgResults,colStr,algoNames(runAlgos),'%.5f');
 fprintf('elapsed time: %.2f min\n',endTime/60);
+
+% save results
+if ~isempty(save2file)
+	save(save2file);
+end
