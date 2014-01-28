@@ -47,7 +47,7 @@ nRunAlgos = length(runAlgos);
 if isfield(expSetup,'Cvec')
 	Cvec = expSetup.Cvec;
 else
-	Cvec = [0 1 5 10 50 100 500 1000 5000 10000];
+	Cvec = [0 .1 .5 1 5 10 50 100 500 1000 5000 10000];
 end
 if isfield(expSetup,'CvecRel')
 	CvecRel = expSetup.CvecRel;
