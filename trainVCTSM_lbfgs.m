@@ -38,7 +38,7 @@ options.LS_type = 0;
 options.LS_interp = 0;
 options.Display = 'off';
 % options.maxIter = 1000;
-% options.MaxFunEvals = 8000;
+% options.MaxFunEvals = 2000;
 options.progTol = 1e-6;
 options.optTol = 1e-3;
 
