@@ -8,7 +8,7 @@ clear options;
 options.Method = 'lbfgs';
 options.LS_type = 0;
 options.LS_interp = 0;
-% options.Display = 'off';
+options.Display = 'off';
 
 z = Fx' * w / kappa - 1;
 lambda = zeros(size(beq));
