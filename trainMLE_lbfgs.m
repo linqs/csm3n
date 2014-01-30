@@ -1,19 +1,33 @@
-function [w, nll] = trainMLE_lbfgs(examples, inferFunc, C, w)
+function [w, nll] = trainMLE_lbfgs(examples, inferFunc, C, options, w)
 %
 % Trains an MRF using MLE.
 %
 % examples : cell array of examples
 % inferFunc : inference function (0: use pseudolikelihood)
-% C : regularization constant or nParam x 1 vector (optional: def=nNode of first example)
+% C : optional regularization constant or vector (def: 1)
+% options : optimization options (optional)
 % w : init weights (optional: def=zeros)
 
 % parse input
-assert(nargin >= 2,'USAGE: trainMLE(examples,inferFunc,C,w)')
+assert(nargin >= 2,'USAGE: trainMLE_lbfgs(examples,inferFunc)')
 usePL = ~isa(inferFunc,'function_handle');
+
+% regularization param
 if nargin < 3
-	C = examples{1}.nNode;
+	C = 1;
 end
-if nargin < 4
+
+% optimization options
+if nargin < 4 || ~isstruct(options)
+	options = struct();
+end
+options.Method = 'lbfgs';
+if ~isfield(options,'Display')
+	options.Display = 'off';
+end
+
+% inital point
+if nargin < 5
 	nParam = max(examples{1}.edgeMap(:));
 	w = zeros(nParam,1);
 end
@@ -28,13 +42,10 @@ else
 	obj = @(w) penalizedL2(w,@UGM_CRFcell_NLL,C,examples,inferFunc);
 end
 
-% optimization options
-clear options;
-options.Display = 'off';
-
-% Optimize
+% optimize
 w = minFunc(obj,w,options);
 
+% compute NLL of solution
 if usePL
 	nll = UGM_CRFcell_PseudoNLL(w,examples);
 else

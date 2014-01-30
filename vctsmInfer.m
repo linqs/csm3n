@@ -6,14 +6,9 @@ function y = vctsmInfer(w, kappa, Fx, Aeq, beq)
 % optimization options
 clear options;
 options.Method = 'lbfgs';
-% options.Corr = 200;
 options.LS_type = 0;
 options.LS_interp = 0;
-options.Display = 'off';
-% options.maxIter = 8000;
-% options.MaxFunEvals = 8000;
-% options.progTol = 1e-6;
-% options.optTol = 1e-3;
+% options.Display = 'off';
 
 z = Fx' * w / kappa - 1;
 lambda = zeros(size(beq));

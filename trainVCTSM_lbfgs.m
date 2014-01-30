@@ -1,4 +1,4 @@
-function [w, kappa, f] = trainVCTSM_lbfgs(examples, C, w, kappa)
+function [w, kappa, f] = trainVCTSM_lbfgs(examples, C, options, w, kappa)
 
 % Optimizes the VCTSM objective, learning the optimal (w,kappa).
 %
@@ -10,7 +10,12 @@ function [w, kappa, f] = trainVCTSM_lbfgs(examples, C, w, kappa)
 %	beq : nCon x 1 constraint b vector
 %	F : nParam x length(oc) feature map
 %	suffStat : nParam x 1 vector of sufficient statistics (i.e., F * oc)
-% C : regularization constant or vector
+% C : optional regularization constant or nParam x 1 vector (def: 1)
+% options : optional optimization options
+% w : optional init weight vector (def: 0)
+% kappa : optional init convexity modulus (def: 1)
+
+assert(nargin >= 2,'USAGE: trainVCTSM_lbfgs(examples)')
 
 % dimensions
 nEx = length(examples);
@@ -20,27 +25,44 @@ for i = 1:nEx
 	nCon = nCon + length(examples{i}.beq);
 end
 
+% regularization param
+if nargin < 2
+	C = 1;
+end
+
+% optimization options
+if nargin < 3 || ~isstruct(options)
+	options = struct();
+end
+options.Method = 'lbfgs';
+options.LS_type = 0;
+options.LS_interp = 0;
+if ~isfield(options,'Display')
+	options.Display = 'off';
+end
+% if ~isfield(options,'MaxIter')
+% 	options.MaxIter = 1000;
+% end
+% if ~isfield(options,'MaxFunEvals')
+% 	options.MaxFunEvals = 2000;
+% end
+% if ~isfield(options,'progTol')
+% 	options.progTol = 1e-6;
+% end
+% if ~isfield(options,'optTol')
+% 	options.optTol = 1e-3;
+% end
+
 % initial point
 x0 = zeros(nParam+nCon+1,1);
-if nargin >= 3
+if nargin >= 4
 	x0(1:nParam) = w;
 end
-if nargin >= 4
+if nargin >= 5
 	x0(nParam+1) = kappa;
 else
 	x0(nParam+1) = 1;
 end
-
-% optimization options
-options.Method = 'lbfgs';
-options.Corr = 200;
-options.LS_type = 0;
-options.LS_interp = 0;
-options.Display = 'off';
-% options.maxIter = 1000;
-% options.MaxFunEvals = 2000;
-options.progTol = 1e-6;
-options.optTol = 1e-3;
 
 % run optimization
 obj = @(y, varargin) vctsmObj(y, examples, C, varargin);

@@ -4,7 +4,7 @@ function [w, nll] = trainMLE(examples, inferFunc, C, options, w)
 %
 % examples : cell array of examples
 % inferFunc : inference function (0: use pseudolikelihood)
-% C : regularization constant or nParam x 1 vector (optional: def=nNode of first example)
+% C : optional regularization constant or vector (def: 1)
 % options : optional struct of optimization options for SGD:
 % 			maxIter : iterations of SGD (def: 100*length(examples))
 % 			stepSize : SGD step size (def: 1e-4)
@@ -15,7 +15,7 @@ function [w, nll] = trainMLE(examples, inferFunc, C, options, w)
 assert(nargin >= 2, 'USAGE: trainM3N(examples,inferFunc)')
 usePL = ~isa(inferFunc,'function_handle');
 if nargin < 3
-	C = examples{1}.nNode;
+	C = 1;
 end
 if nargin < 4 || ~isstruct(options)
 	options = struct();

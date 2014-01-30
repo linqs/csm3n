@@ -179,7 +179,8 @@ for fold = 1:nFold
 					% M(P)LE learning
 					case 1
 						fprintf('Training MLE ...\n');
-						[w,nll] = trainMLE(ex_tr,inferFunc,C_w,optSGD);
+						%[w,nll] = trainMLE(ex_tr,inferFunc,C_w,optSGD);
+						[w,nll] = trainMLE_lbfgs(ex_tr,inferFunc,C_w);
 						params{a,fold,c1,c2}.w = w;
 
 					% M3N learning
@@ -199,6 +200,7 @@ for fold = 1:nFold
 					% VCTSM learning (convexity optimization)
 					case 4
 						fprintf('Training VCTSM ...\n');
+						%[w,kappa,f] = trainVCTSM(ex_tr,C_w,optSGD);
 						[w,kappa,f] = trainVCTSM_lbfgs(ex_tr,C_w);
 						params{a,fold,c1,c2}.w = w;
 						params{a,fold,c1,c2}.kappa = kappa;

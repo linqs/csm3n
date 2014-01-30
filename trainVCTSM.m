@@ -10,7 +10,7 @@ function [w, kappa, fAvg] = trainVCTSM(examples, C, options, w, kappa)
 %	beq : nCon x 1 constraint b vector
 %	Fx : nParam x length(oc) feature map
 %	suffStat : nParam x 1 vector of sufficient statistics (i.e., Fx * oc)
-% C : regularization constant or vector
+% C : optional regularization constant or vector (def: 1)
 % options : optional struct of optimization options for SGD:
 % 			maxIter : iterations of SGD (def: 500*length(examples))
 % 			stepSize : SGD step size (def: 1e-6)
@@ -28,7 +28,7 @@ for i = 1:nEx
 	nCon = nCon + length(examples{i}.beq);
 end
 if nargin < 2
-	C = examples{1}.nNode;
+	C = 1;
 end
 if nargin < 3 || ~isstruct(options)
 	options = struct();

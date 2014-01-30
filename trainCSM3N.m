@@ -5,8 +5,8 @@ function [w, fAvg] = trainCSM3N(examples_l, examples_u, decodeFunc, C_w, C_s, op
 % examples_l : cell array of labeled examples
 % examples_u : cell array of unlabeled examples
 % decodeFunc : decoder function
-% C_w : weight regularization constant or nParam x 1 vector (optional: def=nNode of first example)
-% C_s : stability regularization constant (optional: def=0.1)
+% C_w : optional weight regularization constant or nParam x 1 vector (def: 1)
+% C_s : optional stability regularization constant (def: 0.1)
 % optSGD : optional struct of optimization options for SGD:
 % 			maxIter : iterations of SGD (def: 100*length(examples_l))
 % 			stepSize : SGD step size (def: 1e-4)
@@ -17,7 +17,7 @@ function [w, fAvg] = trainCSM3N(examples_l, examples_u, decodeFunc, C_w, C_s, op
 % parse input
 assert(nargin >= 3, 'USAGE: trainM3N(examples_l,examples_u,decodeFunc)')
 if nargin < 4
-	C_w = examples_l{1}.nNode;
+	C_w = 1;
 end
 if nargin < 5
 	C_s = 0.1;

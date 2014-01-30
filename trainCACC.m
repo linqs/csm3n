@@ -4,7 +4,7 @@ function [w, fAvg] = trainCACC(examples, decodeFunc, C, optSGD, optPGD, w)
 %
 % examples : cell array of examples
 % decodeFunc : decoder function
-% C : regularization constant or nParam x 1 vector (optional: def=nNode of first example)
+% C : optional regularization constant or vector (def: 1)
 % optSGD : optional struct of optimization options for SGD:
 % 			maxIter : iterations of SGD (def: 100*length(examples_l))
 % 			stepSize : SGD step size (def: 1e-4)
@@ -15,7 +15,7 @@ function [w, fAvg] = trainCACC(examples, decodeFunc, C, optSGD, optPGD, w)
 % parse input
 assert(nargin >= 2, 'USAGE: trainM3N(examples,decodeFunc)')
 if nargin < 3
-	C = examples{1}.nNode;
+	C = 1;
 end
 if nargin < 4 || ~isstruct(optSGD)
 	optSGD = struct();
