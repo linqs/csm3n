@@ -82,5 +82,19 @@ expSetup.optSGD = struct('maxIter',500);
 experiment;
 
 
+%% Run Cora experiment
+clear;
+cd data;
+[examples,foldIdx] = loadDocData('cora/cora.mat',4,20,0);
+cd ..;
+Xdesc = struct('discreteX',0,'nonneg',0);
+expSetup = struct('foldIdx',foldIdx,'Xdesc',Xdesc,...
+				  'runAlgos',[1 2 4],...
+				  'decodeFunc',@UGM_Decode_LBP,'inferFunc',@UGM_Infer_LBP,...
+				  'nStabSamp',0,...
+				  'Cvec',[.1 1 100],'CvecRel',0,...
+				  'save2file','poliblog1.mat');
+expSetup.optSGD = struct('maxIter',200);
+experiment;
 
 

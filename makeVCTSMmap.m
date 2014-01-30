@@ -38,5 +38,8 @@ for e = 1:nEdge
 end
 
 % combine maps
-F = [F_loc sparse(nParamLoc,nEdge*nState^2); sparse(nParamRel,nNode*nState) F_rel];
+% F = [F_loc sparse(nParamLoc,nStateRel); sparse(nParamRel,nStateLoc) F_rel];
+F = zeros(nParamLoc+nParamRel,nStateLoc+nStateRel);
+F(1:nParamLoc,1:nStateLoc) = F_loc;
+F(nParamLoc+1:end,nStateLoc+1:end) = F_rel;
 
