@@ -320,6 +320,9 @@ for fold = 1:nFold
 	% store perturbations
 	perturbs{fold} = pert;
 	
+	% clear old folds (no sense in keeping them)
+	clear ex_tr ex_ul ex_cv ex_te;
+	
 	% save results
 	if ~isempty(save2file)
 		save(save2file);
