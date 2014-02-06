@@ -88,7 +88,7 @@ for t = 1:options.maxIter
 		yidx = yidx + nState^2;
 	end
 	A = ones(size(x_p')) - 2*x_u';
-	b = 1 - sum(x_p);
+	b = 1 - sum(x_u);
 	lb = zeros(size(x_p));
 	ub = ones(size(x_p));
 	optLP = optimset('Display','off','MaxIter',10);
@@ -108,18 +108,6 @@ for t = 1:options.maxIter
 	[f,stab] = perturbObj(Wnode, Wedge, yoc_u, yoc_p, Xnode_p, Xedge_p, nNode, nEdge, nState);
 	
 	fprintf('Perturb obj = %f; Stabilty = %f\n',f,stab);
-
-% 	% perturbation objective
-% 	objFun = @(x,varargin) perturbObj(x,w,yoc_u,Ynode_u,nodeMap,edgeMap,edgeStruct,options.edgeFeatFunc,decodeFunc,varargin{:});
-% 
-% 	% projection function
-% 	projFun = @(x) perturbProj(x,x_u);
-% 
-% 	% find worst perturbation using PGD
-% 	[x_p,f,fVec] = pgd(objFun,projFun,x0,options);
-% 
-% 	% convert min to max
-% 	f = -f;
 
 end
 
