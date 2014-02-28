@@ -1,4 +1,4 @@
-function y = vctsmInfer(w, kappa, Fx, Aeq, beq)
+function y = sctsmInfer(w, kappa, Fx, Aeq, beq)
 %
 % Performs inference in a VCTSM model
 %

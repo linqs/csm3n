@@ -36,7 +36,7 @@ else
 	nFold = min(nEx,nFold,length(foldIdx));
 end
 
-algoNames = {'MLE','M3N','M3NLRR','VCTSM','CACC','CSM3N','CSCACC','DLM'};
+algoNames = {'MLE','M3N','M3NLRR','VCTSM','SCTSM','CACC','CSM3N','CSCACC','DLM'};
 if isfield(expSetup,'runAlgos')
 	runAlgos = expSetup.runAlgos;
 else
@@ -59,8 +59,13 @@ if isfield(expSetup,'CvecStab')
 else
 	CvecStab = [.01 .05 .1 .25 .5 .75 1 2];
 end
+if isfield(expSetup,'kappaVec')
+	kappaVec = expSetup.kappaVec;
+else
+	kappaVec = [.01 .1 .25 .5 1 2];
+end
 nCvals1 = length(Cvec);
-nCvals2 = max(length(CvecRel),length(CvecStab));
+nCvals2 = max([length(CvecRel),length(CvecStab),length(kappaVec)]);
 
 if isfield(expSetup,'decodeFunc')
 	decodeFunc = expSetup.decodeFunc;
@@ -107,9 +112,10 @@ end
 
 % job metadata
 nJobs = nFold * nCvals1 * (...
-	length(intersect(runAlgos,[1 2 4 5 8])) + ...
+	length(intersect(runAlgos,[1 2 4 6 9])) + ...
 	length(CvecRel) * nnz(runAlgos==3) + ...
-	length(CvecStab) * length(intersect(runAlgos,[6 7])) );
+	length(kappaVec) * nnz(runAlgos==5) + ...
+	length(CvecStab) * length(intersect(runAlgos,[7 8])) );
 totalTimer = tic;
 count = 0;
 
@@ -155,7 +161,7 @@ for fold = 1:nFold
 			
 			for a = 1:nRunAlgos
 
-				if ~ismember(runAlgos(a),[3 6 7]) && c2 > 1
+				if ~ismember(runAlgos(a),[3 5 7 8]) && c2 > 1
 					% Some algorithms don't use second reg. param.
 					continue;
 				elseif runAlgos(a) == 3
@@ -164,7 +170,13 @@ for fold = 1:nFold
 						continue;
 					end
 					C_r = CvecRel(c2);
-				elseif ismember(runAlgos(a),[6 7])
+				elseif runAlgos(a) == 5
+					% SCTSM
+					if c2 > length(kappaVec)
+						continue;
+					end
+					kappa = kappaVec(c2);
+				elseif ismember(runAlgos(a),[7 8])
 					% CSM3N or CSCACC
 					if c2 > length(CvecStab)
 						continue;
@@ -204,27 +216,31 @@ for fold = 1:nFold
 						[w,kappa,f] = trainVCTSM_lbfgs(ex_tr,C_w);
 						params{a,fold,c1,c2}.w = w;
 						params{a,fold,c1,c2}.kappa = kappa;
+					case 5
+						fprintf('Training SCTSM with kappa=%f ...\n',kappa);
+						[w,kappa,f] = trainSCTSM_lbfgs(ex_tr,kappa,C_w);
+						params{a,fold,c1,c2}.w = w;
 
 					% CACC learning (robust M3N)
-					case 5
+					case 6
 						fprintf('Training CACC ...\n');
 						[w,fAvg] = trainCACC(ex_tr,decodeFunc,C_w,optSGD);
 						params{a,fold,c1,c2}.w = w;
 
 					% CSM3N learning (M3N + stability reg.)
-					case 6
+					case 7
 						fprintf('Training CSM3N ...\n');
 						[w,fAvg] = trainCSM3N(ex_tr,ex_ul,decodeFunc,C_w,C_s,optSGD);
 						params{a,c1,fold}.w = w;
 
 					% CSCACC learning (CACC + stability reg.)
-					case 7
+					case 8
 						fprintf('Training CSCACC ...\n');
 						[w,fAvg] = trainCSCACC(ex_tr,ex_ul,decodeFunc,C_w,C_s,optSGD);
 						params{a,fold,c1,c2}.w = w;
 
 					% DLM learning
-					case 8
+					case 9
 						fprintf('Training DLM ...\n');
 						[w,fAvg] = trainDLM(ex_tr,decodeFunc,C_w,optSGD);
 						params{a,fold,c1,c2}.w = w;
@@ -235,11 +251,11 @@ for fold = 1:nFold
 				errs = zeros(nTrain,1);
 				for i = 1:nTrain
 					ex = ex_tr{i};
-					if runAlgos(a) ~= 4
+					if ~ismember(runAlgos(a),[4 5])
 						[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
 						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
 					else
-						mu = vctsmInfer(w,kappa,ex.Fx,ex.Aeq,ex.beq);
+						mu = sctsmInfer(w,kappa,ex.Fx,ex.Aeq,ex.beq);
 						pred = decodeMarginals(mu,ex.nNode,ex.nState);
 					end
 					errs(i) = nnz(ex.Y ~= pred) / ex.nNode;
@@ -253,14 +269,14 @@ for fold = 1:nFold
 				stab = zeros(nCV,2);
 				for i = 1:nCV
 					ex = ex_cv{i};
-					if runAlgos(a) ~= 4
+					if ~ismember(runAlgos(a),[4 5])
 						[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
 						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
 						if nStabSamp > 0
 							[stab(i,1),stab(i,2),pert] = measureStabilityRand({w},ex,Xdesc,nStabSamp,decodeFunc,edgeFeatFunc,pred,pert);
 						end
 					else
-						mu = vctsmInfer(w,kappa,ex.Fx,ex.Aeq,ex.beq);
+						mu = sctsmInfer(w,kappa,ex.Fx,ex.Aeq,ex.beq);
 						pred = decodeMarginals(mu,ex.nNode,ex.nState);
 						if nStabSamp > 0
 							[stab(i,1),stab(i,2),pert] = measureStabilityRand({w,kappa},ex,Xdesc,nStabSamp,[],edgeFeatFunc,pred,pert);
@@ -281,11 +297,11 @@ for fold = 1:nFold
 				errs = zeros(nTest,1);
 				for i = 1:nTest
 					ex = ex_te{i};
-					if runAlgos(a) ~= 4
+					if ~ismember(runAlgos(a),[4 5])
 						[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
 						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
 					else
-						mu = vctsmInfer(w,kappa,ex.Fx,ex.Aeq,ex.beq);
+						mu = sctsmInfer(w,kappa,ex.Fx,ex.Aeq,ex.beq);
 						pred = decodeMarginals(mu,ex.nNode,ex.nState);
 					end
 					errs(i) = nnz(ex.Y ~= pred()) / ex.nNode;
@@ -339,8 +355,8 @@ geErrs = teErrs - trErrs;
 % bestParam = zeros(nRunAlgos,nFold);
 % for a = 1:nRunAlgos
 % 	for fold = 1:nFold
-% 		if ismember(runAlgos(a),[1 2 5 8])
-% 			% algos that only 1 weight regularizer
+% 		if ismember(runAlgos(a),[1 2 6 9])
+% 			% algos with only 1 weight regularizer
 % 			bestParam(a,fold) = find(cvErrs(a,fold,:)==min(cvErrs(a,fold,:)),1,'first');
 % % 			bestParam(a,fold) = find(cvErrs(a,fold,2:end,1)==min(cvErrs(a,fold,2:end,1)),1,'first') + 1;
 % 		elseif runAlgos(a) == 3
@@ -360,7 +376,7 @@ geErrs = teErrs - trErrs;
 bestParam = bestParamCVerr;
 
 % display results at end
-colStr = {'Train','Valid','Test','GenErr','MaxStab','AvgStab','C_w','C_r/C_s'};
+colStr = {'Train','Valid','Test','GenErr','MaxStab','AvgStab','C_w','[C_r|C_s|kappa]'};
 bestResults = zeros(nRunAlgos,length(colStr),nFold);
 for fold = 1:nFold
 	% choose best params for fold
@@ -370,7 +386,9 @@ for fold = 1:nFold
 	for a = 1:nRunAlgos
 		if runAlgos(a) == 3
 			bestC2(a) = CvecRel(c2idx(a));
-		elseif runAlgos(a) == 6 || runAlgos(a) == 7
+		elseif runAlgos(a) == 5
+			bestC2(a) = kappaVec(c2idx(a));
+		elseif ismember(runAlgos(a),[7 8])
 			bestC2(a) = CvecStab(c2idx(a));
 		end
 	end
