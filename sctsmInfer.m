@@ -25,6 +25,4 @@ function [f, g] = obj(lambda, z, kappa, Aeq, beq, varargin)
 	y = exp(z + Aeq'*lambda / kappa);
 	f = kappa * sum(y) - beq'*lambda;
 	g = Aeq * y - beq;
-
-
-
+	

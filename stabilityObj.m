@@ -58,16 +58,6 @@ projFun = @(x) perturbProj(x,x_u);
 % fastDerivativeCheck(objFun,x0);
 % return;
 
-% % find worst perturbation using IPM
-% A = ones(size(x0')) - 2*x0';
-% b = 1 - sum(x0);
-% lb = zeros(size(x0));
-% ub = ones(size(x0));
-% options = optimset('GradObj','on','Algorithm','interior-point' ...
-% 				  ,'Display','iter','MaxIter',100 ...
-% 				  ,'TolFun',1e-3,'TolX',1e-8,'TolCon',1e-5);
-% [x_p,f] = fmincon(objFun,x0,A,b,[],[],lb,ub,[],options);
-
 % find worst perturbation using PGD
 [x_p,f,fVec] = pgd(objFun,projFun,x0,options);
 
@@ -86,24 +76,20 @@ nEdgeFeat = size(Xedge_p,2);
 y_p = lossAugInfer(w,Xnode_p,Xedge_p,Ynode_u,nodeMap,edgeMap,edgeStruct,decodeFunc,varargin{:});
 yoc_p = overcompletePairwise(y_p,edgeStruct);
 
-% only 1 example
-Xnode_p = reshape(Xnode_p,nNodeFeat,nNode);
-Xedge_p = reshape(Xedge_p,nEdgeFeat,nEdge);
-
 % compute (sub)gradient w.r.t. w
 sg = zeros(size(w));
 widx = reshape(nodeMap(1,:,:),nState,nNodeFeat);
 yidx = localIndex(1,1:nState,nState);
 for i = 1:nNode
 	dy = yoc_p(yidx) - yoc_u(yidx);
-	sg(widx) = sg(widx) + dy * Xnode_p(:,i)';
+	sg(widx) = sg(widx) + dy * Xnode_p(1,:,i);
 	yidx = yidx + nState;
 end
 widx = reshape(edgeMap(:,:,1,:),nState^2,nEdgeFeat);
 yidx = pairwiseIndex(1,1:nState,1:nState,nNode,nState);
 for e = 1:size(edgeEnds,1)
 	dy = yoc_p(yidx) - yoc_u(yidx);
-	sg(widx) = sg(widx) + dy * Xedge_p(:,e)';
+	sg(widx) = sg(widx) + dy * Xedge_p(1,:,e);
 	yidx = yidx + nState^2;
 end
 
@@ -142,18 +128,14 @@ function [f, g] = perturbObj(x, w, yoc_u, Ynode_u, nodeMap, edgeMap, edgeStruct,
 	% L1 distance between predictions
 	stab = norm(yoc_u - yoc_p, 1);
 	
-	% only 1 example
-	Xnode_p = reshape(Xnode_p,nNodeFeat,nNode);
-	Xedge_p = reshape(Xedge_p,nEdgeFeat,nEdge);
-	
 	% objective/gradient w.r.t. x
 	f = 0;
-	g = zeros(size(Xnode_p));
+	g = zeros(nNodeFeat,nNode);
 	Wnode = reshape(w(nodeMap(1,:,:)),nState,nNodeFeat)';
 	yidx = localIndex(1,1:nState,nState);
 	for i = 1:nNode
 		dy = yoc_p(yidx) - yoc_u(yidx);
-		f = f + sum(sum( Wnode .* (Xnode_p(:,i) * dy') ));
+		f = f + sum(sum( Wnode .* (Xnode_p(1,:,i)' * dy') ));
 		g(:,i) = Wnode * dy;
 		yidx = yidx + nState;
 	end
@@ -163,7 +145,7 @@ function [f, g] = perturbObj(x, w, yoc_u, Ynode_u, nodeMap, edgeMap, edgeStruct,
 		i = edgeEnds(e,1);
 		j = edgeEnds(e,2);
 		dy = yoc_p(yidx) - yoc_u(yidx);
-		f = f + sum(sum( Wedge .* (Xedge_p(:,e) * dy') ));
+		f = f + sum(sum( Wedge .* (Xedge_p(1,:,e)' * dy') ));
 		% following lines assume that edge-specific features occur
 		% after concatenation of edge features.
 		g(:,i) = g(:,i) + Wedge(1:nNodeFeat,:) * dy;
