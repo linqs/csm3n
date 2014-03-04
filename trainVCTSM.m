@@ -1,4 +1,4 @@
-function [w, kappa, fAvg] = trainVCTSM(examples, C, options, w, kappa)
+function [w, kappa, fAvg] = trainVCTSM(examples, inferFunc, C, options, w, kappa)
 
 % Optimizes the VCTSM objective, learning the optimal (w,kappa).
 %
@@ -10,6 +10,7 @@ function [w, kappa, fAvg] = trainVCTSM(examples, C, options, w, kappa)
 %	beq : nCon x 1 constraint b vector
 %	Fx : nParam x length(oc) feature map
 %	suffStat : nParam x 1 vector of sufficient statistics (i.e., Fx * oc)
+% inferFunc : inference function used for convexified inference
 % C : optional regularization constant or vector (def: 1)
 % options : optional struct of optimization options for SGD:
 % 			maxIter : iterations of SGD (def: 500*length(examples))
@@ -19,7 +20,7 @@ function [w, kappa, fAvg] = trainVCTSM(examples, C, options, w, kappa)
 % kappa : init kappa (optional: def=1)
 
 % parse input
-assert(nargin >= 1, 'USAGE: trainVCTSM(examples)')
+assert(nargin >= 2, 'USAGE: trainVCTSM(examples,inferFunc)')
 
 nEx = length(examples);
 nParam = max(examples{1}.edgeMap(:));
@@ -27,10 +28,10 @@ nCon = 0;
 for i = 1:nEx
 	nCon = nCon + length(examples{i}.beq);
 end
-if nargin < 2
+if nargin < 3
 	C = 1;
 end
-if nargin < 3 || ~isstruct(options)
+if nargin < 4 || ~isstruct(options)
 	options = struct();
 end
 if ~isfield(options,'maxIter')
@@ -42,24 +43,23 @@ end
 if ~isfield(options,'verbose')
 	options.verbose = 0;
 end
-if nargin < 4
+if nargin < 5 || isempty(w)
 	w = zeros(nParam,1);
 end
-if nargin < 5
+if nargin < 6 || isempty(kappa)
 	kappa = 1;
 end
 
 % initial position
-x0 = [w ; kappa ; zeros(nCon,1)];
+x0 = [w ; log(kappa)];
 
 % SGD
-objFun = @(x,ex,t) vctsmObj(x,{ex},C);
-[x,fAvg] = sgd(examples,objFun,x0,options);
+objFun = @(x, ex, t) vctsmObj(x, {ex}, C, inferFunc);
+[x,fAvg] = sgd(examples, objFun, x0, options);
 
 % parse optimization output
 w = x(1:nParam);
 kappa = exp(x(nParam+1));
-% lambda = x(nParam+2:end);
 
 
 

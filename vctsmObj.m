@@ -1,4 +1,4 @@
-function [f, g] = vctsmObj(x, examples, C, varargin)
+function [f, g] = vctsmObj(x, examples, C, inferFunc, varargin)
 
 % Outputs the objective value and gradient of the VCTSM learning objective
 % using the dual of loss-augmented inference to make the objective a
@@ -14,6 +14,7 @@ function [f, g] = vctsmObj(x, examples, C, varargin)
 %	Fx : nParam x length(oc) feature map
 %	suffStat : nParam x 1 vector of sufficient statistics (i.e., Fx * oc)
 % C : regularization constant or vector
+% inferFunc : inference function
 % varargin : optional arguments (required by minFunc)
 
 nEx = length(examples);
@@ -21,54 +22,57 @@ nParam = max(examples{1}.edgeMap(:));
 
 % parse current position
 w = x(1:nParam);
-logkappa = x(nParam+1);
-lambda = x((nParam+2):end);
+logKappa = x(nParam+1);
+kappa = exp(logKappa);
 
 % init outputs
-f = 0.5 * exp(-2*logkappa) * (C .* w)' * w;
+f = 0.5 * (C .* w)' * w / kappa^2;
 if nargout == 2
-	gradW = exp(-2*logkappa) * (C .* w);
-	gradKappa = -exp(-2*logkappa) * (C .* w)' * w;
-	gradLambda = zeros(length(lambda),1);
+	gradW = (C .* w) / kappa^2;
+	gradLogKappa = -(C .* w)' * w / kappa^2;
 end
 
 % main loop
-iter = 1;
 for i = 1:nEx
 	
-	% static variables for example i
-	mu = examples{i}.oc;
-	A = examples{i}.Aeq;
-	b = examples{i}.beq;
-	Fx = examples{i}.Fx;
-	ss = examples{i}.suffStat;
-	nLoc = examples{i}.ocLocalScope;
-	[nCon,nAll] = size(A);
+	% Grab ith example.
+	ex = examples{i};
+	Fx = ex.Fx;
+	ss_y = ex.suffStat;
+	Ynode = overcompleteRep(ex.Y,ex.nState,0)';
 	
-	% intermediate variables
-	lam = lambda(iter:iter+nCon-1);
-	ell = zeros(nAll,1);
-	ell(1:nLoc) = 1 - 2*mu(1:nLoc);
-	z = (Fx'*w + ell + A'*lam);
-	y = exp(exp(-logkappa)*z - 1);
+	% Loss-augmented (approx) marginal inference
+	[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
+	nodePot = nodePot .* exp(1 - Ynode);
+	[nodeBel,edgeBel,logZ] = UGM_Infer_CBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc,varargin{:});
 	
+	% Compute sufficient statistics
+	mu = [reshape(nodeBel',[],1) ; edgeBel(:)];
+	ss_mu = Fx*mu;
+	
+	% Compute pseudo-entropy of pseudo-marginals using the identity:
+	% logZ = U - H, where H is entropy and U = w' * Fx * mu
+	U = w' * ss_mu;
+	H = logZ - U;
+	
+	% Scale pseudo-entropy by kappa (or exp(logKappa))
+	H = H * kappa;
+
 	% objective
-	loss = exp(logkappa)*sum(y) - w'*ss - lam'*b + sum(mu(1:nLoc));
+	L1 = norm(Ynode(:)-nodeBel(:), 1);
+	loss = U - w'*ss_y + H + L1;
 	f = f + loss;
 	
 	% gradient
 	if nargout == 2
-		gradW = gradW + Fx * y - ss;
-		gradKappa = gradKappa + y' * (exp(logkappa) - z);
-		gradLambda(iter:iter+nCon-1) = A * y - b;
+		gradW = gradW + ss_mu - ss_y;
+		gradLogKappa = gradLogKappa + H;
 	end
-	
-	iter = iter + nCon;
 	
 end
 
 if nargout == 2
-	g = [gradW; gradKappa; gradLambda];
+	g = [gradW; gradLogKappa];
 end
 
 

@@ -48,12 +48,25 @@ for i = 1:length(examples)
 end
 
 
-%% Train CSM3N
+%% Test CSM3N
 clear;
 examples = noisyX(10,1,0,1,0);
 ex_l = examples(1:5);
 ex_u = examples(6:10);
 [w,fAvg] = trainCSM3N(ex_l,ex_u,@UGM_Decode_LBP,100)
+
+
+%% Test VCTSM
+clear;
+Xdesc = struct('discreteX',1,'nonneg',1);
+examples = noisyX(4,1,0,1,0);
+expSetup = struct('nFold',1,'foldDist',[1 1 1 1],'Xdesc',Xdesc,...
+				  'runAlgos',[2 4],...
+				  'Cvec',100,...
+				  'nStabSamp',0,...
+				  'decodeFunc',@UGM_Decode_LBP,'inferFunc',@UGM_Infer_LBP);
+expSetup.optSGD = struct('maxIter',500);
+experiment;
 
 
 %% Run noisyX experiment
@@ -80,7 +93,7 @@ expSetup = struct('foldIdx',foldIdx,'Xdesc',Xdesc,...
 				  'nStabSamp',0,...
 				  'Cvec',[.1 .5 1 5 10 50 100 500 1000 5000 10000],'CvecRel',0,...
 				  'save2file','poliblog1.mat');
-expSetup.optSGD = struct('maxIter',500);
+expSetup.optSGD = struct('maxIter',200);
 experiment;
 
 
