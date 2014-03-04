@@ -1,11 +1,16 @@
-function [f, g] = vctsmObj(x, examples, C, inferFunc, varargin)
-%
+function [f, g] = vctsmObj_splitReg(x, examples, C, inferFunc, varargin)
+
 % Outputs the objective value and gradient of the VCTSM learning objective
 % using the dual of loss-augmented inference to make the objective a
 % minimization.
 %
 % x : current point in optimization
 % examples : nEx x 1 cell array of examples, each containing:
+%	oc : full overcomplete vector representation of Y
+%		 (including high-order terms)
+%	ocLocalScope : number of local terms in oc
+%	Aeq : nCon x length(oc) constraint A matrix
+%	beq : nCon x 1 constraint b vector
 %	Fx : nParam x length(oc) feature map
 %	suffStat : nParam x 1 vector of sufficient statistics (i.e., Fx * oc)
 % C : regularization constant or vector
@@ -21,10 +26,10 @@ logKappa = x(nParam+1);
 kappa = exp(logKappa);
 
 % init outputs
-f = 0.5 * (C .* w)' * w / kappa^2;
+f = 0.5*(C.*w)'*w + 0.5*C/kappa^2;
 if nargout == 2
-	gradW = (C .* w) / kappa^2;
-	gradLogKappa = -(C .* w)' * w / kappa^2;
+	gradW = (C .* w);
+	gradLogKappa = -C / kappa^2;
 end
 
 % main loop

@@ -1,4 +1,4 @@
-function [f, g] = vctsmObj(x, examples, C, inferFunc, varargin)
+function [f, g] = sctsmObj(x, examples, C, inferFunc, kappa, varargin)
 %
 % Outputs the objective value and gradient of the VCTSM learning objective
 % using the dual of loss-augmented inference to make the objective a
@@ -10,6 +10,7 @@ function [f, g] = vctsmObj(x, examples, C, inferFunc, varargin)
 %	suffStat : nParam x 1 vector of sufficient statistics (i.e., Fx * oc)
 % C : regularization constant or vector
 % inferFunc : inference function
+% kappa : predefined modulus of convexity
 % varargin : optional arguments (required by minFunc)
 
 nEx = length(examples);
@@ -17,14 +18,11 @@ nParam = max(examples{1}.edgeMap(:));
 
 % parse current position
 w = x(1:nParam);
-logKappa = x(nParam+1);
-kappa = exp(logKappa);
 
 % init outputs
-f = 0.5 * (C .* w)' * w / kappa^2;
+f = 0.5 * (C .* w)' * w;
 if nargout == 2
-	gradW = (C .* w) / kappa^2;
-	gradLogKappa = -(C .* w)' * w / kappa^2;
+	gradW = (C .* w);
 end
 
 % main loop
@@ -61,13 +59,12 @@ for i = 1:nEx
 	% gradient
 	if nargout == 2
 		gradW = gradW + ss_mu - ss_y;
-		gradLogKappa = gradLogKappa + H;
 	end
 	
 end
 
 if nargout == 2
-	g = [gradW; gradLogKappa];
+	g = gradW;
 end
 
 

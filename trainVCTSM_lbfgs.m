@@ -3,11 +3,6 @@ function [w, kappa, f] = trainVCTSM_lbfgs(examples, inferFunc, C, options, w, ka
 % Optimizes the VCTSM objective, learning the optimal (w,kappa).
 %
 % examples : nEx x 1 cell array of examples, each containing:
-%	oc : full overcomplete vector representation of Y
-%		 (including high-order terms)
-%	ocLocalScope : number of local terms in oc
-%	Aeq : nCon x length(oc) constraint A matrix
-%	beq : nCon x 1 constraint b vector
 %	F : nParam x length(oc) feature map
 %	suffStat : nParam x 1 vector of sufficient statistics (i.e., F * oc)
 % inferFunc : inference function used for convexified inference
