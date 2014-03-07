@@ -16,7 +16,6 @@ if ~exist('decodeFunc','var')
 	decodeFunc = @UGM_Decode_LBP;
 end
 
-clear;
 cd data/poliblog/Processed;
 [examples,foldIdx] = loadPoliBlog();
 cd ../../..;
