@@ -3,6 +3,7 @@
 % Variables:
 %   nFold (def: 10)
 %   noiseRate (def: 2)
+%   runAlgos (def: [1 2 4])
 %   inferFunc (def: UGM_Infer_LBP)
 %   decodeFunc (def: UGM_Decode_LBP)
 %   filename (def: will not save)
@@ -12,6 +13,9 @@ if ~exist('nFold','var')
 end
 if ~exist('noiseRate','var')
 	noiseRate = 2;
+end
+if ~exist('runAlgos','var')
+	runAlgos = [1 2 4];
 end
 if ~exist('inferFunc','var')
 	inferFunc = @UGM_Infer_LBP;
@@ -23,7 +27,7 @@ examples = noisyX(4*nFold,noiseRate,0,1,0);
 Xdesc = struct('discreteX',1,'nonneg',1);
 expSetup = struct('Xdesc',Xdesc,...
 				  'nFold',nFold,'foldDist',[1 1 1 1],...
-				  'runAlgos',[1 2 4],...
+				  'runAlgos',runAlgos,...
 				  'Cvec',[.001 .01 .1 .5 1 5 10 50 100 500 1000],...
 				  'nStabSamp',0,...
 				  'decodeFunc',decodeFunc,'inferFunc',inferFunc);
