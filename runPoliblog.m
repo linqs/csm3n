@@ -17,7 +17,7 @@ if ~exist('decodeFunc','var')
 end
 
 cd data/poliblog/Processed;
-[examples,foldIdx] = loadPoliBlog();
+[examples,foldIdx] = loadPoliBlog(1);
 cd ../../..;
 Xdesc = struct('discreteX',1,'nonneg',1);
 expSetup = struct('Xdesc',Xdesc,...

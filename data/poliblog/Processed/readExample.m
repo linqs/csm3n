@@ -24,7 +24,8 @@ if makeEdgeDist
 	edgeStruct.edgeDist = makeEdgeDistribution(edgeStruct);
 end
 
-[Aeq,beq] = pairwiseConstraints(edgeStruct);
+% [Aeq,beq] = pairwiseConstraints(edgeStruct);
+Aeq = []; beq = [];
 
 Xnode = csvread([prefix '.Word.csv']);
 nFeat = size(Xnode,2);

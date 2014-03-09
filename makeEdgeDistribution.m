@@ -22,11 +22,12 @@ switch(type)
 		i = 0;
 		edgeAppears = zeros(nEdge,1);
 		while 1
-			i = i+1;
+			i = i+1
 			edgeAppears = edgeAppears+minSpan(nNode,[edgeEnds rand(nEdge,1)]);
 			if all(edgeAppears > 0)
 				break;
 			end
+			find(edgeAppears == 0)
 		end
 		mu = edgeAppears/i;
 		

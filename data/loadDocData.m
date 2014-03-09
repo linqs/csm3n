@@ -1,6 +1,9 @@
-function [examples, foldIdx] = loadDocData(fName, nNet, nPC, plotNets)
+function [examples, foldIdx] = loadDocData(fName, nNet, nPC, makeEdgeDist, plotNets)
 
 if nargin < 4
+	makeEdgeDist = 0;
+end
+if nargin < 5
 	plotNets = 0;
 end
 
@@ -39,7 +42,12 @@ for i = 1:nNet
 	end
 	
 	edgeStruct = UGM_makeEdgeStruct(G(idx,idx),nState,1);
-	[Aeq,beq] = pairwiseConstraints(edgeStruct);
+% 	[Aeq,beq] = pairwiseConstraints(edgeStruct);
+	Aeq = []; beq = [];
+	
+	if makeEdgeDist
+		edgeStruct.edgeDist = makeEdgeDistribution(edgeStruct);
+	end
 	
 	Xnode(1,:,:) = X(idx,:)';
 	Xedge = makeEdgeFeatures(Xnode,edgeStruct.edgeEnds);

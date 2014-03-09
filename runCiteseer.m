@@ -21,7 +21,7 @@ if ~exist('decodeFunc','var')
 end
 
 cd data;
-[examples,foldIdx] = loadDocData('citeseer/citeseer.mat',4,nPC,0);
+[examples,foldIdx] = loadDocData('citeseer/citeseer.mat',4,nPC,1,0);
 cd ..;
 Xdesc = struct('discreteX',0,'nonneg',0);
 expSetup = struct('Xdesc',Xdesc,...
