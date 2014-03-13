@@ -46,7 +46,7 @@ for i = 1:nNet
 	Aeq = []; beq = [];
 	
 	if makeEdgeDist
-		edgeStruct.edgeDist = makeEdgeDistribution(edgeStruct);
+		edgeStruct.edgeDist = UGM_makeEdgeDistribution(edgeStruct);
 	end
 	
 	Xnode(1,:,:) = X(idx,:)';

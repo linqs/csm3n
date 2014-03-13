@@ -87,9 +87,10 @@ for s = 1:length(anno)
 	G = G + G';
 	edgeStruct = UGM_makeEdgeStruct(G,nState,1);
 	if compEdgeDist
-		edgeStruct.edgeDist = makeEdgeDistribution(edgeStruct);
+		edgeStruct.edgeDist = UGM_makeEdgeDistribution(edgeStruct);
 	end
-	[Aeq,beq] = pairwiseConstraints(edgeStruct);
+% 	[Aeq,beq] = pairwiseConstraints(edgeStruct);
+	Aeq = []; beq = [];
 	Xedge = makeEdgeFeatures(Xnode,edgeStruct.edgeEnds,nodeId);
 	examples{s} = makeExample(Xnode,Xedge,y',nState,edgeStruct,Aeq,beq);
 	

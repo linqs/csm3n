@@ -24,6 +24,9 @@ nState = 2;
 G = latticeAdjMatrix4(nRows,nCols);
 edgeStruct = UGM_makeEdgeStruct(G,nState,1);
 nEdge = edgeStruct.nEdges;
+if makeEdgeDist
+	edgeStruct.edgeDist = UGM_makeEdgeDistribution(edgeStruct);
+end
 
 
 %% FEATURES
@@ -57,10 +60,8 @@ y = int32(y+1);
 
 
 %% MAKE EXAMPLE
-if makeEdgeDist
-	edgeStruct.edgeDist = makeEdgeDistribution(edgeStruct);
-end
-[Aeq,beq] = pairwiseConstraints(edgeStruct);
+% [Aeq,beq] = pairwiseConstraints(edgeStruct);
+Aeq = []; beq = [];
 ex = makeExample(Xnode,Xedge,y,nState,edgeStruct,Aeq,beq);
 ex.gmm = gmm;
 ex.pixels = X_bw;

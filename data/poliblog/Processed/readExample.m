@@ -21,7 +21,7 @@ G = G | G';
 edgeStruct = UGM_makeEdgeStruct(G,2,1);
 
 if makeEdgeDist
-	edgeStruct.edgeDist = makeEdgeDistribution(edgeStruct);
+	edgeStruct.edgeDist = UGM_makeEdgeDistribution(edgeStruct);
 end
 
 % [Aeq,beq] = pairwiseConstraints(edgeStruct);
