@@ -27,10 +27,10 @@ if nargout == 2
 	gradW = C1 * C2 * w;
 	gradLogKappa = -C1 / (C2*kappa^2);
 end
-% f = 0.5 * (C .* w)' * w / kappa^2;
+% f = 0.5 * C1 * (w'*w) / kappa^2;
 % if nargout == 2
-% 	gradW = (C .* w) / kappa^2;
-% 	gradLogKappa = -(C .* w)' * w / kappa^2;
+% 	gradW = C1 * w / kappa^2;
+% 	gradLogKappa = -C1 * (w'*w) / kappa^2;
 % end
 
 % Main loop
@@ -40,7 +40,7 @@ for i = 1:nEx
 	ex = examples{i};
 	Fx = ex.Fx;
 	ss_y = ex.suffStat;
-	Ynode = overcompleteRep(ex.Y,ex.nState,0)';
+	Ynode = ex.Ynode'; % assumes Ynode is (nState x nNode)
 	
 	% Loss-augmented (approx) marginal inference
 	[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
