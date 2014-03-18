@@ -1,4 +1,4 @@
-function [f, g] = vctsmObj(x, examples, C, inferFunc, varargin)
+function [f, g] = vctsmObj(x, examples, C1, C2, inferFunc, varargin)
 %
 % Outputs the objective value and gradient of the VCTSM learning objective
 % using the dual of loss-augmented inference to make the objective a
@@ -8,26 +8,32 @@ function [f, g] = vctsmObj(x, examples, C, inferFunc, varargin)
 % examples : nEx x 1 cell array of examples, each containing:
 %	Fx : nParam x length(oc) feature map
 %	suffStat : nParam x 1 vector of sufficient statistics (i.e., Fx * oc)
-% C : regularization constant or vector
+% C1 : regularization constant for reg/loss tradeoff
+% C2 : regularization constant for weights/convexity tradeoff
 % inferFunc : inference function
 % varargin : optional arguments (required by minFunc)
 
 nEx = length(examples);
 nParam = max(examples{1}.edgeMap(:));
 
-% parse current position
+% Parse current position
 w = x(1:nParam);
 logKappa = x(nParam+1);
 kappa = exp(logKappa);
 
-% init outputs
-f = 0.5 * (C .* w)' * w / kappa^2;
+% Init outputs
+f = 0.5*C1 * (C2*(w'*w) + 1/(C2*kappa^2));
 if nargout == 2
-	gradW = (C .* w) / kappa^2;
-	gradLogKappa = -(C .* w)' * w / kappa^2;
+	gradW = C1 * C2 * w;
+	gradLogKappa = -C1 / (C2*kappa^2);
 end
+% f = 0.5 * (C .* w)' * w / kappa^2;
+% if nargout == 2
+% 	gradW = (C .* w) / kappa^2;
+% 	gradLogKappa = -(C .* w)' * w / kappa^2;
+% end
 
-% main loop
+% Main loop
 for i = 1:nEx
 	
 	% Grab ith example.

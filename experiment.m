@@ -212,8 +212,7 @@ for fold = 1:nFold
 					% VCTSM learning (convexity optimization)
 					case 4
 						fprintf('Training VCTSM ...\n');
-						[w,kappa,f] = trainVCTSM(ex_tr,inferFunc,C_w,optSGD,[],2);
-						%[w,kappa,f] = trainVCTSM_lbfgs(ex_tr,inferFunc,C_w,[],[],1);
+						[w,kappa,f] = trainVCTSM(ex_tr,inferFunc,C_w,1,optSGD,[],2);
 						params{a,fold,c1,c2}.w = w;
 						params{a,fold,c1,c2}.kappa = kappa;
 					% SCTSM learning (fixed convexity)
