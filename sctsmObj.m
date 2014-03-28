@@ -32,7 +32,7 @@ for i = 1:nEx
 	ex = examples{i};
 	Fx = ex.Fx;
 	ss_y = ex.suffStat;
-	Ynode = overcompleteRep(ex.Y,ex.nState,0)';
+	Ynode = ex.Ynode'; % assumes Ynode is (nState x nNode)
 	
 	% Loss-augmented (approx) marginal inference
 	[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
