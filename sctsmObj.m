@@ -48,15 +48,13 @@ for i = 1:nEx
 	U = w' * ss_mu;
 	H = logZ - U;
 	
-	% Scale pseudo-entropy by kappa (or exp(logKappa))
-	H = H * kappa;
-
-	% objective
+	% Objective
+	% Note: -\Psi = H
 	L1 = norm(Ynode(:)-nodeBel(:), 1);
-	loss = U - w'*ss_y + H + L1;
+	loss = U - w'*ss_y + kappa*H + L1;
 	f = f + loss;
 	
-	% gradient
+	% Gradient
 	if nargout == 2
 		gradW = gradW + ss_mu - ss_y;
 	end

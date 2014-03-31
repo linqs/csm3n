@@ -18,6 +18,7 @@ nParam = max(examples{1}.edgeMap(:));
 
 % Parse current position
 w = x(1:nParam);
+% kappa = x(nParam+1);
 logKappa = x(nParam+1);
 kappa = exp(logKappa);
 
@@ -25,6 +26,7 @@ kappa = exp(logKappa);
 f = 0.5*C1 * (C2*(w'*w) + 1/(C2*kappa^2));
 if nargout == 2
 	gradW = C1 * C2 * w;
+% 	gradKappa = -C1 / (C2*kappa^3);
 	gradLogKappa = -C1 / (C2*kappa^2);
 end
 % f = 0.5 * C1 * (w'*w) / kappa^2;
@@ -56,23 +58,23 @@ for i = 1:nEx
 	U = w' * ss_mu;
 	H = logZ - U;
 	
-	% Scale pseudo-entropy by kappa (or exp(logKappa))
-	H = H * kappa;
-
-	% objective
+	% Objective
+	% Note: -\Psi = H
 	L1 = norm(Ynode(:)-nodeBel(:), 1);
-	loss = U - w'*ss_y + H + L1;
+	loss = U - w'*ss_y + kappa*H + L1;
 	f = f + loss;
 	
-	% gradient
+	% Gradient
 	if nargout == 2
 		gradW = gradW + ss_mu - ss_y;
-		gradLogKappa = gradLogKappa + H;
+% 		gradKappa = gradKappa + H;
+		gradLogKappa = gradLogKappa + kappa*H;
 	end
 	
 end
 
 if nargout == 2
+% 	g = [gradW; gradKappa];
 	g = [gradW; gradLogKappa];
 end
 
