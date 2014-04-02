@@ -143,3 +143,13 @@ expSetup = struct('Xdesc',Xdesc,...
 % expSetup.optSGD = struct('maxIter',200);
 
 
+%% Convert edgeDist to counting numbers
+
+edgeStruct.nodeCount = ones(ex.nNode,1);
+edgeStruct.edgeCount = edgeStruct.edgeDist;
+for e = 1:ex.nEdge
+	n1 = edgeStruct.edgeEnds(e,1);
+	n2 = edgeStruct.edgeEnds(e,2);
+	edgeStruct.nodeCount(n1) = edgeStruct.nodeCount(n1) - edgeStruct.edgeDist(e);
+	edgeStruct.nodeCount(n2) = edgeStruct.nodeCount(n2) - edgeStruct.edgeDist(e);
+end
