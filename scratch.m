@@ -116,7 +116,7 @@ expSetup = struct('foldIdx',foldIdx,'Xdesc',Xdesc,...
 %% Cora experiment
 clear;
 cd data;
-[examples,foldIdx] = loadDocData('cora/cora.mat',4,30,0);
+[examples,foldIdx] = loadDocData('cora/cora.mat',4,30,1);
 cd ..;
 Xdesc = struct('discreteX',0,'nonneg',0);
 expSetup = struct('foldIdx',foldIdx,'Xdesc',Xdesc,...

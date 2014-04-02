@@ -255,7 +255,7 @@ for fold = 1:nFold
 					if ~ismember(runAlgos(a),[4 5])
 						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
 					else
-						pred = UGM_Decode_CBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
+						pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
 % 					else
 % 						mu = sctsmInfer(w,kappa,ex.Fx,ex.Aeq,ex.beq);
 % 						pred = decodeMarginals(mu,ex.nNode,ex.nState);
@@ -278,9 +278,9 @@ for fold = 1:nFold
 							[stab(i,1),stab(i,2),pert] = measureStabilityRand({w},ex,Xdesc,nStabSamp,decodeFunc,edgeFeatFunc,pred,pert);
 						end
 					else
-						pred = UGM_Decode_CBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
+						pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
 						if nStabSamp > 0
-							vctsmDecoder = @(nodePot,edgePot,edgeStruct) UGM_Decode_CBP(kappa,nodePot,edgePot,edgeStruct,inferFunc);
+							vctsmDecoder = @(nodePot,edgePot,edgeStruct) UGM_Decode_ConvexBP(kappa,nodePot,edgePot,edgeStruct,inferFunc);
 							[stab(i,1),stab(i,2),pert] = measureStabilityRand({w},ex,Xdesc,nStabSamp,vctsmDecoder,edgeFeatFunc,pred,pert);
 						end
 % 					else
@@ -309,7 +309,7 @@ for fold = 1:nFold
 					if ~ismember(runAlgos(a),[4 5])
 						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
 					else
-						pred = UGM_Decode_CBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
+						pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
 % 					else
 % 						mu = sctsmInfer(w,kappa,ex.Fx,ex.Aeq,ex.beq);
 % 						pred = decodeMarginals(mu,ex.nNode,ex.nState);
