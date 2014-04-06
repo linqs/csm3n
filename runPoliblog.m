@@ -4,6 +4,7 @@
 %   runAlgos (def: [1 2 4])
 %   inferFunc (def: UGM_Infer_TRBP)
 %   decodeFunc (def: UGM_Decode_TRBP)
+%   srcfile (def: will load data)
 %   filename (def: will not save)
 
 if ~exist('runAlgos','var')
@@ -16,16 +17,26 @@ if ~exist('decodeFunc','var')
 	decodeFunc = @UGM_Decode_TRBP;
 end
 
-cd data/poliblog/Processed;
-[examples,foldIdx] = loadPoliBlog(1);
-cd ../../..;
 Xdesc = struct('discreteX',1,'nonneg',1);
 expSetup = struct('Xdesc',Xdesc,...
-				  'foldIdx',foldIdx,...
 				  'runAlgos',runAlgos,...
 				  'Cvec',[.001 .01 .1 .5 1 5 10 50 100 500 1000 5000],...
 				  'nStabSamp',0,...
 				  'decodeFunc',decodeFunc,'inferFunc',inferFunc);
+
+cd data/poliblog
+if ~exist('srcfile','var')
+	cd Processed;
+	[examples,foldIdx] = loadPoliBlog(1);
+	expSetup.foldIdx = foldIdx;
+	cd ..;
+else
+	load(srcfile);
+	expSetup.nFold = length(examples) / 4;
+	expSetup.foldDist = [1 0 1 2];
+end
+cd ../..
+
 if exist('filename','var')
 	expSetup.save2file = filename;
 end
