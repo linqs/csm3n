@@ -165,23 +165,34 @@ end
 % Compute avg,std
 avgErrC = zeros(length(Cvec),length(kappaVec));
 stdErrC = zeros(length(Cvec),length(kappaVec));
+avgNormW = zeros(length(Cvec),length(kappaVec));
 for c = 1:length(Cvec)
 	avgErrC(c,:) = mean(squeeze(teErrs(1,1:nFold,c,1:length(kappaVec))),1);
 	stdErrC(c,:) = std(squeeze(teErrs(1,1:nFold,c,1:length(kappaVec))),1);
+	for k = 1:length(kappaVec)
+		for f = 1:nFold
+			avgNormW(c,k) = avgNormW(c,k) + norm(params{1,f,c,k}.w)^2;
+		end
+		avgNormW(c,k) = avgNormW(c,k) / nFold;
+	end
 end
 % Skip first nSkip kappa values (very low convexity is way different scale)
 nSkip = 1;
 
 % Plots
 legendStr = {'C=0.001','C=0.01','C=0.05','C=0.1','C=0.2','C=0.4','C=0.8','C=1','C=2'};
-subplot(1,2,1);
+subplot(2,2,1);
 plot(repmat(kappaVec(1+nSkip:end),length(Cvec),1)',avgErrC(:,1+nSkip:end)');
 title('Convexity vs. Test Error');
 xlabel('kappa'); ylabel('test error (avg 10 folds)');
 legend(legendStr(1+nSkip:end))
-subplot(1,2,2);
+subplot(2,2,2);
 semilogx(repmat(kappaVec(1+nSkip:end),length(Cvec),1)',avgErrC(:,1+nSkip:end)');
 title('Convexity vs. Test Error (log)');
 xlabel('kappa (log)'); ylabel('test error (avg 10 folds)');
+subplot(2,2,3);
+plot(repmat(kappaVec(1+nSkip:end),length(Cvec),1)',avgNormW(:,1+nSkip:end)');
+title('Convexity vs. Norm of Weights');
+xlabel('kappa'); ylabel('||w||^2 (avg 10 folds)');
 
 
