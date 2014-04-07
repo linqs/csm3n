@@ -124,6 +124,7 @@ params = cell(nRunAlgos,nFold,nCvals1,nCvals2);
 trErrs = inf(nRunAlgos,nFold,nCvals1,nCvals2);
 cvErrs = inf(nRunAlgos,nFold,nCvals1,nCvals2);
 teErrs = inf(nRunAlgos,nFold,nCvals1,nCvals2);
+teF1 = inf(nRunAlgos,nFold,nCvals1,nCvals2);
 perturbs = cell(nFold,1);
 cvStabMax = inf(nRunAlgos,nFold,nCvals1,nCvals2,2);
 cvStabAvg = inf(nRunAlgos,nFold,nCvals1,nCvals2,2);
@@ -290,7 +291,7 @@ for fold = 1:nFold
 % 							[stab(i,1),stab(i,2),pert] = measureStabilityRand({w,kappa},ex,Xdesc,nStabSamp,[],edgeFeatFunc,pred,pert);
 % 						end
 					end
-					errs(i) = nnz(ex.Y ~= pred()) / ex.nNode;
+					errs(i) = nnz(ex.Y ~= pred) / ex.nNode;
 				end
 				cvErrs(a,fold,c1,c2) = mean(errs);
 				fprintf('Avg CV err = %.4f\n', cvErrs(a,fold,c1,c2));
@@ -303,6 +304,7 @@ for fold = 1:nFold
 				%% TESTING
 
 				errs = zeros(nTest,1);
+				f1w = zeros(nTest,1);
 				for i = 1:nTest
 					ex = ex_te{i};
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
@@ -314,14 +316,18 @@ for fold = 1:nFold
 % 						mu = sctsmInfer(w,kappa,ex.Fx,ex.Aeq,ex.beq);
 % 						pred = decodeMarginals(mu,ex.nNode,ex.nState);
 					end
-					errs(i) = nnz(ex.Y ~= pred()) / ex.nNode;
+					errs(i) = nnz(ex.Y ~= pred) / ex.nNode;
+					[s.cm,s.err,s.pre,s.rec,s.f1w,s.f1avg] = errStats(double(ex.Y),pred);
+					teStat(a,fold,c1,c2,i) = s;
+					f1w(i) = s.f1w;
 					% plot prediction
 					%subplot(nRunAlgos,1,a);
 					%imagesc(reshape(pred,32,32));
 					%title(algoNames(a));
 				end
 				teErrs(a,fold,c1,c2) = mean(errs);
-				fprintf('Avg test err = %.4f\n', teErrs(a,fold,c1,c2));
+				teF1(a,fold,c1,c2) = mean(f1w);
+				fprintf('Avg test err = %.4f, avg F1 = %.4f\n', teErrs(a,fold,c1,c2),teF1(a,fold,c1,c2));
 
 				%% PROGRESS
 
@@ -386,7 +392,7 @@ geErrs = teErrs - trErrs;
 bestParam = bestParamCVerr;
 
 % display results at end
-colStr = {'Train','Valid','Test','GenErr','MaxStab','AvgStab','C_w','[C_r|C_s|kappa]'};
+colStr = {'TrainErr','ValidErr','TestErr','TestF1','GenErr','MaxStab','AvgStab','C_w','[C_r|C_s|kappa]'};
 bestResults = zeros(nRunAlgos,length(colStr),nFold);
 for fold = 1:nFold
 	% choose best params for fold
@@ -404,7 +410,8 @@ for fold = 1:nFold
 	end
 	% display results for fold
 	idx = sub2ind([nRunAlgos nFold nCvals1 nCvals2],(1:nRunAlgos)',fold*ones(nRunAlgos,1),c1idx,c2idx);
-	bestResults(:,:,fold) = [trErrs(idx) cvErrs(idx) teErrs(idx) geErrs(idx) cvStabMax(idx) cvStabAvg(idx) bestC1(:) bestC2(:)];
+	bestResults(:,:,fold) = [trErrs(idx) cvErrs(idx) teErrs(idx) teF1(idx) geErrs(idx) ...
+							 cvStabMax(idx) cvStabAvg(idx) bestC1(:) bestC2(:)];
 	disptable(bestResults(:,:,fold),colStr,algoNames(runAlgos),'%.5f');
 end
 
