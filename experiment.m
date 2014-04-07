@@ -262,7 +262,7 @@ for fold = 1:nFold
 					end
 					errs(i) = nnz(ex.Y ~= pred) / ex.nNode;
 				end
-				trErrs(a,fold,c1,c2) = sum(errs)/nTrain;
+				trErrs(a,fold,c1,c2) = mean(errs);
 				fprintf('Avg train err = %.4f\n', trErrs(a,fold,c1,c2));
 
 				%% CROSS-VALIDATION
@@ -320,7 +320,7 @@ for fold = 1:nFold
 					%imagesc(reshape(pred,32,32));
 					%title(algoNames(a));
 				end
-				teErrs(a,fold,c1,c2) = sum(errs)/nTest;
+				teErrs(a,fold,c1,c2) = mean(errs);
 				fprintf('Avg test err = %.4f\n', teErrs(a,fold,c1,c2));
 
 				%% PROGRESS
