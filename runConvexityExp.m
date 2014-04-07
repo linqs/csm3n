@@ -25,6 +25,12 @@ end
 if ~exist('decodeFunc','var')
 	decodeFunc = @UGM_Decode_TRBP;
 end
+if ~exist('Cvec','var')
+	Cvec = [.001 .01 .1 .5 1 5 10 50 100 500 1000];
+end
+if ~exist('kappaVec','var')
+	kappaVec = [.001 .01 .05 .1 .2 .4 .8 1 1.5 2];
+end
 
 if discretize
 	Xdesc = struct('discreteX',1,'nonneg',1);
@@ -34,8 +40,8 @@ end
 
 expSetup = struct('Xdesc',Xdesc,...
 				  'runAlgos',[2 4 5],...
-				  'Cvec',[.001 .01 .1 .5 1 5 10 50 100 500 1000],...
-				  'kappaVec',[.001 .01 .05 .1 .2 .4 .8 1 1.5 2],...
+				  'Cvec',Cvec,...
+				  'kappaVec',kappaVec,...
 				  'nStabSamp',0,...
 				  'decodeFunc',decodeFunc,'inferFunc',inferFunc);
 
