@@ -1,4 +1,4 @@
-function ex = readExample(prefix,makeEdgeDist)
+function ex = readExample(prefix,makeEdgeDist,makeCounts)
 %
 % Loads and formats an example from the Political Blog data
 %
@@ -6,6 +6,9 @@ function ex = readExample(prefix,makeEdgeDist)
 
 if nargin < 2
 	makeEdgeDist = 0;
+end
+if nargin < 3
+	makeCounts = 0;
 end
 
 Ynode = csvread([prefix '.Y.csv']);
@@ -22,6 +25,10 @@ edgeStruct = UGM_makeEdgeStruct(G,2,1);
 
 if makeEdgeDist
 	edgeStruct.edgeDist = UGM_makeEdgeDistribution(edgeStruct);
+end
+
+if makeCounts
+	[edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_ConvexBetheCounts(edgeStruct,1);
 end
 
 % [Aeq,beq] = pairwiseConstraints(edgeStruct);

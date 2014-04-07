@@ -159,3 +159,29 @@ for e = 1:ex.nEdge
 	edgeStruct.nodeCount(n1) = edgeStruct.nodeCount(n1) - edgeStruct.edgeDist(e);
 	edgeStruct.nodeCount(n2) = edgeStruct.nodeCount(n2) - edgeStruct.edgeDist(e);
 end
+
+%% Plot convExp results
+
+% Compute avg,std
+avgErrC = zeros(length(Cvec),length(kappaVec));
+stdErrC = zeros(length(Cvec),length(kappaVec));
+for c = 1:length(Cvec)
+	avgErrC(c,:) = mean(squeeze(teErrs(1,1:nFold,c,1:length(kappaVec))),1);
+	stdErrC(c,:) = std(squeeze(teErrs(1,1:nFold,c,1:length(kappaVec))),1);
+end
+% Skip first nSkip kappa values (very low convexity is way different scale)
+nSkip = 1;
+
+% Plots
+legendStr = {'C=0.001','C=0.01','C=0.05','C=0.1','C=0.2','C=0.4','C=0.8','C=1','C=2'};
+subplot(1,2,1);
+plot(repmat(kappaVec(1+nSkip:end),length(Cvec),1)',avgErrC(:,1+nSkip:end)');
+title('Convexity vs. Test Error');
+xlabel('kappa'); ylabel('test error (avg 10 folds)');
+legend(legendStr(1+nSkip:end))
+subplot(1,2,2);
+semilogx(repmat(kappaVec(1+nSkip:end),length(Cvec),1)',avgErrC(:,1+nSkip:end)');
+title('Convexity vs. Test Error (log)');
+xlabel('kappa (log)'); ylabel('test error (avg 10 folds)');
+
+
