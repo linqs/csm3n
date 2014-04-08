@@ -3,7 +3,7 @@
 % Variables:
 %   nFold (def: 10)
 %   noiseRate (def: 1)
-%	discretize (def: 1)
+%   discretize (def: 1)
 %   inferFunc (def: UGM_Infer_TRBP)
 %   decodeFunc (def: UGM_Decode_TRBP)
 %   srcfile (def: will create 7*nFold examples)
