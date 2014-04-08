@@ -134,6 +134,9 @@ bestParamCVerr = zeros(nRunAlgos,nFold);
 bestParamStab = zeros(nRunAlgos,nFold);
 bestParamTest = zeros(nRunAlgos,nFold);
 
+% number of local parameters
+nLocParam = max(examples{1}.nodeMap(:));
+
 for fold = 1:nFold
 	
 	fprintf('Starting fold %d of %d.\n', fold,nFold);
@@ -205,8 +208,7 @@ for fold = 1:nFold
 					% M3NLRR learning (M3N with separate local/relational reg.)
 					case 3
 						fprintf('Training M3N with local/relational regularization ...\n');
-						maxLocParamIdx = max(ex_tr{1}.nodeMap(:));
-						Csplit = [C_w * ones(maxLocParamIdx,1) ; C_r * ones(nParam-maxLocParamIdx,1)];
+						Csplit = [C_w * ones(nLocParam,1) ; C_r * ones(nParam-nLocParam,1)];
 						[w,fAvg] = trainM3N(ex_tr,decodeFunc,Csplit,optSGD);
 						params{a,fold,c1,c2}.w = w;
 
