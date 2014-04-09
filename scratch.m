@@ -164,7 +164,7 @@ end
 
 % Compute avg,std
 sctsmIdx = 3;
-nLocParam = max(examples{1}.nodeMap(:));
+nLocParam = max(ex.nodeMap(:));
 avgErrC = zeros(length(Cvec),length(kappaVec));
 stdErrC = zeros(length(Cvec),length(kappaVec));
 avgErrM3N = mean(squeeze(teErrs(1,1:nFold,1:length(Cvec),1)),1);
