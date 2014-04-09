@@ -107,6 +107,28 @@ else
 	optSGD = struct();
 end
 
+if isfield(expSetup,'optSGD_M3N')
+	optSGD_M3N = expSetup.optSGD_M3N;
+else
+	optSGD_M3N = optSGD;
+end
+if isfield(expSetup,'optSGD_VCTSM')
+	optSGD_VCTSM = expSetup.optSGD_VCTSM;
+else
+	optSGD_VCTSM = optSGD;
+end
+if isfield(expSetup,'optSGD_CACC')
+	optSGD_CACC = expSetup.optSGD_CACC;
+else
+	optSGD_CACC = optSGD;
+end
+
+if isfield(expSetup,'initKappa')
+	initKappa = expSetup.initKappa;
+else
+	initKappa = 2;
+end
+
 
 %% MAIN LOOP
 
@@ -202,44 +224,45 @@ for fold = 1:nFold
 					% M3N learning
 					case 2
 						fprintf('Training M3N ...\n');
-						[w,fAvg] = trainM3N(ex_tr,decodeFunc,C_w,optSGD);
+						[w,fAvg] = trainM3N(ex_tr,decodeFunc,C_w,optSGD_M3N);
 						params{a,fold,c1,c2}.w = w;
 
 					% M3NLRR learning (M3N with separate local/relational reg.)
 					case 3
 						fprintf('Training M3N with local/relational regularization ...\n');
 						Csplit = [C_w * ones(nLocParam,1) ; C_r * ones(nParam-nLocParam,1)];
-						[w,fAvg] = trainM3N(ex_tr,decodeFunc,Csplit,optSGD);
+						[w,fAvg] = trainM3N(ex_tr,decodeFunc,Csplit,optSGD_M3N);
 						params{a,fold,c1,c2}.w = w;
 
 					% VCTSM learning (convexity optimization)
 					case 4
 						fprintf('Training VCTSM ...\n');
-						[w,kappa,f] = trainVCTSM(ex_tr,inferFunc,C_w,1,optSGD,[],2);
+						[w,kappa,f] = trainVCTSM(ex_tr,inferFunc,C_w,1,optSGD_VCTSM,[],initKappa);
+						%[w,kappa,f] = trainVCTSM_lbfgs(ex_tr,inferFunc,C_w,1,[],[],initKappa);
 						params{a,fold,c1,c2}.w = w;
 						params{a,fold,c1,c2}.kappa = kappa;
 					% SCTSM learning (fixed convexity)
 					case 5
 						fprintf('Training SCTSM with kappa=%f ...\n',kappa);
-						[w,f] = trainSCTSM(ex_tr,inferFunc,kappa,C_w,optSGD);
+						[w,f] = trainSCTSM(ex_tr,inferFunc,kappa,C_w,optSGD_M3N);
 						params{a,fold,c1,c2}.w = w;
 
 					% CACC learning (robust M3N)
 					case 6
 						fprintf('Training CACC ...\n');
-						[w,fAvg] = trainCACC(ex_tr,decodeFunc,C_w,optSGD);
+						[w,fAvg] = trainCACC(ex_tr,decodeFunc,C_w,optSGD_CACC);
 						params{a,fold,c1,c2}.w = w;
 
 					% CSM3N learning (M3N + stability reg.)
 					case 7
 						fprintf('Training CSM3N ...\n');
-						[w,fAvg] = trainCSM3N(ex_tr,ex_ul,decodeFunc,C_w,C_s,optSGD);
+						[w,fAvg] = trainCSM3N(ex_tr,ex_ul,decodeFunc,C_w,C_s,optSGD_CACC);
 						params{a,c1,fold}.w = w;
 
 					% CSCACC learning (CACC + stability reg.)
 					case 8
 						fprintf('Training CSCACC ...\n');
-						[w,fAvg] = trainCSCACC(ex_tr,ex_ul,decodeFunc,C_w,C_s,optSGD);
+						[w,fAvg] = trainCSCACC(ex_tr,ex_ul,decodeFunc,C_w,C_s,optSGD_CACC);
 						params{a,fold,c1,c2}.w = w;
 
 					% DLM learning
