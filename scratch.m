@@ -102,7 +102,7 @@ expSetup = struct('Xdesc',Xdesc,...
 clear;
 cd data/poliblog/Processed;
 [examples,foldIdx] = loadPoliBlog(1);
-perturbed = perturbExamples(examples,.15);
+% perturbed = perturbExamples(examples,.15);
 cd ../../..;
 Xdesc = struct('discreteX',0,'nonneg',0);%struct('discreteX',1);
 expSetup = struct('nFold',1,'foldDist',[1 0 1 2],'Xdesc',Xdesc,...
