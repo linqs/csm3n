@@ -84,7 +84,7 @@ fclose(fout);
 
 figure(2);
 
-d = 50; % target dimensionality
+d = 100; % target dimensionality
 
 % center data
 means = mean(full(Xpruned));
