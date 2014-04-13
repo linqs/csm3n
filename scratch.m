@@ -100,10 +100,10 @@ expSetup = struct('Xdesc',Xdesc,...
 
 %% PoliBlog experiment
 clear;
-cd data/poliblog/Processed;
-[examples,foldIdx] = loadPoliBlog(1);
+cd data/poliblog/Raw/pcaProcessed;
+[examples,foldIdx] = loadPoliBlog(1,1);
 % perturbed = perturbExamples(examples,.15);
-cd ../../..;
+cd ../../../../;
 Xdesc = struct('discreteX',0,'nonneg',0);%struct('discreteX',1);
 expSetup = struct('nFold',1,'foldDist',[1 0 1 2],'Xdesc',Xdesc,...
 				  'runAlgos',[2 4],...
@@ -116,7 +116,7 @@ expSetup = struct('nFold',1,'foldDist',[1 0 1 2],'Xdesc',Xdesc,...
 % 				  'nStabSamp',0,...
 % 				  'Cvec',[.1 .5 1 5 10 50 100 500 1000 5000 10000],'CvecRel',0,...
 % 				  'save2file','poliblog1.mat');
-expSetup.optSGD = struct('maxIter',200,'stepSize',1e-6);
+expSetup.optSGD = struct('maxIter',200,'stepSize',1e-4);
 
 
 %% Cora experiment

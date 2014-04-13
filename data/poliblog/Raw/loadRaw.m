@@ -6,7 +6,14 @@ crawls = {'02092012', '05092102'};
 figure(1);
 for i = 1:length(crawls)
     
-    IJ = load(sprintf('wordIJ_%s.txt', crawls{i}));
+     % load from text file if .mat file hasn't been saved
+     % if the text file has been updated, the mat file MUST be removed
+     if exist(sprintf('wordIJ_%s.mat', crawls{i}), 'file')
+         load(sprintf('wordIJ_%s.mat', crawls{i}));
+     else
+        IJ = load(sprintf('wordIJ_%s.txt', crawls{i}));
+        save(sprintf('wordIJ_%s.mat', crawls{i}), 'IJ');
+     end
     
     X{i} = sparse(IJ(:,1), IJ(:,2), ones(length(IJ),1));
     X{i}(1490,:) = 0; % add the last missing page for indexing convenience
@@ -32,11 +39,6 @@ wordStrings(wordIndex) = wordStrings;
 
 X = X{1} + X{2} > 0;
 
-%% remove empty pages
-
-remove = sum(X,2)==0;
-
-X = X(~remove,:);
 
 %% prune overly common or rare words
 
@@ -45,16 +47,29 @@ N = size(X,1);
 DF = full(sum(X>0,1)) / N;
 
 
-maxDF = 0.5; 
-minDF = 100 / N;
+maxDF = 0.25;
+minDF = 50 / N;
 
 keptWords = DF <= maxDF & DF >= minDF;
 
 fprintf('Number of unpruned words: %d\n', nnz(keptWords));
 
-Xpruned = X(:, keptWords) > 0;
+Xpruned = double(X(:, keptWords) > 0);
 
 DFpruned = DF(keptWords);
+
+%% remove empty pages
+
+remove = sum(Xpruned,2)==0;
+
+Xpruned = Xpruned(~remove,:);
+
+N = size(Xpruned,1);
+
+%% normalize X to unit vectors
+
+% 
+% Xpruned = bsxfun(@rdivide, Xpruned, sqrt(sum(Xpruned.*Xpruned,2)));
 
 
 %% output dictionary and pruned words
@@ -84,7 +99,7 @@ fclose(fout);
 
 figure(2);
 
-d = 100; % target dimensionality
+d = 50; % target dimensionality
 
 % center data
 means = mean(full(Xpruned));
