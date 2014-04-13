@@ -58,5 +58,9 @@ end
 if exist('filename','var')
 	expSetup.save2file = filename;
 end
-% expSetup.optSGD = struct('maxIter',200);
+
+if exist('optSGD','var')
+	expSetup.optSGD = optSGD;
+end
+
 experiment;
