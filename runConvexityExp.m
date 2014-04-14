@@ -7,8 +7,8 @@
 %   inferFunc (def: UGM_Infer_TRBP)
 %   decodeFunc (def: UGM_Decode_TRBP)
 %   srcfile (def: will create 7*nFold examples)
-%		Must also supply nFold,foldDist
-%   filename (def: will not save)
+%		Must also supply either foldIdx or nFold,foldDist
+%   savefile (def: will not save)
 
 if ~exist('nFold','var')
 	nFold = 10;
@@ -29,7 +29,7 @@ if ~exist('Cvec','var')
 	Cvec = [.001 .01 .1 .5 1 5 10 50 100 500 1000];
 end
 if ~exist('kappaVec','var')
-	kappaVec = [.001 .01 .05 .1 .2 .4 .8 1 1.5 2];
+	kappaVec = [.001 .01 .02 .05 .1 .25 .5 .75 1 1.5 2];
 end
 
 if discretize
@@ -49,14 +49,17 @@ if ~exist('srcfile','var')
 	examples = noisyX(7*nFold,noiseRate,0,discretize,0);
 	expSetup.nFold = nFold;
 	expSetup.foldDist = [1 0 1 5];
+elseif exist('foldIdx','var')
+	load(srcfile);
+	expSetup.foldIdx = foldIdx;
 else
 	load(srcfile);
 	expSetup.nFold = nFold;
 	expSetup.foldDist = foldDist;
 end
 
-if exist('filename','var')
-	expSetup.save2file = filename;
+if exist('savefile','var')
+	expSetup.save2file = savefile;
 end
 
 if exist('optSGD','var')

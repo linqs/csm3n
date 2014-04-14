@@ -4,6 +4,7 @@
 % 	examples : cell array of (labeled) examples
 % 	expSetup : (optional) structure containing experimental setup
 
+clearvars -except examples expSetup;
 assert(exist('examples','var') && iscell(examples), 'experiment requires cell array of examples.');
 nEx = length(examples);
 nParam = max(examples{1}.edgeMap(:));
