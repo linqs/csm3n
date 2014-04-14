@@ -26,10 +26,10 @@ if ~exist('decodeFunc','var')
 	decodeFunc = @UGM_Decode_TRBP;
 end
 if ~exist('Cvec','var')
-	Cvec = [.001 .01 .1 .5 1 5 10 50 100 500 1000];
+	Cvec = [.001 .01 .1 1 10 100 1000];
 end
 if ~exist('kappaVec','var')
-	kappaVec = [.001 .01 .02 .05 .1 .25 .5 .75 1 1.5 2];
+	kappaVec = [.01 .02 .05 .1 .25 .5 .75 1 1.5 2];
 end
 
 if discretize
