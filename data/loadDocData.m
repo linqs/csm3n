@@ -49,6 +49,7 @@ for i = 1:nNet
 		edgeStruct.edgeDist = UGM_makeEdgeDistribution(edgeStruct);
 	end
 	
+	Xnode = zeros(1,nPC,length(idx));
 	Xnode(1,:,:) = X(idx,:)';
 	Xedge = makeEdgeFeatures(Xnode,edgeStruct.edgeEnds);
 	examples{i} = makeExample(Xnode,Xedge,y(idx),nState,edgeStruct,Aeq,beq);

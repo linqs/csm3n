@@ -163,14 +163,14 @@ stdErrC = zeros(length(Cvec),length(kappaVec));
 avgNormWloc = zeros(length(Cvec),length(kappaVec));
 avgNormWrel = zeros(length(Cvec),length(kappaVec));
 if nFold == 1
-	avgErrM3N = squeeze(teErrs(1,1,1:length(Cvec),1))';
-	avgErrVCTSM = squeeze(teErrs(2,1,1:length(Cvec),1))';
+	avgErrM3N = squeeze(teErrs(1,fold,1:length(Cvec),1))';
+	avgErrVCTSM = squeeze(teErrs(2,fold,1:length(Cvec),1))';
 	for c = 1:length(Cvec)
-		avgErrC(c,:) = squeeze(teErrs(sctsmIdx,1,c,1:length(kappaVec)));
+		avgErrC(c,:) = squeeze(teErrs(sctsmIdx,fold,c,1:length(kappaVec)));
 		stdErrC(c,:) = 0;
 		for k = 1:length(kappaVec)
-			avgNormWloc(c,k) = norm(params{sctsmIdx,1,c,k}.w(1:nLocParam))^2;
-			avgNormWrel(c,k) = norm(params{sctsmIdx,1,c,k}.w(nLocParam+1:end))^2;
+			avgNormWloc(c,k) = norm(params{sctsmIdx,fold,c,k}.w(1:nLocParam))^2;
+			avgNormWrel(c,k) = norm(params{sctsmIdx,fold,c,k}.w(nLocParam+1:end))^2;
 		end
 	end
 else
@@ -189,38 +189,41 @@ else
 	end
 end
 
-% Skip first nSkip kappa values (very low convexity is way different scale)
-nSkip = 0;
-
-% Make legend
+% Make legend strings
 legendStr = {};
 for c = 1:length(Cvec)
 	legendStr{c} = sprintf('C=%.3f',Cvec(c));
 end
 
+% C values to plot
+plotCvec = 1:length(Cvec);
+
+% kappa values to plot
+plotKappa = 2:length(kappaVec);
+
 % Plots
 subplot(2,2,1);
-semilogx(repmat(kappaVec(1+nSkip:end),length(Cvec),1)',avgErrC(:,1+nSkip:end)');
+semilogx(repmat(kappaVec(plotKappa),length(plotCvec),1)',avgErrC(plotCvec,plotKappa)');
 hold on;
-plot(repmat(kappaVec(1+nSkip:end),length(Cvec),1)',repmat(avgErrM3N,length(kappaVec)-nSkip,1),'--');
+plot(repmat(kappaVec(plotKappa),length(plotCvec),1)',repmat(avgErrM3N(plotCvec),length(plotKappa),1),'--');
 hold off;
 title('Convexity vs. Test Error (dotted = M3N)');
-xlabel('log(kappa)'); ylabel('test error (avg 10 folds)');
-legend(legendStr(1+nSkip:end),'Location','SouthEast');
+xlabel('log(kappa)'); ylabel(sprintf('test error (avg %d folds)',nFold));
+legend(legendStr(plotCvec),'Location','SouthEast');
 subplot(2,2,2);
-semilogx(repmat(kappaVec(1+nSkip:end),length(Cvec),1)',avgErrC(:,1+nSkip:end)');
+semilogx(repmat(kappaVec(plotKappa),length(plotCvec),1)',avgErrC(plotCvec,plotKappa)');
 hold on;
-plot(repmat(kappaVec(1+nSkip:end),length(Cvec),1)',repmat(avgErrVCTSM,length(kappaVec)-nSkip,1),'--');
+plot(repmat(kappaVec(plotKappa),length(plotCvec),1)',repmat(avgErrVCTSM(plotCvec),length(plotKappa),1),'--');
 hold off;
 title('Convexity vs. Test Error (dotted = VCTSM)');
-xlabel('log(kappa)'); ylabel('test error (avg 10 folds)');
+xlabel('log(kappa)'); ylabel(sprintf('test error (avg %d folds)',nFold));
 subplot(2,2,3);
-plot(repmat(kappaVec(1+nSkip:end),length(Cvec),1)',avgNormWloc(:,1+nSkip:end)');
+plot(repmat(kappaVec(plotKappa),length(plotCvec),1)',avgNormWloc(plotCvec,plotKappa)');
 title('Convexity vs. Norm of Local Weights');
-xlabel('kappa'); ylabel('||w||^2 (avg 10 folds)');
+xlabel('kappa'); ylabel(sprintf('||w||^2 (avg %d folds)',nFold));
 subplot(2,2,4);
-plot(repmat(kappaVec(1+nSkip:end),length(Cvec),1)',avgNormWrel(:,1+nSkip:end)');
+plot(repmat(kappaVec(plotKappa),length(plotCvec),1)',avgNormWrel(plotCvec,plotKappa)');
 title('Convexity vs. Norm of Relational Weights');
-xlabel('kappa'); ylabel('||w||^2 (avg 10 folds)');
+xlabel('kappa'); ylabel(sprintf('||w||^2 (avg %d folds)',nFold));
 
 
