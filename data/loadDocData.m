@@ -68,6 +68,7 @@ for tr = 1:nNet
 		end
 		fold = fold + 1;
 		foldIdx(fold).tridx = tr;
+		foldIdx(fold).ulidx = [];
 		foldIdx(fold).cvidx = cv;
 		foldIdx(fold).teidx = nets(~ismember(nets,[tr cv]));
 	end
