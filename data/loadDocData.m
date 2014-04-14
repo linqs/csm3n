@@ -57,21 +57,39 @@ end
 
 % Generate nNet! folds of all permutations of 1:nNet, with
 %  1 train
-%  1 unlabeled (if nNet >= 4)
 %  1 cv
 %  rest are test
-exPerms = perms(1:nNet);
-for fold = 1:size(exPerms,1)
-	foldIdx(fold).tridx = exPerms(fold,1);
-	if nNet >= 4
-		foldIdx(fold).ulidx = exPerms(fold,2);
-		foldIdx(fold).cvidx = exPerms(fold,3);
-		foldIdx(fold).teidx = exPerms(fold,4:end);
-	else
-		foldIdx(fold).cvidx = exPerms(fold,2);
-		foldIdx(fold).teidx = exPerms(fold,3);
+fold = 0;
+nets = 1:nNet;
+for tr = 1:nNet
+	for cv = 1:nNet
+		if tr == cv
+			continue
+		end
+		fold = fold + 1;
+		foldIdx(fold).tridx = tr;
+		foldIdx(fold).cvidx = cv;
+		foldIdx(fold).teidx = nets(~ismember(nets,[tr cv]));
 	end
 end
+
+% % Generate nNet! folds of all permutations of 1:nNet, with
+% %  1 train
+% %  1 unlabeled (if nNet >= 4)
+% %  1 cv
+% %  rest are test
+% exPerms = perms(1:nNet);
+% for fold = 1:size(exPerms,1)
+% 	foldIdx(fold).tridx = exPerms(fold,1);
+% 	if nNet >= 4
+% 		foldIdx(fold).ulidx = exPerms(fold,2);
+% 		foldIdx(fold).cvidx = exPerms(fold,3);
+% 		foldIdx(fold).teidx = exPerms(fold,4:end);
+% 	else
+% 		foldIdx(fold).cvidx = exPerms(fold,2);
+% 		foldIdx(fold).teidx = exPerms(fold,3);
+% 	end
+% end
 
 
 % OLD CODE, DO NOT USE!!! Will exhaust RAM.
