@@ -49,13 +49,14 @@ if ~exist('srcfile','var')
 	examples = noisyX(7*nFold,noiseRate,0,discretize,0);
 	expSetup.nFold = nFold;
 	expSetup.foldDist = [1 0 1 5];
-elseif exist('foldIdx','var')
-	load(srcfile);
-	expSetup.foldIdx = foldIdx;
 else
 	load(srcfile);
-	expSetup.nFold = nFold;
-	expSetup.foldDist = foldDist;
+	if exist('foldIdx','var')
+		expSetup.foldIdx = foldIdx;
+	else
+		expSetup.nFold = nFold;
+		expSetup.foldDist = foldDist;
+	end
 end
 
 if exist('savefile','var')
