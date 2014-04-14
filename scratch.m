@@ -155,46 +155,65 @@ expSetup = struct('Xdesc',Xdesc,...
 
 %% Plot convExp results
 
-% Compute avg,std
+% Compute stats
 sctsmIdx = 3;
 nLocParam = max(ex.nodeMap(:));
 avgErrC = zeros(length(Cvec),length(kappaVec));
 stdErrC = zeros(length(Cvec),length(kappaVec));
-avgErrM3N = mean(squeeze(teErrs(1,1:nFold,1:length(Cvec),1)),1);
-avgErrVCTSM = mean(squeeze(teErrs(2,1:nFold,1:length(Cvec),1)),1);
 avgNormWloc = zeros(length(Cvec),length(kappaVec));
 avgNormWrel = zeros(length(Cvec),length(kappaVec));
-for c = 1:length(Cvec)
-	avgErrC(c,:) = mean(squeeze(teErrs(sctsmIdx,1:nFold,c,1:length(kappaVec))),1);
-	stdErrC(c,:) = std(squeeze(teErrs(sctsmIdx,1:nFold,c,1:length(kappaVec))),1);
-	for k = 1:length(kappaVec)
-		for f = 1:nFold
-			avgNormWloc(c,k) = avgNormWloc(c,k) + norm(params{sctsmIdx,f,c,k}.w(1:nLocParam))^2;
-			avgNormWrel(c,k) = avgNormWrel(c,k) + norm(params{sctsmIdx,f,c,k}.w(nLocParam+1:end))^2;
+if nFold == 1
+	avgErrM3N = squeeze(teErrs(1,1,1:length(Cvec),1))';
+	avgErrVCTSM = squeeze(teErrs(2,1,1:length(Cvec),1))';
+	for c = 1:length(Cvec)
+		avgErrC(c,:) = squeeze(teErrs(sctsmIdx,1,c,1:length(kappaVec)));
+		stdErrC(c,:) = 0;
+		for k = 1:length(kappaVec)
+			avgNormWloc(c,k) = norm(params{sctsmIdx,1,c,k}.w(1:nLocParam))^2;
+			avgNormWrel(c,k) = norm(params{sctsmIdx,1,c,k}.w(nLocParam+1:end))^2;
 		end
-		avgNormWloc(c,k) = avgNormWloc(c,k) / nFold;
+	end
+else
+	avgErrM3N = mean(squeeze(teErrs(1,1:nFold,1:length(Cvec),1)),1);
+	avgErrVCTSM = mean(squeeze(teErrs(2,1:nFold,1:length(Cvec),1)),1);
+	for c = 1:length(Cvec)
+		avgErrC(c,:) = mean(squeeze(teErrs(sctsmIdx,1:nFold,c,1:length(kappaVec))),1);
+		stdErrC(c,:) = std(squeeze(teErrs(sctsmIdx,1:nFold,c,1:length(kappaVec))),1);
+		for k = 1:length(kappaVec)
+			for f = 1:nFold
+				avgNormWloc(c,k) = avgNormWloc(c,k) + norm(params{sctsmIdx,f,c,k}.w(1:nLocParam))^2;
+				avgNormWrel(c,k) = avgNormWrel(c,k) + norm(params{sctsmIdx,f,c,k}.w(nLocParam+1:end))^2;
+			end
+			avgNormWloc(c,k) = avgNormWloc(c,k) / nFold;
+		end
 	end
 end
+
 % Skip first nSkip kappa values (very low convexity is way different scale)
-nSkip = 1;
+nSkip = 0;
+
+% Make legend
+legendStr = {};
+for c = 1:length(Cvec)
+	legendStr{c} = sprintf('C=%.3f',Cvec(c));
+end
 
 % Plots
-legendStr = {'C=0.001','C=0.01','C=0.05','C=0.1','C=0.2','C=0.4','C=0.8','C=1','C=2'};
 subplot(2,2,1);
-plot(repmat(kappaVec(1+nSkip:end),length(Cvec),1)',avgErrC(:,1+nSkip:end)');
+semilogx(repmat(kappaVec(1+nSkip:end),length(Cvec),1)',avgErrC(:,1+nSkip:end)');
 hold on;
 plot(repmat(kappaVec(1+nSkip:end),length(Cvec),1)',repmat(avgErrM3N,length(kappaVec)-nSkip,1),'--');
 hold off;
 title('Convexity vs. Test Error (dotted = M3N)');
-xlabel('kappa'); ylabel('test error (avg 10 folds)');
+xlabel('log(kappa)'); ylabel('test error (avg 10 folds)');
 legend(legendStr(1+nSkip:end),'Location','SouthEast');
 subplot(2,2,2);
-plot(repmat(kappaVec(1+nSkip:end),length(Cvec),1)',avgErrC(:,1+nSkip:end)');
+semilogx(repmat(kappaVec(1+nSkip:end),length(Cvec),1)',avgErrC(:,1+nSkip:end)');
 hold on;
 plot(repmat(kappaVec(1+nSkip:end),length(Cvec),1)',repmat(avgErrVCTSM,length(kappaVec)-nSkip,1),'--');
 hold off;
 title('Convexity vs. Test Error (dotted = VCTSM)');
-xlabel('kappa'); ylabel('test error (avg 10 folds)');
+xlabel('log(kappa)'); ylabel('test error (avg 10 folds)');
 subplot(2,2,3);
 plot(repmat(kappaVec(1+nSkip:end),length(Cvec),1)',avgNormWloc(:,1+nSkip:end)');
 title('Convexity vs. Norm of Local Weights');

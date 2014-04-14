@@ -135,8 +135,8 @@ end
 % job metadata
 nJobs = nFold * nCvals1 * (...
 	length(intersect(runAlgos,[1 2 4 6 9])) + ...
-	length(CvecRel) * nnz(runAlgos==3) + ...
-	length(kappaVec) * nnz(runAlgos==5) + ...
+	length(CvecRel) * any(runAlgos==3) + ...
+	length(kappaVec) * any(runAlgos==5) + ...
 	length(CvecStab) * length(intersect(runAlgos,[7 8])) );
 totalTimer = tic;
 count = 0;
@@ -187,27 +187,27 @@ for fold = 1:nFold
 			
 			for a = 1:nRunAlgos
 
-				if ~ismember(runAlgos(a),[3 5 7 8]) && c2 > 1
-					% Some algorithms don't use second reg. param.
-					continue;
-				elseif runAlgos(a) == 3
+				if strcmp(algoNames{runAlgos(a)},'M3NLRR')
 					% M3NLRR
 					if c2 > length(CvecRel)
 						continue;
 					end
 					C_r = CvecRel(c2);
-				elseif runAlgos(a) == 5
+				elseif strcmp(algoNames{runAlgos(a)},'SCTSM')
 					% SCTSM
 					if c2 > length(kappaVec)
 						continue;
 					end
 					kappa = kappaVec(c2);
-				elseif ismember(runAlgos(a),[7 8])
+				elseif strcmp(algoNames{runAlgos(a)},'CSM3N') || strcmp(algoNames{runAlgos(a)},'CSCACC')
 					% CSM3N or CSCACC
 					if c2 > length(CvecStab)
 						continue;
 					end
 					C_s = CvecStab(c2);
+				elseif c2 > 1
+					% Some algorithms don't use second reg. param.
+					continue;
 				end
 				
 				%% TRAINING
@@ -241,6 +241,7 @@ for fold = 1:nFold
 						%[w,kappa,f] = trainVCTSM_lbfgs(ex_tr,inferFunc,C_w,1,[],[],initKappa);
 						params{a,fold,c1,c2}.w = w;
 						params{a,fold,c1,c2}.kappa = kappa;
+						
 					% SCTSM learning (fixed convexity)
 					case 5
 						fprintf('Training SCTSM with kappa=%f ...\n',kappa);
@@ -278,13 +279,10 @@ for fold = 1:nFold
 				for i = 1:nTrain
 					ex = ex_tr{i};
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
-					if ~ismember(runAlgos(a),[4 5])
-						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
-					else
+					if strcmp(runAlgos(a),'VCTSM') || strcmp(runAlgos(a),'SCTSM')
 						pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
-% 					else
-% 						mu = sctsmInfer(w,kappa,ex.Fx,ex.Aeq,ex.beq);
-% 						pred = decodeMarginals(mu,ex.nNode,ex.nState);
+					else
+						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
 					end
 					errs(i) = nnz(ex.Y ~= pred) / ex.nNode;
 				end
@@ -298,23 +296,17 @@ for fold = 1:nFold
 				for i = 1:nCV
 					ex = ex_cv{i};
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
-					if ~ismember(runAlgos(a),[4 5])
+					if strcmp(runAlgos(a),'VCTSM') || strcmp(runAlgos(a),'SCTSM')
+						pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
+						if nStabSamp > 0
+							sctsmDecoder = @(nodePot,edgePot,edgeStruct) UGM_Decode_ConvexBP(kappa,nodePot,edgePot,edgeStruct,inferFunc);
+							[stab(i,1),stab(i,2),pert] = measureStabilityRand({w},ex,Xdesc,nStabSamp,sctsmDecoder,edgeFeatFunc,pred,pert);
+						end
+					else
 						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
 						if nStabSamp > 0
 							[stab(i,1),stab(i,2),pert] = measureStabilityRand({w},ex,Xdesc,nStabSamp,decodeFunc,edgeFeatFunc,pred,pert);
 						end
-					else
-						pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
-						if nStabSamp > 0
-							vctsmDecoder = @(nodePot,edgePot,edgeStruct) UGM_Decode_ConvexBP(kappa,nodePot,edgePot,edgeStruct,inferFunc);
-							[stab(i,1),stab(i,2),pert] = measureStabilityRand({w},ex,Xdesc,nStabSamp,vctsmDecoder,edgeFeatFunc,pred,pert);
-						end
-% 					else
-% 						mu = sctsmInfer(w,kappa,ex.Fx,ex.Aeq,ex.beq);
-% 						pred = decodeMarginals(mu,ex.nNode,ex.nState);
-% 						if nStabSamp > 0
-% 							[stab(i,1),stab(i,2),pert] = measureStabilityRand({w,kappa},ex,Xdesc,nStabSamp,[],edgeFeatFunc,pred,pert);
-% 						end
 					end
 					errs(i) = nnz(ex.Y ~= pred) / ex.nNode;
 				end
@@ -333,13 +325,10 @@ for fold = 1:nFold
 				for i = 1:nTest
 					ex = ex_te{i};
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
-					if ~ismember(runAlgos(a),[4 5])
-						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
-					else
+					if strcmp(runAlgos(a),'VCTSM') || strcmp(runAlgos(a),'SCTSM')
 						pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
-% 					else
-% 						mu = sctsmInfer(w,kappa,ex.Fx,ex.Aeq,ex.beq);
-% 						pred = decodeMarginals(mu,ex.nNode,ex.nState);
+					else
+						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);						
 					end
 					errs(i) = nnz(ex.Y ~= pred) / ex.nNode;
 					[s.cm,s.err,s.pre,s.rec,s.f1w,s.f1avg] = errStats(double(ex.Y),pred);
@@ -425,11 +414,11 @@ for fold = 1:nFold
 	bestC1 = Cvec(c1idx);
 	bestC2 = zeros(nRunAlgos,1);
 	for a = 1:nRunAlgos
-		if runAlgos(a) == 3
+		if strcmp(algoNames{runAlgos(a)},'M3NLRR')
 			bestC2(a) = CvecRel(c2idx(a));
-		elseif runAlgos(a) == 5
+		elseif strcmp(algoNames{runAlgos(a)},'SCTSM')
 			bestC2(a) = kappaVec(c2idx(a));
-		elseif ismember(runAlgos(a),[7 8])
+		elseif strcmp(algoNames{runAlgos(a)},'CSM3N') || strcmp(algoNames{runAlgos(a)},'CSCACC')
 			bestC2(a) = CvecStab(c2idx(a));
 		end
 	end
