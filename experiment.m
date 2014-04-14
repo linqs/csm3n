@@ -259,7 +259,7 @@ for fold = 1:nFold
 					case 7
 						fprintf('Training CSM3N ...\n');
 						[w,fAvg] = trainCSM3N(ex_tr,ex_ul,decodeFunc,C_w,C_s,optSGD_CACC);
-						params{a,c1,fold}.w = w;
+						params{a,fold,c1,c2}.w = w;
 
 					% CSCACC learning (CACC + stability reg.)
 					case 8
