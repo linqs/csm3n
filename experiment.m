@@ -127,7 +127,7 @@ end
 if isfield(expSetup,'initKappa')
 	initKappa = expSetup.initKappa;
 else
-	initKappa = 2;
+	initKappa = 1;
 end
 
 

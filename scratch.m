@@ -153,6 +153,21 @@ expSetup = struct('Xdesc',Xdesc,...
 % expSetup.optSGD = struct('maxIter',200);
 
 
+%% Noisy CAG
+
+clear;
+cd data/catandgirl;
+[examples] = loadCAG(0.1);
+cd ../..;
+Xdesc = struct('discreteX',1,'nonneg',1);
+expSetup = struct('nFold',1,'foldDist',[1 0 1 2],...
+				  'Xdesc',Xdesc,...
+				  'runAlgos',[2 4],...
+				  'decodeFunc',@UGM_Decode_TRBP,'inferFunc',@UGM_Infer_TRBP,...
+				  'Cvec',1,'CvecRel',0,...
+				  'nStabSamp',0);
+
+
 %% Plot convExp results
 
 % Compute stats
@@ -162,29 +177,30 @@ avgErrC = zeros(length(Cvec),length(kappaVec));
 stdErrC = zeros(length(Cvec),length(kappaVec));
 avgNormWloc = zeros(length(Cvec),length(kappaVec));
 avgNormWrel = zeros(length(Cvec),length(kappaVec));
-if nFold == 1
-	avgErrM3N = squeeze(teErrs(1,fold,1:length(Cvec),1))';
-	avgErrVCTSM = squeeze(teErrs(2,fold,1:length(Cvec),1))';
+plotFolds = 1:nFold;
+if length(plotFolds) == 1
+	avgErrM3N = squeeze(teErrs(1,plotFolds(1),1:length(Cvec),1))';
+	avgErrVCTSM = squeeze(teErrs(2,plotFolds(1),1:length(Cvec),1))';
 	for c = 1:length(Cvec)
-		avgErrC(c,:) = squeeze(teErrs(sctsmIdx,fold,c,1:length(kappaVec)));
+		avgErrC(c,:) = squeeze(teErrs(sctsmIdx,plotFolds(1),c,1:length(kappaVec)));
 		stdErrC(c,:) = 0;
 		for k = 1:length(kappaVec)
-			avgNormWloc(c,k) = norm(params{sctsmIdx,fold,c,k}.w(1:nLocParam))^2;
-			avgNormWrel(c,k) = norm(params{sctsmIdx,fold,c,k}.w(nLocParam+1:end))^2;
+			avgNormWloc(c,k) = norm(params{sctsmIdx,plotFolds(1),c,k}.w(1:nLocParam))^2;
+			avgNormWrel(c,k) = norm(params{sctsmIdx,plotFolds(1),c,k}.w(nLocParam+1:end))^2;
 		end
 	end
 else
-	avgErrM3N = mean(squeeze(teErrs(1,1:nFold,1:length(Cvec),1)),1);
-	avgErrVCTSM = mean(squeeze(teErrs(2,1:nFold,1:length(Cvec),1)),1);
+	avgErrM3N = mean(squeeze(teErrs(1,plotFolds,1:length(Cvec),1)),1);
+	avgErrVCTSM = mean(squeeze(teErrs(2,plotFolds,1:length(Cvec),1)),1);
 	for c = 1:length(Cvec)
-		avgErrC(c,:) = mean(squeeze(teErrs(sctsmIdx,1:nFold,c,1:length(kappaVec))),1);
-		stdErrC(c,:) = std(squeeze(teErrs(sctsmIdx,1:nFold,c,1:length(kappaVec))),1);
+		avgErrC(c,:) = mean(squeeze(teErrs(sctsmIdx,plotFolds,c,1:length(kappaVec))),1);
+		stdErrC(c,:) = std(squeeze(teErrs(sctsmIdx,plotFolds,c,1:length(kappaVec))),1);
 		for k = 1:length(kappaVec)
-			for f = 1:nFold
+			for f = plotFolds
 				avgNormWloc(c,k) = avgNormWloc(c,k) + norm(params{sctsmIdx,f,c,k}.w(1:nLocParam))^2;
 				avgNormWrel(c,k) = avgNormWrel(c,k) + norm(params{sctsmIdx,f,c,k}.w(nLocParam+1:end))^2;
 			end
-			avgNormWloc(c,k) = avgNormWloc(c,k) / nFold;
+			avgNormWloc(c,k) = avgNormWloc(c,k) / length(plotFolds);
 		end
 	end
 end
@@ -199,7 +215,7 @@ end
 plotCvec = 1:length(Cvec);
 
 % kappa values to plot
-plotKappa = 2:length(kappaVec);
+plotKappa = 1:length(kappaVec);
 
 % Plots
 subplot(2,2,1);
