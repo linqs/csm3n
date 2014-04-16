@@ -46,7 +46,9 @@ expSetup = struct('Xdesc',Xdesc,...
 				  'decodeFunc',decodeFunc,'inferFunc',inferFunc);
 
 if ~exist('srcfile','var')
+	cd data;
 	examples = noisyX(7*nFold,noiseRate,0,discretize,0);
+	cd ..;
 	expSetup.nFold = nFold;
 	expSetup.foldDist = [1 0 1 5];
 else

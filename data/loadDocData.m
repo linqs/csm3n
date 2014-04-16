@@ -1,9 +1,9 @@
 function [examples, foldIdx] = loadDocData(fName, nNet, nPC, makeEdgeDist, plotNets)
 
-if nargin < 4
+if ~exist('makeEdgeDist','var') || isempty(makeEdgeDist)
 	makeEdgeDist = 0;
 end
-if nargin < 5
+if ~exist('plotNets','var') || isempty(plotNets)
 	plotNets = 0;
 end
 
@@ -56,22 +56,24 @@ for i = 1:nNet
 
 end
 
-% Generate nNet! folds of all permutations of 1:nNet, with
-%  1 train
-%  1 cv
-%  rest are test
-fold = 0;
-nets = 1:nNet;
-for tr = 1:nNet
-	for cv = 1:nNet
-		if tr == cv
-			continue
+if nargout == 2
+	% Generate nNet! folds of all permutations of 1:nNet, with
+	%  1 train
+	%  1 cv
+	%  rest are test
+	fold = 0;
+	nets = 1:nNet;
+	for tr = 1:nNet
+		for cv = 1:nNet
+			if tr == cv
+				continue
+			end
+			fold = fold + 1;
+			foldIdx(fold).tridx = tr;
+			foldIdx(fold).ulidx = [];
+			foldIdx(fold).cvidx = cv;
+			foldIdx(fold).teidx = nets(~ismember(nets,[tr cv]));
 		end
-		fold = fold + 1;
-		foldIdx(fold).tridx = tr;
-		foldIdx(fold).ulidx = [];
-		foldIdx(fold).cvidx = cv;
-		foldIdx(fold).teidx = nets(~ismember(nets,[tr cv]));
 	end
 end
 

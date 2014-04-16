@@ -23,7 +23,9 @@ end
 if ~exist('decodeFunc','var')
 	decodeFunc = @UGM_Decode_LBP;
 end
+cd data;
 examples = noisyX(4*nFold,noiseRate,0,1,0);
+cd ..;
 Xdesc = struct('discreteX',1,'nonneg',1);
 expSetup = struct('Xdesc',Xdesc,...
 				  'nFold',nFold,'foldDist',[1 1 1 1],...
