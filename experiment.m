@@ -71,12 +71,12 @@ nCvals2 = max([length(CvecRel),length(CvecStab),length(kappaVec)]);
 if isfield(expSetup,'decodeFunc')
 	decodeFunc = expSetup.decodeFunc;
 else
-	decodeFunc = @UGM_Decode_LBP;
+	decodeFunc = @UGM_Decode_TRBP;
 end
 if isfield(expSetup,'inferFunc')
 	inferFunc = expSetup.inferFunc;
 else
-	inferFunc = @UGM_Infer_LBP;
+	inferFunc = @UGM_Infer_TRBP;
 end
 if isfield(expSetup,'edgeFeatFunc')
 	edgeFeatFunc = expSetup.edgeFeatFunc;
