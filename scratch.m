@@ -170,9 +170,17 @@ expSetup.optSGD = struct('maxIter',100,'verbose',1,'stepSize',1e-6);
 
 %% Plot convExp results
 
+% Experiment variables
+if isfield(expSetup,'foldIdx')
+	nFold = length(expSetup.foldIdx);
+else
+	nFold = expSetup.nFold;
+end
+Cvec = expSetup.Cvec;
+kappaVec = expSetup.kappaVec;
+sctsmIdx = find(expSetup.runAlgos==5);
+
 % Compute stats
-sctsmIdx = 3;
-nLocParam = max(ex.nodeMap(:));
 avgErrC = zeros(length(Cvec),length(kappaVec));
 stdErrC = zeros(length(Cvec),length(kappaVec));
 avgNormWloc = zeros(length(Cvec),length(kappaVec));
@@ -212,7 +220,7 @@ for c = 1:length(Cvec)
 end
 
 % C values to plot
-plotCvec = 1:length(Cvec);
+plotCvec = 1:length(Cvec)-3;
 
 % kappa values to plot
 plotKappa = 1:length(kappaVec);
@@ -226,6 +234,7 @@ hold off;
 title('Convexity vs. Test Error (dotted = M3N)');
 xlabel('log(kappa)'); ylabel(sprintf('test error (avg %d folds)',nFold));
 legend(legendStr(plotCvec),'Location','SouthEast');
+
 subplot(2,2,2);
 semilogx(repmat(kappaVec(plotKappa),length(plotCvec),1)',avgErrC(plotCvec,plotKappa)');
 hold on;
@@ -233,13 +242,16 @@ plot(repmat(kappaVec(plotKappa),length(plotCvec),1)',repmat(avgErrVCTSM(plotCvec
 hold off;
 title('Convexity vs. Test Error (dotted = VCTSM)');
 xlabel('log(kappa)'); ylabel(sprintf('test error (avg %d folds)',nFold));
-subplot(2,2,3);
-plot(repmat(kappaVec(plotKappa),length(plotCvec),1)',avgNormWloc(plotCvec,plotKappa)');
-title('Convexity vs. Norm of Local Weights');
-xlabel('kappa'); ylabel(sprintf('||w||^2 (avg %d folds)',nFold));
-subplot(2,2,4);
-plot(repmat(kappaVec(plotKappa),length(plotCvec),1)',avgNormWrel(plotCvec,plotKappa)');
-title('Convexity vs. Norm of Relational Weights');
-xlabel('kappa'); ylabel(sprintf('||w||^2 (avg %d folds)',nFold));
 
+subplot(2,2,3);
+[hAx,hLine1,hLine2] = plotyy(repmat(kappaVec(plotKappa),length(plotCvec),1)',avgNormWloc(plotCvec,plotKappa)',repmat(kappaVec(plotKappa),length(plotCvec),1)',avgNormWrel(plotCvec,plotKappa)');
+set(hLine2,'LineStyle','--');
+% plot(repmat(kappaVec(plotKappa),length(plotCvec),1)',avgNormWloc(plotCvec,plotKappa)');
+% hold on;
+% plot(repmat(kappaVec(plotKappa),length(plotCvec),1)',avgNormWrel(plotCvec,plotKappa)','--');
+% hold off;
+title('Convexity vs. Norm of Weights');
+xlabel('kappa');
+ylabel(hAx(1),sprintf('Local ||w||^2 (avg %d folds)',nFold));
+ylabel(hAx(2),sprintf('Relational ||w||^2 (avg %d folds)',nFold));
 
