@@ -29,18 +29,18 @@ nStateY = 2;
 % Make noisy X instances
 Y = reshape(Ximage,[nNode 1]);
 Y = repmat(Y,[1 nEx]);
-% Y = Y + 0.25*randn(size(Y));
 Y = int32(Y > 0.5);
 Y = Y + 1;
 
 % noisy observations
-obs = (double(Y) - 1) * 2 - 1 + obsNoise * randn(size(Y));
+obs = (double(Y)-1)*2-1 + obsNoise*randn(size(Y));
+% obs = abs((double(Y)-1) - (rand(size(Y))<obsNoise));
 X = zeros(nEx,addBias+1+binarizeX,nNode);
 for i = 1:nEx
 	if ~binarizeX
 		xi = obs(:,i);
 	else
-		xi = [(obs(:,i) < 0) (obs(:,i) >= 0)];
+		xi = [(obs(:,i) <= 0) (obs(:,i) > 0)];
 	end
 	if addBias
 		xi = [ones(nNode,1) xi];
@@ -50,17 +50,20 @@ end
 
 % plot first example
 if dispPlot
-	figure;
+	fig = figure();
+	figpos = get(fig,'Position');
+	figpos(4) = 2*figpos(4);
+	set(fig,'Position',figpos);
 	subplot(2,1,1);
 	imagesc(reshape(Y(:,1),nRows,nCols));
 	subplot(2,1,2);
 	if ~binarizeX
 		imagesc(reshape(obs(:,1),nRows,nCols));
 	else
-		imagesc(reshape(obs(:,1) >= 0,nRows,nCols));
+		imagesc(reshape(obs(:,1)>0,nRows,nCols));
 	end
-	colormap gray
-	suptitle('Example of Noisy X');
+	colormap(gray);
+	suptitle(sprintf('Example of Noisy X (noiseRate = %f)',obsNoise));
 end
 
 % adjacency graph
@@ -70,10 +73,10 @@ G = latticeAdjMatrix4(nRows,nCols);
 examples = cell(nEx,1);
 edgeStruct = UGM_makeEdgeStruct(G,nStateY,1);
 edgeStruct.edgeDist = UGM_makeEdgeDistribution(edgeStruct,3,[nRows nCols]);
-[Aeq,beq] = pairwiseConstraints(edgeStruct);
+% [Aeq,beq] = pairwiseConstraints(edgeStruct);
 for i = 1:nEx
 	Xnode = X(i,:,:);
 	Xedge = makeEdgeFeatures(Xnode,edgeStruct.edgeEnds);
-	examples{i} = makeExample(Xnode,Xedge,Y(:,i),nStateY,edgeStruct,Aeq,beq);
+	examples{i} = makeExample(Xnode,Xedge,Y(:,i),nStateY,edgeStruct,[],[]);
 end
 

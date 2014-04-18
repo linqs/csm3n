@@ -44,7 +44,7 @@ end
 
 % SGD
 objFun = @(x, ex, t) sctsmObj(x, {ex}, C, inferFunc, kappa);
-[w,fAvg] = sgd(examples, objFun, w, options);
+[w,fAvg] = sgd(examples, objFun, w, [], options);
 
 
 

@@ -41,6 +41,13 @@ end
 if ~isfield(options,'stepSize')
 	options.stepSize = 1e-4;
 end
+if isfield(options,'stepSizeKappa')
+	if length(options.stepSize) == 1
+		options.stepSize = [ones(nParam,1)*options.stepSize ; options.stepSizeKappa];
+	else
+		options.stepSize = [options.stepSize(1:nParam) ; options.stepSizeKappa];
+	end
+end
 if ~isfield(options,'verbose')
 	options.verbose = 0;
 end
@@ -56,11 +63,17 @@ x0 = [w ; log(kappa)];
 
 % SGD
 objFun = @(x, ex, t) vctsmObj(x, {ex}, C1, C2, inferFunc);
-[x,fAvg] = sgd(examples, objFun, x0, options);
+[x,fAvg] = sgd(examples, objFun, x0, @projFun, options);
 
 % parse optimization output
-w = x(1:nParam);
-kappa = exp(x(nParam+1));
+w = x(1:end-1);
+kappa = exp(x(end));
 
 
+%% Projection function (ensures that kappa is positive)
+function x = projFun(x)
+
+if x(end) < log(1e-10)
+	x(end) = log(1e-10);
+end
 

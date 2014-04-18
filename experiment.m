@@ -130,6 +130,12 @@ else
 	initKappa = 1;
 end
 
+if isfield(expSetup,'plotPred')
+	plotPred = expSetup.plotPred;
+else
+	plotPred = 0;
+end
+
 
 %% MAIN LOOP
 
@@ -160,6 +166,14 @@ bestParamTest = zeros(nRunAlgos,nFold);
 % number of local parameters
 nLocParam = max(examples{1}.nodeMap(:));
 
+% Setup figure for plotting predictions
+if plotPred
+	fig = figure();
+	figpos = get(fig,'Position');
+	figpos(4) = nRunAlgos*figpos(4);
+	set(fig,'Position',figpos);
+end
+
 for fold = 1:nFold
 	
 	fprintf('Starting fold %d of %d.\n', fold,nFold);
@@ -180,6 +194,11 @@ for fold = 1:nFold
 	
 	% init perturbations for stability measurement
 	pert = [];
+			
+	% Title of plot
+	if plotPred
+		suptitle(sprintf('Predictions for (last) test example : fold=%d',fold));
+	end
 	
 	for c1 = 1:nCvals1
 		C_w = Cvec(c1);
@@ -335,14 +354,18 @@ for fold = 1:nFold
 					[s.cm,s.err,s.pre,s.rec,s.f1w,s.f1avg] = errStats(double(ex.Y),pred);
 					teStat(a,fold,c1,c2,i) = s;
 					f1w(i) = s.f1w;
-					% plot prediction
-					%subplot(nRunAlgos,1,a);
-					%imagesc(reshape(pred,32,32));
-					%title(algoNames(a));
 				end
 				teErrs(a,fold,c1,c2) = mean(errs);
 				teF1(a,fold,c1,c2) = mean(f1w);
 				fprintf('Avg test err = %.4f, avg F1 = %.4f\n', teErrs(a,fold,c1,c2),teF1(a,fold,c1,c2));
+
+				% plot last prediction
+				if plotPred
+					subplot(nRunAlgos,1,a);
+					imagesc(reshape(pred,32,32));
+					colormap(gray);
+					title(sprintf('%s : C1=%d, C2=%d', algoNames{a},c1,c2));
+				end
 
 				%% PROGRESS
 

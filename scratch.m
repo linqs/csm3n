@@ -73,12 +73,16 @@ expSetup = struct('Xdesc',Xdesc,...
 %% Discrete noisyX
 clear;
 nFold = 1;
-examples = noisyX(7*nFold,1.5,0,1,0);
+cd data
+examples = noisyX(7*nFold,2,0,1,1);
+% examples = noisyX(7*nFold,.3,0,1,1);
+cd ..;
 Xdesc = struct('discreteX',1,'nonneg',1);
 expSetup = struct('Xdesc',Xdesc,...
 				  'nFold',nFold,'foldDist',[1 0 1 5],...
-				  'runAlgos',[2 4],...
-				  'Cvec',[.01 .1 1 10],...
+				  'runAlgos',[2 4 5],...
+				  'Cvec',1,...
+				  'kappaVec',[.1 .2 .5 1 2],...
 				  'nStabSamp',0,...
 				  'decodeFunc',@UGM_Decode_TRBP,'inferFunc',@UGM_Infer_TRBP);
 % expSetup.optSGD = struct('maxIter',200);
@@ -87,12 +91,15 @@ expSetup = struct('Xdesc',Xdesc,...
 %% Continuous noisyX
 clear;
 nFold = 1;
-examples = noisyX(3*nFold,2,0,0,0);
+cd data
+examples = noisyX(7*nFold,2,0,0,1);
+cd ..
 Xdesc = struct('discreteX',0,'nonneg',0);
 expSetup = struct('Xdesc',Xdesc,...
-				  'nFold',nFold,'foldDist',[1 0 1 1],...
-				  'runAlgos',[1 2 4],...
-				  'Cvec',[.01 .1 1 10],...
+				  'nFold',nFold,'foldDist',[1 0 1 5],...
+				  'runAlgos',[2 4 5],...
+				  'Cvec',1,...
+				  'kappaVec',[.1 .2 .5 1 2],...
 				  'nStabSamp',0,...
 				  'decodeFunc',@UGM_Decode_TRBP,'inferFunc',@UGM_Infer_TRBP);
 % expSetup.optSGD = struct('maxIter',200);
@@ -156,11 +163,14 @@ expSetup = struct('Xdesc',Xdesc,...
 %% Noisy CAG
 
 clear;
-cd data/catandgirl;
-[examples] = loadCAG(0.1);
+% cd data/catandgirl;
+% [examples] = loadCAG(0.1);
+% cd ../..;
+cd data/nips14;
+[examples] = loadExamples(3,.2,.5,1,1,1);
 cd ../..;
 Xdesc = struct('discreteX',1,'nonneg',1);
-expSetup = struct('nFold',1,'foldDist',[1 0 1 2],...
+expSetup = struct('nFold',1,'foldDist',[1 0 1 1],...
 				  'Xdesc',Xdesc,...
 				  'runAlgos',[2 4],...
 				  'decodeFunc',@UGM_Decode_TRBP,'inferFunc',@UGM_Infer_TRBP,...
@@ -220,36 +230,62 @@ for c = 1:length(Cvec)
 end
 
 % C values to plot
-plotCvec = 1:length(Cvec)-3;
+plotCvec = 1:length(Cvec);
 
 % kappa values to plot
 plotKappa = 1:length(kappaVec);
 
-% Plots
-subplot(2,2,1);
+% Plots (2 plots)
+fig = figure();
+figPos = get(fig,'Position');
+figPos(3) = 2*figPos(3);
+set(fig,'Position',figPos);
+
+subplot(1,2,1);
 semilogx(repmat(kappaVec(plotKappa),length(plotCvec),1)',avgErrC(plotCvec,plotKappa)');
 hold on;
-plot(repmat(kappaVec(plotKappa),length(plotCvec),1)',repmat(avgErrM3N(plotCvec),length(plotKappa),1),'--');
+plot(repmat(kappaVec(plotKappa),length(plotCvec),1)',repmat(avgErrM3N(plotCvec),length(plotKappa),1),'-.');
+plot(repmat(kappaVec(plotKappa),length(plotCvec),1)',repmat(avgErrVCTSM(plotCvec),length(plotKappa),1),'--');
+hold off;
+title('Convexity vs. Test Error (dash-dot = M3N, dash-dash = VCTSM)');
+xlabel('log(kappa)'); ylabel(sprintf('test error (avg %d folds)',nFold));
+legend(legendStr(plotCvec),'Location','SouthEast');
+
+subplot(1,2,2);
+[hAx,hLine1,hLine2] = plotyy(repmat(kappaVec(plotKappa),length(plotCvec),1)',avgNormWloc(plotCvec,plotKappa)',repmat(kappaVec(plotKappa),length(plotCvec),1)',avgNormWrel(plotCvec,plotKappa)');
+set(hLine2,'LineStyle','--');
+title('Convexity vs. Norm of Weights');
+xlabel('kappa');
+ylabel(hAx(1),sprintf('Local ||w||^2 (avg %d folds)',nFold));
+ylabel(hAx(2),sprintf('Relational ||w||^2 (avg %d folds)',nFold));
+
+
+% Plots (3 plots)
+fig = figure();
+figPos = get(fig,'Position');
+figPos(3) = 3*figPos(3);
+set(fig,'Position',figPos);
+
+subplot(1,3,1);
+semilogx(repmat(kappaVec(plotKappa),length(plotCvec),1)',avgErrC(plotCvec,plotKappa)');
+hold on;
+semilogx(repmat(kappaVec(plotKappa),length(plotCvec),1)',repmat(avgErrM3N(plotCvec),length(plotKappa),1),'-.');
 hold off;
 title('Convexity vs. Test Error (dotted = M3N)');
 xlabel('log(kappa)'); ylabel(sprintf('test error (avg %d folds)',nFold));
 legend(legendStr(plotCvec),'Location','SouthEast');
 
-subplot(2,2,2);
+subplot(1,3,2);
 semilogx(repmat(kappaVec(plotKappa),length(plotCvec),1)',avgErrC(plotCvec,plotKappa)');
 hold on;
-plot(repmat(kappaVec(plotKappa),length(plotCvec),1)',repmat(avgErrVCTSM(plotCvec),length(plotKappa),1),'--');
+semilogx(repmat(kappaVec(plotKappa),length(plotCvec),1)',repmat(avgErrVCTSM(plotCvec),length(plotKappa),1),'--');
 hold off;
 title('Convexity vs. Test Error (dotted = VCTSM)');
 xlabel('log(kappa)'); ylabel(sprintf('test error (avg %d folds)',nFold));
 
-subplot(2,2,3);
+subplot(1,3,3);
 [hAx,hLine1,hLine2] = plotyy(repmat(kappaVec(plotKappa),length(plotCvec),1)',avgNormWloc(plotCvec,plotKappa)',repmat(kappaVec(plotKappa),length(plotCvec),1)',avgNormWrel(plotCvec,plotKappa)');
 set(hLine2,'LineStyle','--');
-% plot(repmat(kappaVec(plotKappa),length(plotCvec),1)',avgNormWloc(plotCvec,plotKappa)');
-% hold on;
-% plot(repmat(kappaVec(plotKappa),length(plotCvec),1)',avgNormWrel(plotCvec,plotKappa)','--');
-% hold off;
 title('Convexity vs. Norm of Weights');
 xlabel('kappa');
 ylabel(hAx(1),sprintf('Local ||w||^2 (avg %d folds)',nFold));

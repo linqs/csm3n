@@ -44,7 +44,7 @@ end
 
 % SGD
 objFun = @(x,ex,t) cscaccSGDObj(x,ex,examples_u,decodeFunc,C_w,C_s,optPGD);
-[w,fAvg] = sgd(examples_l,objFun,w,optSGD);
+[w,fAvg] = sgd(examples_l,objFun,w,[],optSGD);
 
 
 % Subroutine for L2-regularized M3N objective

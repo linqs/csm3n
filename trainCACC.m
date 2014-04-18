@@ -39,5 +39,5 @@ end
 
 % SGD
 objFun = @(x,ex,t) caccObj(x,{ex},decodeFunc,C,optPGD);
-[w,fAvg] = sgd(examples,objFun,w,optSGD);
+[w,fAvg] = sgd(examples,objFun,w,[],optSGD);
 		

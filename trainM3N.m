@@ -35,7 +35,7 @@ end
 
 % SGD
 objFun = @(x,ex,t) l2M3N(x,ex,decodeFunc,C); % TODO: get avg loss from l2M3N
-[w,fAvg] = sgd(examples,objFun,w,options);
+[w,fAvg] = sgd(examples,objFun,w,[],options);
 
 
 % Subroutine for L2-regularized M3N objective
