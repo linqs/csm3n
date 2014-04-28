@@ -69,8 +69,9 @@ end
 if makePlots
 	B = zeros(N);
 	figure();
+	m = ceil(sqrt(k));
 	for p = 1:k
-		subplot(1,k,p);
+		subplot(m,m,p);
 		spy(subgraphs(p).A);
 		[I,J] = find(subgraphs(p).A);
 		idx = sub2ind([N N],subgraphs(p).nodes(I),subgraphs(p).nodes(J));
@@ -82,3 +83,12 @@ if makePlots
 	subplot(1,2,2);
 	spy(B);
 end
+
+% Verify partitioning
+selected = zeros(N,1);
+for p = 1:k
+	selected(subgraphs(p).nodes) = selected(subgraphs(p).nodes) + 1;
+end
+assert(all(selected <= 1), 'Partitions not distinct');
+assert(all(selected == 1), 'Partitions do not cover nodes');
+
