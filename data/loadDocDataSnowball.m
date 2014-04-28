@@ -1,7 +1,10 @@
-function [examples, foldIdx] = loadDocDataSnowball(fName, nNet, nPC, jumpRate, makeEdgeDist, plotNets)
+function [examples, foldIdx] = loadDocDataSnowball(fName, nNet, nPC, jumpRate, seeds, makeEdgeDist, plotNets)
 
 if ~exist('jumpRate','var') || isempty(jumpRate)
 	jumpRate = 0;
+end
+if ~exist('seeds','var')
+	seeds = [];
 end
 if ~exist('makeEdgeDist','var') || isempty(makeEdgeDist)
 	makeEdgeDist = 0;
@@ -24,7 +27,7 @@ nState = max(unique(y));
 G = G - diag(diag(G));
 
 % Snowball sample nNet networks
-subgraphs = snowballSample(G,nNet,jumpRate,[],plotNets);
+subgraphs = snowballSample(G,nNet,jumpRate,seeds,plotNets);
 
 % Perform PCA on all observed features
 X = bsxfun(@minus,full(X),mean(X,1));

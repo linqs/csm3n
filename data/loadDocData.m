@@ -25,16 +25,26 @@ X = bsxfun(@minus,full(X),mean(X,1));
 [V,~] = eigs(X'*X / (size(X,1)-1), nPC);
 X = X * V;
 
-% Partition into nNet networks
+% Compute splits
 nNode = floor(length(y) / nNet);
+splits = cell(nNet);
+for i = 1:nNet
+	if i < nNet || mod(length(y),nNet) == 0
+		splits{i} = (i-1)*nNode+1:i*nNode;
+	else
+		splits{i} = (i-1)*nNode+1:length(y);
+	end
+end
+% % cora
+% splits = {1:750,751:1750,1751:length(y)};
+% % citeseer
+% splits = {1:1000,1001:2200,2200:length(y)};
+
+% Partition into nNet networks
 examples = cell(nNet,1);
 for i = 1:nNet
 	
-	if i < nNet || mod(length(y),nNet) == 0
-		idx = (i-1)*nNode+1:i*nNode;
-	else
-		idx = (i-1)*nNode+1:length(y);
-	end
+	idx = splits{i};
 	
 	if plotNets
 		subplot(1,nNet,i);
