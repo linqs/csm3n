@@ -21,7 +21,7 @@ if ~exist('decodeFunc','var')
 end
 
 cd data;
-[examples,foldIdx] = loadDocData('cora/cora.mat',4,nPC,1,1);
+[examples,foldIdx] = loadDocData('cora/cora.mat',4,[],nPC,1,1);
 cd ..;
 Xdesc = struct('discreteX',0,'nonneg',0);
 expSetup = struct('Xdesc',Xdesc,...

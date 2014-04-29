@@ -1,4 +1,4 @@
-function [examples, foldIdx] = loadDocData(fName, nNet, nPC, makeEdgeDist, plotNets)
+function [examples, foldIdx] = loadDocData(fName, nNet, splits, nPC, makeEdgeDist, plotNets)
 
 if ~exist('makeEdgeDist','var') || isempty(makeEdgeDist)
 	makeEdgeDist = 0;
@@ -26,13 +26,15 @@ X = bsxfun(@minus,full(X),mean(X,1));
 X = X * V;
 
 % Compute splits
-nNode = floor(length(y) / nNet);
-splits = cell(nNet);
-for i = 1:nNet
-	if i < nNet || mod(length(y),nNet) == 0
-		splits{i} = (i-1)*nNode+1:i*nNode;
-	else
-		splits{i} = (i-1)*nNode+1:length(y);
+if isempty(splits)
+	nNode = floor(length(y) / nNet);
+	splits = cell(nNet);
+	for i = 1:nNet
+		if i < nNet || mod(length(y),nNet) == 0
+			splits{i} = (i-1)*nNode+1:i*nNode;
+		else
+			splits{i} = (i-1)*nNode+1:length(y);
+		end
 	end
 end
 % % cora
