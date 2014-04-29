@@ -129,7 +129,7 @@ expSetup.optSGD = struct('maxIter',200,'stepSize',1e-4);
 %% Cora experiment
 clear;
 cd data;
-[examples,foldIdx] = loadDocData('cora/cora.mat',4,20,1);
+[examples,foldIdx] = loadDocData('cora/cora.mat',4,[],20,1);
 cd ..;
 Xdesc = struct('discreteX',0,'nonneg',0);
 expSetup = struct('nFold',1,'foldDist',[1 0 1 3],'Xdesc',Xdesc,...
