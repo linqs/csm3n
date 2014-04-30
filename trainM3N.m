@@ -33,9 +33,15 @@ if nargin < 5
 	w = zeros(nParam,1);
 end
 
-% SGD
-objFun = @(x,ex,t) l2M3N(x,ex,decodeFunc,C); % TODO: get avg loss from l2M3N
-[w,fAvg] = sgd(examples,objFun,w,[],options);
+% Use projected subgradient descent for 1 training example;
+% otherwise, use stochastic subgradient.
+if length(examples) == 1
+	objFun = @(x) l2M3N(x,examples{1},decodeFunc,C);
+	[w,fAvg] = pgd(objFun,[],w,options);
+else
+	objFun = @(x,ex,t) l2M3N(x,ex,decodeFunc,C); % TODO: get avg loss from l2M3N
+	[w,fAvg] = sgd(examples,objFun,w,[],options);
+end
 
 
 % Subroutine for L2-regularized M3N objective

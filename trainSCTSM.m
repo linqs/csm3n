@@ -42,9 +42,15 @@ if nargin < 6 || isempty(w)
 	w = zeros(nParam,1);
 end
 
-% SGD
-objFun = @(x, ex, t) sctsmObj(x, {ex}, C, inferFunc, kappa);
-[w,fAvg] = sgd(examples, objFun, w, [], options);
+% Use projected subgradient descent for 1 training example;
+% otherwise, use stochastic subgradient.
+if length(examples) == 1
+	objFun = @(x) sctsmObj(x, examples, C, inferFunc, kappa);
+	[w,fAvg] = pgd(objFun, [], w, options);
+else
+	objFun = @(x, ex, t) sctsmObj(x, {ex}, C, inferFunc, kappa);
+	[w,fAvg] = sgd(examples, objFun, w, [], options);
+end
 
 
 
