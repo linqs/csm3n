@@ -160,22 +160,25 @@ expSetup = struct('Xdesc',Xdesc,...
 % expSetup.optSGD = struct('maxIter',200);
 
 
-%% Noisy CAG
+%% Noisy Image
 
 clear;
 % cd data/catandgirl;
 % [examples] = loadCAG(0.1);
 % cd ../..;
 cd data/nips14;
-[examples] = loadExamples(3,.2,.5,1,1,1);
+% [examples] = loadExamples(3,.2,.5,1,1,1);
+[ex_high,ex_low] = conceptDrift(.5,10,2,2);
+examples = [ex_high(:) ; ex_low(1)];
+% examples = [ex_low(:) ; ex_high(1)];
 cd ../..;
-Xdesc = struct('discreteX',1,'nonneg',1);
 expSetup = struct('nFold',1,'foldDist',[1 0 1 1],...
-				  'Xdesc',Xdesc,...
 				  'runAlgos',[2 4],...
 				  'decodeFunc',@UGM_Decode_TRBP,'inferFunc',@UGM_Infer_TRBP,...
 				  'Cvec',1,'CvecRel',0,...
 				  'nStabSamp',0);
-expSetup.optSGD = struct('maxIter',100,'verbose',1,'stepSize',1e-6);
+expSetup.optSGD = struct('maxIter',100,'verbose',1,'stepSize',1e-3);
+expSetup.optSGD_VCTSM = expSetup.optSGD; expSetup.optSGD_VCTSM.stepSizeKappa = 1e-3;
 
+experiment
 
