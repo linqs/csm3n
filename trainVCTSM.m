@@ -17,7 +17,7 @@ function [w, kappa, fAvg] = trainVCTSM(examples, inferFunc, C1, C2, options, w, 
 % w : init weights (optional: def=zeros)
 % kappa : init kappa (optional: def=1)
 
-% parse input
+% Parse input
 assert(nargin >= 2, 'USAGE: trainVCTSM(examples,inferFunc)')
 
 nEx = length(examples);
@@ -58,14 +58,20 @@ if nargin < 7 || isempty(kappa)
 	kappa = 1;
 end
 
-% initial position
+% Initial position
 x0 = [w ; log(kappa)];
 
-% SGD
-objFun = @(x, ex, t) vctsmObj(x, {ex}, C1, C2, inferFunc);
-[x,fAvg] = sgd(examples, objFun, x0, @projFun, options);
+% Use projected subgradient descent for 1 training example;
+% otherwise, use stochastic subgradient.
+if length(examples) == 1
+	objFun = @(x) vctsmObj(x, examples, C1, C2, inferFunc);
+	[x,fAvg] = pgd(objFun, @projFun, x0, options);
+else
+	objFun = @(x, ex, t) vctsmObj(x, {ex}, C1, C2, inferFunc);
+	[x,fAvg] = sgd(examples, objFun, x0, @projFun, options);
+end
 
-% parse optimization output
+% Parse optimization output
 w = x(1:end-1);
 kappa = exp(x(end));
 
