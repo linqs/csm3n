@@ -22,13 +22,13 @@ y_noisy = noisyimg(:) + 1;
 
 %% High coupling, low signal
 
-w_max = 1; w_min = .2;
+w_max = 1; w_min = .1;
 W_loc = zeros(nStates,nStatesY);
 W_rel = zeros(nStates,nStates,2*nStatesY);
 W_loc(:,1) = linspace(w_max,w_min,nStates)';
 W_loc(:,2) = linspace(w_min,w_max,nStates)';
 for i = 1:4
-	W_rel(:,:,i) = 1 * (w_min*ones(nStates) + (w_max-w_min)*eye(nStates));
+	W_rel(:,:,i) = .8 * (w_min*ones(nStates) + (w_max-w_min)*eye(nStates));
 end
 w_high = [W_loc(:) ; W_rel(:)];
 
@@ -47,11 +47,11 @@ samp_high = UGM_Sample_VarMCMC(nodePot,edgePot,edgeStruct,10,.25)';
 
 %% Low coupling, high signal
 
-w_max = 1; w_min = .2;
+w_max = 1; w_min = .1;
 W_loc = zeros(nStates,nStatesY);
 W_rel = zeros(nStates,nStates,2*nStatesY);
-W_loc(:,1) = .8 * logspace(w_max,w_min,nStates)';
-W_loc(:,2) = .8 * logspace(w_min,w_max,nStates)';
+W_loc(:,1) = 10 * linspace(w_max,w_min,nStates)';
+W_loc(:,2) = 10 * linspace(w_min,w_max,nStates)';
 for i = 1:4
 	W_rel(:,:,i) = 0.1 * (w_min*ones(nStates) + (w_max-w_min)*eye(nStates));
 end

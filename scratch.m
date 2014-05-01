@@ -177,8 +177,10 @@ expSetup = struct('nFold',1,'foldDist',[1 0 1 1],...
 				  'decodeFunc',@UGM_Decode_TRBP,'inferFunc',@UGM_Infer_TRBP,...
 				  'Cvec',1,'CvecRel',0,...
 				  'nStabSamp',0);
-expSetup.optSGD = struct('maxIter',100,'verbose',1,'stepSize',1e-3);
-expSetup.optSGD_VCTSM = expSetup.optSGD; expSetup.optSGD_VCTSM.stepSizeKappa = 1e-3;
+expSetup.optSGD = struct('maxIter',100,'verbose',1,'stepSize',1/examples{1}.nNode);
+expSetup.optSGD_VCTSM = expSetup.optSGD;
+% expSetup.optSGD_VCTSM.stepSize = 1e-3;
+% expSetup.optSGD_VCTSM.stepSizeKappa = 1e-3;
 
 experiment
 
