@@ -1,6 +1,20 @@
-function [ex_high,ex_low] = conceptDrift(rescale,nStates,nSampHigh,nSampLow)
+function [ex_high,ex_low] = conceptDrift(rescale,nStates,nSampHigh,nSampLow,eta,alpha,burnIn,makePlots)
 
-% Load image and convert grayscale to BW
+if ~exist('eta','var') || isempty(eta)
+	eta = 0.2;
+end
+if ~exist('alpha','var') || isempty(alpha)
+	alpha = 10;
+end
+if ~exist('burnIn','var') || isempty(burnIn)
+	burnIn = 5;
+end
+if ~exist('makePlots','var') || isempty(makePlots)
+	makePlots = 1;
+end
+
+%% Load image and convert grayscale to BW
+
 srcimg = imread('nips2014.bmp','bmp');
 srcimg = rgb2gray(srcimg);
 if rescale ~= 1
@@ -14,9 +28,9 @@ srcimg = srcimg == maxval;
 y = srcimg(:) + 1;
 nStatesY = 2;
 
-% Noisy image
-noiseRate = .2;
-noisyimg = abs(srcimg - (rand(size(srcimg)) < noiseRate));
+%% Noisy ground truth
+
+noisyimg = abs(srcimg - (rand(size(srcimg)) < eta));
 y_noisy = noisyimg(:) + 1;
 
 
@@ -41,21 +55,21 @@ end
 Yedge = makeEdgeFeatures(Ynode(1,:,:),edgeStruct.edgeEnds);
 [nodeMap,edgeMap] = UGM_makeCRFmaps(Ynode,Yedge,edgeStruct,0,1,1);
 [nodePot,edgePot] = UGM_CRF_makePotentials(w_high,Ynode,Yedge,nodeMap,edgeMap,edgeStruct);
-edgeStruct.maxIter = nSampHigh;
-samp_high = UGM_Sample_VarMCMC(nodePot,edgePot,edgeStruct,10,.25)';
+samp_high = UGM_Sample_VarMCMC(nodePot,edgePot,edgeStruct,burnIn,.25)';
 
 
 %% Low coupling, high signal
 
-w_max = 1; w_min = .1;
-W_loc = zeros(nStates,nStatesY);
-W_rel = zeros(nStates,nStates,2*nStatesY);
-W_loc(:,1) = 10 * linspace(w_max,w_min,nStates)';
-W_loc(:,2) = 10 * linspace(w_min,w_max,nStates)';
-for i = 1:4
-	W_rel(:,:,i) = 0.1 * (w_min*ones(nStates) + (w_max-w_min)*eye(nStates));
-end
-w_low = [W_loc(:) ; W_rel(:)];
+% W_loc = zeros(nStates,nStatesY);
+% W_rel = zeros(nStates,nStates,2*nStatesY);
+% W_loc(:,1) = (1 + alpha*10) * linspace(w_max,w_min,nStates)';
+% W_loc(:,2) = (1 + alpha*10) * linspace(w_min,w_max,nStates)';
+% for i = 1:4
+% 	offDiagVal = w_min + alpha*(w_max-w_min);
+% 	W_rel(:,:,i) = .8 * (offDiagVal*ones(nStates) + (w_max-offDiagVal)*eye(nStates));
+% end
+% w_low = [W_loc(:) ; W_rel(:)];
+w_low = [alpha*W_loc(:) ; (1/alpha)*W_rel(:)];
 
 % Sample from CRF conditioned on noisy image
 edgeStruct = UGM_makeEdgeStruct(G,nStates,1,nSampLow);
@@ -64,9 +78,9 @@ for n = 1:nNodes
 	Ynode(1,y_noisy(n),n) = 1;
 end
 Yedge = makeEdgeFeatures(Ynode(1,:,:),edgeStruct.edgeEnds);
+[nodeMap,edgeMap] = UGM_makeCRFmaps(Ynode,Yedge,edgeStruct,0,1,1);
 [nodePot,edgePot] = UGM_CRF_makePotentials(w_low,Ynode,Yedge,nodeMap,edgeMap,edgeStruct);
-edgeStruct.maxIter = nSampHigh;
-samp_low = UGM_Sample_VarMCMC(nodePot,edgePot,edgeStruct,10,.25)';
+samp_low = UGM_Sample_VarMCMC(nodePot,edgePot,edgeStruct,burnIn,.25)';
 
 
 %% Make examples
@@ -74,6 +88,7 @@ samp_low = UGM_Sample_VarMCMC(nodePot,edgePot,edgeStruct,10,.25)';
 % Structural info for ground truth
 edgeStruct = UGM_makeEdgeStruct(G,nStatesY,1);
 edgeStruct.edgeDist = UGM_makeEdgeDistribution(edgeStruct,3,[nRows nCols]);
+edgeStruct.nRows = nRows; edgeStruct.nCols = nCols;
 % [edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_ConvexBetheCounts(edgeStruct,1);
 
 ex_high = cell(nSampHigh,1);
@@ -99,32 +114,33 @@ end
 
 %% Plot samples
 
-% Ground truth
-fig = figure();
-subplot(2,2,1);
-imagesc(srcimg);
-title('Ground Truth');
-colormap(gray);
+if makePlots
+	% Ground truth
+	fig = figure();
+	subplot(2,2,1);
+	imagesc(srcimg);
+	title('Ground Truth');
+	colormap(gray);
 
-% Noisy image
-subplot(2,2,2);
-imagesc(noisyimg);
-title('Noisy Ground Truth');
+	% Noisy image
+	subplot(2,2,2);
+	imagesc(noisyimg);
+	title('Noisy Ground Truth');
 
-% Train
-subplot(2,2,3);
-imagesc(reshape(samp_high(:,1),nRows,nCols));
-title('High Coupling, Low Signal Sample');
+	% Train
+	subplot(2,2,3);
+	imagesc(reshape(samp_high(:,end),nRows,nCols));
+	title('High Coupling, Low Signal Sample');
 
-% Test
-subplot(2,2,4);
-imagesc(reshape(samp_low(:,1),nRows,nCols));
-title('Low Coupling, High Signal Sample');
+	% Test
+	subplot(2,2,4);
+	imagesc(reshape(samp_low(:,end),nRows,nCols));
+	title('Low Coupling, High Signal Sample');
 
-% figPos = get(fig,'Position');
-% figPos(3) = 3*figPos(3);
-% set(fig,'Position',figPos);
-
+	% figPos = get(fig,'Position');
+	% figPos(3) = 3*figPos(3);
+	% set(fig,'Position',figPos);
+end
 
 %% Use noisy observations to decode labels
 % 

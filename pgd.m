@@ -1,4 +1,4 @@
-function [x, f, fVec] = pgd(objFun, projFun, x0, options)
+function [x, f, fvec] = pgd(objFun, projFun, x0, options)
 % 
 % Performs projected gradient descent (PGD).
 % 
@@ -17,6 +17,7 @@ function [x, f, fVec] = pgd(objFun, projFun, x0, options)
 % 			  stepSize : step size (def=1)
 % 			  verbose : display iteration info (def=0)
 %			  returnBest : return the best solution (def=0, returns last solution)
+%			  plotObj : plot objective (number indicates which plot to use)
 		  
 %% Parse input
 
@@ -43,6 +44,10 @@ end
 if ~isfield(options,'returnBest')
 	options.returnBest = 0;
 end
+if ~isfield(options,'plotObj')
+	options.plotObj = 0;
+end
+
 
 %% Main loop
 
@@ -52,13 +57,17 @@ x = x0;
 if options.verbose
 	fprintf('Initial point: f = %f\n', f);
 end
-if nargout >= 3
-	fVec = zeros(options.maxIter+1,1);
-	fVec(1) = f;
+if nargout >= 3 || options.plotObj ~= 0
+	fvec = zeros(options.maxIter+1,1);
+	fvec(1) = f;
 end
 
 bestFval = f;
 bestXval = x;
+
+% normW = norm(x(1:end-1));
+% kappa = exp(x(end));
+% stability = (normW / kappa)^2;
 
 % Iterative updates
 for t = 1:options.maxIter
@@ -74,8 +83,11 @@ for t = 1:options.maxIter
 	
 	% Compute objective
 	[f, g] = objFun(x);
-	if nargout >= 3
-		fVec(t+1) = f;
+	if nargout >= 3 || options.plotObj ~= 0
+		fvec(t+1) = f;
+% 		normW(end+1) = norm(x(1:end-1));
+% 		kappa(end+1) = exp(x(end));
+% 		stability(end+1) = (normW / kappa)^2;
 	end
 	
 	% Keep track of best
@@ -87,7 +99,25 @@ for t = 1:options.maxIter
 	if options.verbose
 		fprintf('Iter = %d of %d: f = %f\n', t, options.maxIter, f);
 	end
+	
+	if options.plotObj ~= 0 && mod(t,100) == 0
+		figure(options.plotObj);
+		plot(1:t+1,fvec(1:t+1));
+% 		plotyy(1:t+1,fvec(1:t+1),1:t+1,stability(1:t+1));
+% 		figure(options.plotObj+1);
+% 		plotyy(1:t+1,normW,1:t+1,kappa);
+		drawnow;
+	end
 
+end
+
+if options.plotObj ~= 0
+	figure(options.plotObj);
+	plot(1:length(fvec),fvec);
+% 	plotyy(1:length(fvec),fvec,1:length(stability),stability);
+% 	figure(options.plotObj+1);
+% 	plotyy(1:t+1,normW,1:t+1,kappa);
+	drawnow;
 end
 
 % Return best

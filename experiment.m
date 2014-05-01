@@ -139,7 +139,7 @@ end
 
 %% MAIN LOOP
 
-% job metadata
+% Job metadata
 nJobs = nFold * nCvals1 * (...
 	length(intersect(runAlgos,[1 2 4 6 9])) + ...
 	length(CvecRel) * any(runAlgos==3) + ...
@@ -148,7 +148,7 @@ nJobs = nFold * nCvals1 * (...
 totalTimer = tic;
 count = 0;
 
-% storage
+% Storage
 params = cell(nRunAlgos,nFold,nCvals1,nCvals2);
 trErrs = inf(nRunAlgos,nFold,nCvals1,nCvals2);
 cvErrs = inf(nRunAlgos,nFold,nCvals1,nCvals2);
@@ -158,12 +158,12 @@ perturbs = cell(nFold,1);
 cvStabMax = inf(nRunAlgos,nFold,nCvals1,nCvals2,2);
 cvStabAvg = inf(nRunAlgos,nFold,nCvals1,nCvals2,2);
 
-% best parameters based on {CV,stab,test)
+% Best parameters based on {CV,stab,test)
 bestParamCVerr = zeros(nRunAlgos,nFold);
 bestParamStab = zeros(nRunAlgos,nFold);
 bestParamTest = zeros(nRunAlgos,nFold);
 
-% number of local parameters
+% Number of local parameters
 nLocParam = max(examples{1}.nodeMap(:));
 
 % Setup figure for plotting predictions
@@ -178,7 +178,7 @@ for fold = 1:nFold
 	
 	fprintf('Starting fold %d of %d.\n', fold,nFold);
 	
-	% separate training/CV/testing
+	% Separate training/CV/testing
 	tridx = foldIdx(fold).tridx;
 	ulidx = foldIdx(fold).ulidx;
 	cvidx = foldIdx(fold).cvidx;
@@ -192,7 +192,7 @@ for fold = 1:nFold
 	ex_cv = examples(cvidx);
 	ex_te = examples(teidx);
 	
-	% init perturbations for stability measurement
+	% Init perturbations for stability measurement
 	pert = [];
 			
 	% Title of plot
@@ -294,7 +294,7 @@ for fold = 1:nFold
 
 				end
 
-				% training stats
+				% Training stats
 				errs = zeros(nTrain,1);
 				for i = 1:nTrain
 					ex = ex_tr{i};
@@ -341,7 +341,7 @@ for fold = 1:nFold
 				%% TESTING
 
 				errs = zeros(nTest,1);
-				f1w = zeros(nTest,1);
+				f1 = zeros(nTest,1);
 				for i = 1:nTest
 					ex = ex_te{i};
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
@@ -351,18 +351,24 @@ for fold = 1:nFold
 						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);						
 					end
 					errs(i) = nnz(ex.Y ~= pred) / ex.nNode;
-					[s.cm,s.err,s.pre,s.rec,s.f1w,s.f1avg] = errStats(double(ex.Y),pred);
+					[s.cm,s.err,s.pre,s.rec,s.f1,s.f1avg,s.f1wavg] = errStats(double(ex.Y),pred);
 					teStat(a,fold,c1,c2,i) = s;
-					f1w(i) = s.f1w;
+					if ex.nState == 2
+						% If binary, use F1 of first class
+						f1(i) = s.f1(1);
+					else
+						% If multiclass, use weighted average F1
+						f1(i) = s.f1w;
+					end
 				end
 				teErrs(a,fold,c1,c2) = mean(errs);
-				teF1(a,fold,c1,c2) = mean(f1w);
+				teF1(a,fold,c1,c2) = mean(f1);
 				fprintf('Avg test err = %.4f, avg F1 = %.4f\n', teErrs(a,fold,c1,c2),teF1(a,fold,c1,c2));
 
-				% plot last prediction
+				% Plot last prediction
 				if plotPred
 					subplot(nRunAlgos,1,a);
-					imagesc(reshape(pred,32,32));
+					imagesc(reshape(pred,ex.edgeStruct.nRows,ex.edgeStruct.nCols));
 					colormap(gray);
 					title(sprintf('%s : C1=%d, C2=%d', algoNames{a},c1,c2));
 				end
@@ -380,20 +386,20 @@ for fold = 1:nFold
 		
 	end
 	
-	% choose best parameters
+	% Choose best parameters
 	for a = 1:nRunAlgos
 		bestParamCVerr(a,fold) = find(cvErrs(a,fold,:)==min(cvErrs(a,fold,:)),1,'first');
 		bestParamStab(a,fold) = find(cvStabMax(a,fold,:)==min(cvStabMax(a,fold,:)),1,'first');
 		bestParamTest(a,fold) = find(teErrs(a,fold,:)==min(teErrs(a,fold,:)),1,'first');
 	end
 	
-	% store perturbations
+	% Store perturbations
 	perturbs{fold} = pert;
 	
-	% clear old folds (no sense in keeping them)
+	% Clear old folds (no sense in keeping them)
 	clear ex_tr ex_ul ex_cv ex_te;
 	
-	% save results
+	% Save results
 	if ~isempty(save2file)
 		save(save2file);
 	end
@@ -402,7 +408,7 @@ for fold = 1:nFold
 
 end
 
-% generalization error
+% Generalization error
 geErrs = teErrs - trErrs;
 
 % choose which "best parameters" to use
