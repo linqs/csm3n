@@ -364,7 +364,7 @@ for fold = 1:nFold
 				% Plot last prediction
 				if plotPred
 					figure(plotPred);
-					subplot(nRunAlgos,1,a);
+					subplot(1,nRunAlgos,a);
 					imagesc(reshape(pred,ex.edgeStruct.nRows,ex.edgeStruct.nCols));
 					colormap(gray);
 					title(sprintf('%s : f=%d, C1=%d, C2=%d', algoNames{runAlgos(a)},fold,c1,c2));
