@@ -1,13 +1,12 @@
 function [f, g] = vctsmObj(x, examples, C1, C2, inferFunc, varargin)
 %
-% Outputs the objective value and gradient of the VCTSM learning objective
-% using the dual of loss-augmented inference to make the objective a
-% minimization.
+% Outputs the objective value and gradient of the VCTSM learning objective.
 %
 % x : current point in optimization
 % examples : nEx x 1 cell array of examples, each containing:
 %	Fx : nParam x length(oc) feature map
 %	suffStat : nParam x 1 vector of sufficient statistics (i.e., Fx * oc)
+%	Ynode : nState x nNode overcomplete matrix representation of labels
 % C1 : regularization constant for reg/loss tradeoff
 % C2 : regularization constant for weights/convexity tradeoff
 % inferFunc : inference function
@@ -23,12 +22,14 @@ logKappa = x(nParam+1);
 kappa = exp(logKappa);
 
 % Init outputs
+% Convex upper bound regularizer using Young's inequality
 f = 0.5*C1 * (C2*(w'*w) + 1/(C2*kappa^2));
 if nargout == 2
 	gradW = C1 * C2 * w;
 % 	gradKappa = -C1 / (C2*kappa^3);
 	gradLogKappa = -C1 / (C2*kappa^2);
 end
+% Non-convex regularizer
 % f = 0.5 * C1 * (w'*w) / kappa^2;
 % if nargout == 2
 % 	gradW = C1 * w / kappa^2;
@@ -62,13 +63,13 @@ for i = 1:nEx
 	% Note: -\Psi = H
 	L1 = norm(Ynode(:)-nodeBel(:), 1);
 	loss = U - w'*ss_y + kappa*H + L1;
-	f = f + loss;
+	f = f + loss / (nEx*ex.nNode);
 	
 	% Gradient
 	if nargout == 2
-		gradW = gradW + ss_mu - ss_y;
+		gradW = gradW + (ss_mu-ss_y) / (nEx*ex.nNode);
 % 		gradKappa = gradKappa + H;
-		gradLogKappa = gradLogKappa + kappa*H;
+		gradLogKappa = gradLogKappa + (kappa*H) / (nEx*ex.nNode);
 	end
 	
 end

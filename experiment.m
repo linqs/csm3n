@@ -166,13 +166,14 @@ bestParamTest = zeros(nRunAlgos,nFold);
 % Number of local parameters
 nLocParam = max(examples{1}.nodeMap(:));
 
-% Setup figure for plotting predictions
-if plotPred
-	fig = figure();
-	figpos = get(fig,'Position');
-	figpos(4) = nRunAlgos*figpos(4);
-	set(fig,'Position',figpos);
-end
+% % Setup figure for plotting predictions
+% if plotPred
+% 	fig = figure(plotPred);
+% 	figpos = get(fig,'Position');
+% 	figpos(4) = nRunAlgos*figpos(4);
+% 	set(fig,'Position',figpos);
+% 	drawnow;
+% end
 
 for fold = 1:nFold
 	
@@ -194,11 +195,6 @@ for fold = 1:nFold
 	
 	% Init perturbations for stability measurement
 	pert = [];
-			
-	% Title of plot
-	if plotPred
-		suptitle(sprintf('Predictions for (last) test example : fold=%d',fold));
-	end
 	
 	for c1 = 1:nCvals1
 		C_w = Cvec(c1);
@@ -367,10 +363,12 @@ for fold = 1:nFold
 
 				% Plot last prediction
 				if plotPred
+					figure(plotPred);
 					subplot(nRunAlgos,1,a);
 					imagesc(reshape(pred,ex.edgeStruct.nRows,ex.edgeStruct.nCols));
 					colormap(gray);
-					title(sprintf('%s : C1=%d, C2=%d', algoNames{a},c1,c2));
+					title(sprintf('%s : f=%d, C1=%d, C2=%d', algoNames{runAlgos(a)},fold,c1,c2));
+					drawnow;
 				end
 
 				%% PROGRESS

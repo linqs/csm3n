@@ -2,12 +2,15 @@ function [w, fAvg] = trainM3N(examples, decodeFunc, C, options, w)
 %
 % Trains an MRF using max-margin formulation.
 %
-% examples : cell array of examples
+% examples : nEx x 1 cell array of examples, each containing:
+%	Fx : nParam x length(oc) feature map
+%	suffStat : nParam x 1 vector of sufficient statistics (i.e., Fx * oc)
+%	Ynode : nState x nNode overcomplete matrix representation of labels
 % decodeFunc : decoder function
 % C : optional regularization constant or vector (def: 1)
-% options : optional struct of optimization options for SGD:
-% 			maxIter : iterations of SGD (def: 100*length(examples))
-% 			stepSize : SGD step size (def: 1e-4)
+% options : optional struct of optimization options for subgradient descent:
+% 			maxIter : iterations (def: 100*length(examples))
+% 			stepSize : step size (def: 1)
 % 			verbose : verbose mode (def: 0)
 % w : init weights (optional: def=zeros)
 
@@ -23,7 +26,7 @@ if ~isfield(options,'maxIter')
 	options.maxIter = 100 * length(examples);
 end
 if ~isfield(options,'stepSize')
-	options.stepSize = 1e-4;
+	options.stepSize = 1;
 end
 if ~isfield(options,'verbose')
 	options.verbose = 0;
@@ -36,11 +39,13 @@ end
 % Use projected subgradient descent for 1 training example;
 % otherwise, use stochastic subgradient.
 if length(examples) == 1
-	objFun = @(x) l2M3N(x,examples{1},decodeFunc,C);
-	[w,fAvg] = pgd(objFun,[],w,options);
+	objFun = @(x) m3nObj(x, examples, C, decodeFunc);
+% 	objFun = @(x) l2M3N(x,examples{1},decodeFunc,C);
+	[w,fAvg] = pgd(objFun, [], w, options);
 else
-	objFun = @(x,ex,t) l2M3N(x,ex,decodeFunc,C); % TODO: get avg loss from l2M3N
-	[w,fAvg] = sgd(examples,objFun,w,[],options);
+	objFun = @(x, ex, t) m3nObj(x, {ex}, C, decodeFunc);
+% 	objFun = @(x,ex,t) l2M3N(x,ex,decodeFunc,C); % TODO: get avg loss from l2M3N
+	[w,fAvg] = sgd(examples, objFun, w, [], options);
 end
 
 

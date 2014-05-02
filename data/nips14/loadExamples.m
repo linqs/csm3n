@@ -2,7 +2,7 @@ function examples = loadExamples(nEx,noiseRate,rescale,makeEdgeDist,makeCounts,m
 %
 % Loads and processes an example image
 %
-% fname : file name
+% nEx : number of examples
 % noiseRate : noise rate
 % rescale : rescale rate (def: 1)
 % makeEdgeDist : whether to make the edge distribution (def: 1)
@@ -60,6 +60,7 @@ end
 % Structural data
 G = latticeAdjMatrix4(nRows,nCols);
 edgeStruct = UGM_makeEdgeStruct(G,2,1);
+edgeStruct.nRows = nRows; edgeStruct.nCols = nCols;
 if makeEdgeDist
 	edgeStruct.edgeDist = UGM_makeEdgeDistribution(edgeStruct,3,[nRows nCols]);
 end

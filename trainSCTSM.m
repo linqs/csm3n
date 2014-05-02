@@ -5,12 +5,13 @@ function [w, fAvg] = trainSCTSM(examples, inferFunc, kappa, C, options, w)
 % examples : nEx x 1 cell array of examples, each containing:
 %	Fx : nParam x length(oc) feature map
 %	suffStat : nParam x 1 vector of sufficient statistics (i.e., Fx * oc)
+%	Ynode : nState x nNode overcomplete matrix representation of labels
 % inferFunc : inference function used for convexified inference
 % kappa : modulus of convexity
 % C : optional regularization constant or vector (def: 1)
-% options : optional struct of optimization options for SGD:
-% 			maxIter : iterations of SGD (def: 500*length(examples))
-% 			stepSize : SGD step size (def: 1e-6)
+% options : optional struct of optimization options for subgradient descent:
+% 			maxIter : iterations (def: 100*length(examples))
+% 			stepSize : step size (def: 1)
 % 			verbose : verbose mode (def: 0)
 % w : init weights (optional: def=zeros)
 
@@ -33,7 +34,7 @@ if ~isfield(options,'maxIter')
 	options.maxIter = 100 * length(examples);
 end
 if ~isfield(options,'stepSize')
-	options.stepSize = 1e-4;
+	options.stepSize = 1;
 end
 if ~isfield(options,'verbose')
 	options.verbose = 0;
