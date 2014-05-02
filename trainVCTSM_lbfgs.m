@@ -1,16 +1,17 @@
 function [w, kappa, f] = trainVCTSM_lbfgs(examples, inferFunc, C1, C2, options, w, kappa)
 
-% Optimizes the VCTSM objective, learning the optimal (w,kappa).
+% Optimizes the VCTSM objective with LBFGS, learning the optimal (w,kappa).
 %
 % examples : nEx x 1 cell array of examples, each containing:
 %	Fx : nParam x length(oc) feature map
 %	suffStat : nParam x 1 vector of sufficient statistics (i.e., Fx * oc)
+%	Ynode : nState x nNode overcomplete matrix representation of labels
 % inferFunc : inference function used for convexified inference
 % C1 : optional regularization constant (def: 1),
 %		controls tradeoff between regularizer and loss
 % C2 : optional regularization constant (def: 1),
 %		controls tradeoff between weight norm and convexity
-% options : optional struct of optimization options for LBFGS:
+% options : optional struct of optimization options for LBFGS
 % w : init weights (optional: def=zeros)
 % kappa : init kappa (optional: def=1)
 
@@ -22,13 +23,13 @@ nCon = 0;
 for i = 1:nEx
 	nCon = nCon + length(examples{i}.beq);
 end
-if nargin < 3
+if ~exist('C1','var') || isempty(C1)
 	C1 = 1;
 end
-if nargin < 4
+if ~exist('C2','var') || isempty(C2)
 	C2 = 1;
 end
-if nargin < 5 || ~isstruct(options)
+if ~exist('options','var') || ~isstruct(options)
 	options = struct();
 end
 options.Method = 'lbfgs';
@@ -49,10 +50,10 @@ end
 % if ~isfield(options,'optTol')
 % 	options.optTol = 1e-10;
 % end
-if nargin < 6 || isempty(w)
+if ~exist('w','var') || isempty(w)
 	w = zeros(nParam,1);
 end
-if nargin < 7 || isempty(kappa)
+if ~exist('kappa','var') || isempty(kappa)
 	kappa = 1;
 end
 
