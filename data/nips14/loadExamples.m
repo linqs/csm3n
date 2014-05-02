@@ -29,8 +29,7 @@ if rescale ~= 1
 	srcimg = imresize(srcimg,rescale);
 end
 [nRows,nCols,~] = size(srcimg);
-maxval = max(unique(srcimg));
-srcimg = srcimg == maxval;
+srcimg = srcimg == max(unique(srcimg));
 
 % Ground truth
 Ynode = srcimg(:) + 1;
@@ -46,7 +45,7 @@ end
 
 % Plots
 if makePlots
-	fig = figure();
+	fig = figure(makePlots);
 	subplot(1,2,1);
 	imagesc(srcimg);
 	subplot(1,2,2);
