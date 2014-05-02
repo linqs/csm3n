@@ -169,14 +169,15 @@ clear;
 cd data/nips14;
 nFold = 1;
 nTrain = 1;
+nCV = 1;
 nTest = 10;
-[examples] = loadExamples(nFold*(nTrain+nTest),.15,.75,1,1,1);
+[examples] = loadExamples(nFold*(nTrain+nCV+nTest),.15,.75,1,1,1);
 for f = 1:nFold
 	sidx = (f-1)*(nTrain+nTest);
 	foldIdx(f).tridx = sidx+1:sidx+nTrain;
 	foldIdx(f).ulidx = [];
-	foldIdx(f).cvidx = foldIdx(f).tridx;
-	foldIdx(f).teidx = sidx+nTrain+1:sidx+nTrain+nTest;
+	foldIdx(f).cvidx = sidx+nTrain+1:sidx+nTrain+nCV;
+	foldIdx(f).teidx = sidx+nTrain+nCV+1:sidx+nTrain+nCV+nTest;
 end
 cd ../..;
 
@@ -199,17 +200,20 @@ end
 cd ../..;
 
 
-expSetup = struct('foldIdx',foldIdx,...
-				  'runAlgos',[2 4],...
-				  'decodeFunc',@UGM_Decode_TRBP,'inferFunc',@UGM_Infer_TRBP,...
-				  'Cvec',1,'CvecRel',0,...
-				  'nStabSamp',0);
-expSetup.optSGD = struct('maxIter',500,'stepSize',.03,...
-						 'plotObj',1,'plotRefresh',10,...
-						 'verbose',1,'returnBest',1);
-expSetup.optVCTSM = expSetup.optSGD;
-expSetup.optVCTSM.plotObj = 2;
-expSetup.optVCTSM.stepSize = .3;
+expSetup = struct('foldIdx',foldIdx ...
+				 ,'runAlgos',[2 4 5] ...
+				 ,'decodeFunc',@UGM_Decode_TRBP,'inferFunc',@UGM_Infer_TRBP ...
+				 ,'Cvec',[.1 1 10] ...
+				 ,'stepSizeVec',.03 ...
+				 ,'kappaVec',[.01 .02 .05 .1 .2 .5 1 2 5 10] ...
+				 );
+expSetup.optSGD = struct('maxIter',1000 ...
+						,'plotObj',2,'plotRefresh',100 ...
+						,'verbose',0,'returnBest',1);
+expSetup.optLBFGS = struct('Display','iter');
+% expSetup.optVCTSM = expSetup.optSGD;
+% expSetup.optVCTSM.plotObj = 3;
+% expSetup.optVCTSM.stepSize = .3;
 % expSetup.optVCTSM.stepSizeKappa = 5 * expSetup.optVCTSM.stepSize;
 expSetup.plotPred = 3;
 experiment

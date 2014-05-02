@@ -12,6 +12,10 @@ function [w, kappa, f] = trainVCTSM_lbfgs(examples, inferFunc, C1, C2, options, 
 % C2 : optional regularization constant (def: 1),
 %		controls tradeoff between weight norm and convexity
 % options : optional struct of optimization options for LBFGS
+%			Important options (for complete list, see minFunc)
+%				Display : display mode
+%				MaxIter : maximum iterations
+%				MaxFunEvals : maximum function evals
 % w : init weights (optional: def=zeros)
 % kappa : init kappa (optional: def=1)
 
@@ -19,40 +23,28 @@ assert(nargin >= 2,'USAGE: trainVCTSM_lbfgs(examples,inferFunc)')
 
 nEx = length(examples);
 nParam = max(examples{1}.edgeMap(:));
-nCon = 0;
-for i = 1:nEx
-	nCon = nCon + length(examples{i}.beq);
-end
+
 if ~exist('C1','var') || isempty(C1)
 	C1 = 1;
 end
 if ~exist('C2','var') || isempty(C2)
 	C2 = 1;
 end
+
 if ~exist('options','var') || ~isstruct(options)
 	options = struct();
 end
 options.Method = 'lbfgs';
-options.LS_type = 0;
-options.LS_interp = 0;
+% options.LS_type = 0;
+% options.LS_interp = 0;
 if ~isfield(options,'Display')
-	options.Display = 'on';
+	options.Display = 'off';
 end
-% if ~isfield(options,'MaxIter')
-% 	options.MaxIter = 1000;
-% end
-% if ~isfield(options,'MaxFunEvals')
-% 	options.MaxFunEvals = 2000;
-% end
-% if ~isfield(options,'progTol')
-% 	options.progTol = 1e-10;
-% end
-% if ~isfield(options,'optTol')
-% 	options.optTol = 1e-10;
-% end
+
 if ~exist('w','var') || isempty(w)
 	w = zeros(nParam,1);
 end
+
 if ~exist('kappa','var') || isempty(kappa)
 	kappa = 1;
 end

@@ -45,6 +45,42 @@ else
 end
 nRunAlgos = length(runAlgos);
 
+% Optimization options
+if isfield(expSetup,'optSGD')
+	optSGD = expSetup.optSGD;
+else
+	optSGD = struct();
+end
+if isfield(expSetup,'optLBFGS')
+	optLBFGS = expSetup.optLBFGS;
+else
+	optLBFGS = struct();
+end
+% Algorithm-specific optimization options
+if isfield(expSetup,'optM3N')
+	optM3N = expSetup.optM3N;
+else
+	optM3N = optSGD;
+end
+if isfield(expSetup,'optVCTSM')
+	optVCTSM = expSetup.optVCTSM;
+else
+% 	optVCTSM = optSGD(); % for SGD version
+	optVCTSM = optLBFGS;
+end
+if isfield(expSetup,'optSCTSM')
+	optSCTSM = expSetup.optSCTSM;
+else
+% 	optSCTSM = optSGD(); % for SGD version
+	optSCTSM = optLBFGS;
+end
+if isfield(expSetup,'optCACC')
+	optCACC = expSetup.optCACC;
+else
+	optCACC = optSGD;
+end
+
+% Hyperparameters
 if isfield(expSetup,'Cvec')
 	Cvec = expSetup.Cvec;
 else
@@ -57,17 +93,36 @@ else
 end
 if isfield(expSetup,'CvecStab')
 	CvecStab = expSetup.CvecStab;
-else
+elseif any(runAlgos==3)
 	CvecStab = [.01 .05 .1 .25 .5 .75 1 2];
+else
+	CvecStab = 0;
 end
 if isfield(expSetup,'kappaVec')
 	kappaVec = expSetup.kappaVec;
-else
+elseif any(runAlgos==5)
 	kappaVec = [.01 .1 .25 .5 1 2];
+else
+	kappaVec = 1;
+end
+if isfield(expSetup,'stepSizeVec')
+	stepSizeVec = expSetup.stepSizeVec;
+elseif isfield(optM3N,'stepSize')
+	stepSizeVec = optM3N.stepSize;
+else
+	stepSizeVec = 1;
 end
 nCvals1 = length(Cvec);
-nCvals2 = max([length(CvecRel),length(CvecStab),length(kappaVec)]);
+nCvals2 = max([length(CvecRel),length(CvecStab),length(kappaVec),length(stepSizeVec)]);
 
+% Init kappa for VCTSM
+if isfield(expSetup,'initKappa')
+	initKappa = expSetup.initKappa;
+else
+	initKappa = 1;
+end
+
+% Inference/feature algos
 if isfield(expSetup,'decodeFunc')
 	decodeFunc = expSetup.decodeFunc;
 else
@@ -84,52 +139,26 @@ else
 	edgeFeatFunc = @makeEdgeFeatures;
 end
 
+% OLD STUFF for stability measurements
 if isfield(expSetup,'Xdesc')
 	Xdesc = expSetup.Xdesc;
 else
 	Xdesc = [];
 end
-
 if isfield(expSetup,'nStabSamp')
 	nStabSamp = expSetup.nStabSamp;
 else
-	nStabSamp = 10;
+	nStabSamp = 0;
 end
 
+% File to save workspace
 if isfield(expSetup,'save2file')
 	save2file = expSetup.save2file;
 else
 	save2file = [];
 end
 
-if isfield(expSetup,'optSGD')
-	optSGD = expSetup.optSGD;
-else
-	optSGD = struct();
-end
-
-if isfield(expSetup,'optM3N')
-	optM3N = expSetup.optM3N;
-else
-	optM3N = optSGD;
-end
-if isfield(expSetup,'optVCTSM')
-	optVCTSM = expSetup.optVCTSM;
-else
-	optVCTSM = optSGD;
-end
-if isfield(expSetup,'optCACC')
-	optCACC = expSetup.optCACC;
-else
-	optCACC = optSGD;
-end
-
-if isfield(expSetup,'initKappa')
-	initKappa = expSetup.initKappa;
-else
-	initKappa = 1;
-end
-
+% Plot last predictions
 if isfield(expSetup,'plotPred')
 	plotPred = expSetup.plotPred;
 else
@@ -141,7 +170,8 @@ end
 
 % Job metadata
 nJobs = nFold * nCvals1 * (...
-	length(intersect(runAlgos,[1 2 4 6 9])) + ...
+	length(intersect(runAlgos,[1 4 6 9])) + ...
+	length(stepSizeVec) * any(runAlgos==2) + ...
 	length(CvecRel) * any(runAlgos==3) + ...
 	length(kappaVec) * any(runAlgos==5) + ...
 	length(CvecStab) * length(intersect(runAlgos,[7 8])) );
@@ -203,27 +233,33 @@ for fold = 1:nFold
 			
 			for a = 1:nRunAlgos
 
-				if strcmp(algoNames{runAlgos(a)},'M3NLRR')
+				if strcmp(algoNames{runAlgos(a)},'M3N')
+					% M3N
+					if c2 > length(stepSizeVec)
+						continue
+					end
+					stepSize = stepSizeVec(c2);
+				elseif strcmp(algoNames{runAlgos(a)},'M3NLRR')
 					% M3NLRR
 					if c2 > length(CvecRel)
-						continue;
+						continue
 					end
 					C_r = CvecRel(c2);
 				elseif strcmp(algoNames{runAlgos(a)},'SCTSM')
 					% SCTSM
 					if c2 > length(kappaVec)
-						continue;
+						continue
 					end
 					kappa = kappaVec(c2);
 				elseif strcmp(algoNames{runAlgos(a)},'CSM3N') || strcmp(algoNames{runAlgos(a)},'CSCACC')
 					% CSM3N or CSCACC
 					if c2 > length(CvecStab)
-						continue;
+						continue
 					end
 					C_s = CvecStab(c2);
 				elseif c2 > 1
 					% Some algorithms don't use second reg. param.
-					continue;
+					continue
 				end
 				
 				%% TRAINING
@@ -240,6 +276,7 @@ for fold = 1:nFold
 					% M3N learning
 					case 2
 						fprintf('Training M3N ...\n');
+						optM3N.stepSize = stepSize;
 						[w,fAvg] = trainM3N(ex_tr,decodeFunc,C_w,optM3N);
 						params{a,fold,c1,c2}.w = w;
 
@@ -254,14 +291,15 @@ for fold = 1:nFold
 					case 4
 						fprintf('Training VCTSM ...\n');
 						%[w,kappa,f] = trainVCTSM(ex_tr,inferFunc,C_w,1,optVCTSM,[],initKappa);
-						[w,kappa,f] = trainVCTSM_lbfgs(ex_tr,inferFunc,C_w,1,[],[],initKappa);
+						[w,kappa,f] = trainVCTSM_lbfgs(ex_tr,inferFunc,C_w,1,optVCTSM,[],initKappa);
 						params{a,fold,c1,c2}.w = w;
 						params{a,fold,c1,c2}.kappa = kappa;
 						
 					% SCTSM learning (fixed convexity)
 					case 5
 						fprintf('Training SCTSM with kappa=%f ...\n',kappa);
-						[w,f] = trainSCTSM(ex_tr,inferFunc,kappa,C_w,optM3N);
+						%[w,f] = trainSCTSM(ex_tr,inferFunc,kappa,C_w,optSCTSM);
+						[w,f] = trainSCTSM_lbgfs(ex_tr,inferFunc,kappa,C_w,optSCTSM);
 						params{a,fold,c1,c2}.w = w;
 
 					% CACC learning (robust M3N)
@@ -409,32 +447,9 @@ end
 % Generalization error
 geErrs = teErrs - trErrs;
 
-% choose which "best parameters" to use
-% bestParam = zeros(nRunAlgos,nFold);
-% for a = 1:nRunAlgos
-% 	for fold = 1:nFold
-% 		if ismember(runAlgos(a),[1 2 6 9])
-% 			% algos with only 1 weight regularizer
-% 			bestParam(a,fold) = find(cvErrs(a,fold,:)==min(cvErrs(a,fold,:)),1,'first');
-% % 			bestParam(a,fold) = find(cvErrs(a,fold,2:end,1)==min(cvErrs(a,fold,2:end,1)),1,'first') + 1;
-% 		elseif runAlgos(a) == 3
-% 			% M3NLRR
-% 			bestParam(a,fold) = find(cvErrs(a,fold,:)==min(cvErrs(a,fold,:)),1,'first');
-% 		elseif runAlgos(a) == 4
-% 			% VCTSM
-% 			% must use some regularization
-% 			bestParam(a,fold) = find(cvErrs(a,fold,2:end,1)==min(cvErrs(a,fold,2:end,1)),1,'first') + 1;
-% 		else
-% 			% CS algos
-% 			bestParam(a,fold) = find(cvErrs(a,fold,1,:)==min(cvErrs(a,fold,1,:)),1,'first')*nCvals2 + 1;
-% 		end
-% 	end
-% end
-% or just use whatever is best according to CV error
-bestParam = bestParamCVerr;
-
 % display results at end
-colStr = {'TrainErr','ValidErr','TestErr','TestF1','GenErr','MaxStab','AvgStab','C_w','[C_r|C_s|kappa]'};
+colStr = {'TrainErr','ValidErr','TestErr','TestF1','GenErr','MaxStab','AvgStab','C_w','[step|C_r|C_s|kappa]'};
+bestParam = bestParamCVerr;
 bestResults = zeros(nRunAlgos,length(colStr),nFold);
 for fold = 1:nFold
 	% choose best params for fold
@@ -442,7 +457,9 @@ for fold = 1:nFold
 	bestC1 = Cvec(c1idx);
 	bestC2 = zeros(nRunAlgos,1);
 	for a = 1:nRunAlgos
-		if strcmp(algoNames{runAlgos(a)},'M3NLRR')
+		if strcmp(algoNames{runAlgos(a)},'M3N')
+			bestC2(a) = stepSizeVec(c2idx(a));
+		elseif strcmp(algoNames{runAlgos(a)},'M3NLRR')
 			bestC2(a) = CvecRel(c2idx(a));
 		elseif strcmp(algoNames{runAlgos(a)},'SCTSM')
 			bestC2(a) = kappaVec(c2idx(a));
