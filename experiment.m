@@ -424,9 +424,9 @@ for fold = 1:nFold
 	
 	% Choose best parameters
 	for a = 1:nRunAlgos
-		bestParamCVerr(a,fold) = find(cvErrs(a,fold,:)==min(cvErrs(a,fold,:)),1,'first');
-		bestParamStab(a,fold) = find(cvStabMax(a,fold,:)==min(cvStabMax(a,fold,:)),1,'first');
-		bestParamTest(a,fold) = find(teErrs(a,fold,:)==min(teErrs(a,fold,:)),1,'first');
+		[~,bestParamCVerr(a,fold)] = min(cvErrs(a,fold,:));
+		[~,bestParamStab(a,fold)] = min(cvStabMax(a,fold,:));
+		[~,bestParamTest(a,fold)] = min(teErrs(a,fold,:));
 	end
 	
 	% Store perturbations
