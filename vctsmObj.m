@@ -21,6 +21,13 @@ w = x(1:nParam);
 logKappa = x(nParam+1);
 kappa = exp(logKappa);
 
+% kappa must be positive
+if kappa <= 0
+	err = MException('vctsmObj:BadInput',...
+			sprintf('kappa must be strictly positive; log(kappa)=%f, kappa=%f',logKappa,kappa));
+	throw(err);
+end
+
 % Init outputs
 % Convex upper bound regularizer using Young's inequality
 f = 0.5*C1 * (C2*(w'*w) + 1/(C2*kappa^2));
