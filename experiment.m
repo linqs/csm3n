@@ -468,7 +468,7 @@ for fold = 1:nFold
 		end
 	end
 	% display results for fold
-	idx = sub2ind([nRunAlgos nFold nCvals1 nCvals2],(1:nRunAlgos)',fold*ones(nRunAlgos,1),c1idx,c2idx);
+	idx = sub2ind(size(teErrs),(1:nRunAlgos)',fold*ones(nRunAlgos,1),c1idx,c2idx);
 	bestResults(:,:,fold) = [trErrs(idx) cvErrs(idx) teErrs(idx) teF1(idx) geErrs(idx) ...
 							 cvStabMax(idx) cvStabAvg(idx) bestC1(:) bestC2(:)];
 	disptable(bestResults(:,:,fold),colStr,algoNames(runAlgos),'%.5f');
