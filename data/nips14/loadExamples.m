@@ -65,6 +65,7 @@ if makeEdgeDist
 end
 if makeCounts
 	[edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_ConvexBetheCounts(edgeStruct,1);
+	edgeStruct.momentum = 1;
 end
 
 % Make examples

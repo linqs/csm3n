@@ -163,15 +163,12 @@ expSetup = struct('Xdesc',Xdesc,...
 %% Noisy Image
 
 clear;
-% cd data/catandgirl;
-% [examples] = loadCAG(0.1);
-% cd ../..;
 cd data/nips14;
 nFold = 1;
 nTrain = 1;
 nCV = 1;
 nTest = 10;
-[examples] = loadExamples(nFold*(nTrain+nCV+nTest),.1,.6,1,1,1);
+[examples] = loadExamples(nFold*(nTrain+nCV+nTest),.15,.6,1,1,1);
 for f = 1:nFold
 	sidx = (f-1)*(nTrain+nTest);
 	foldIdx(f).tridx = sidx+1:sidx+nTrain;
@@ -182,39 +179,36 @@ end
 cd ../..;
 
 
-clear;
-cd data/nips14;
-nFold = 1;
-examples = [];
-nTrain = 1;
-nTest = 10;
-for f = 1:nFold
-	[ex_high,ex_low] = conceptDrift(.5,10,nTrain,nTest,.2,5,10,0);
-	examples = [examples ; ex_high(:) ; ex_low(:)];
-	sidx = (f-1)*(nTrain+nTest);
-	foldIdx(f).tridx = sidx+1:sidx+nTrain;
-	foldIdx(f).ulidx = [];
-	foldIdx(f).cvidx = foldIdx(f).tridx;
-	foldIdx(f).teidx = sidx+nTrain+1:sidx+nTrain+nTest;
-end
-cd ../..;
+% clear;
+% cd data/nips14;
+% nFold = 1;
+% examples = [];
+% nTrain = 1;
+% nTest = 10;
+% for f = 1:nFold
+% 	[ex_high,ex_low] = conceptDrift(.5,10,nTrain,nTest,.2,5,10,0);
+% 	examples = [examples ; ex_high(:) ; ex_low(:)];
+% 	sidx = (f-1)*(nTrain+nTest);
+% 	foldIdx(f).tridx = sidx+1:sidx+nTrain;
+% 	foldIdx(f).ulidx = [];
+% 	foldIdx(f).cvidx = foldIdx(f).tridx;
+% 	foldIdx(f).teidx = sidx+nTrain+1:sidx+nTrain+nTest;
+% end
+% cd ../..;
 
 
 expSetup = struct('foldIdx',foldIdx ...
-				 ,'runAlgos',2 ...
-				 ,'decodeFunc',@UGM_Decode_TRBP,'inferFunc',@UGM_Infer_TRBP ...
+				 ,'runAlgos',[4 5] ...
+				 ,'decodeFunc',@UGM_Decode_TRBP,'inferFunc',@UGM_Infer_CountBP ...
 				 ,'Cvec',1 ...
 				 ,'stepSizeVec',[.01 .02 .05] ...
-				 ,'kappaVec',1 ...
+				 ,'kappaVec',[.1 .2 .5 1 2 5 10 20 50 100] ...
 				 );
 expSetup.optSGD = struct('maxIter',1000 ...
 						,'plotObj',2,'plotRefresh',100 ...
 						,'verbose',1,'returnBest',1);
 expSetup.optLBFGS = struct('Display','iter');
-% expSetup.optVCTSM = expSetup.optSGD;
-% expSetup.optVCTSM.plotObj = 3;
-% expSetup.optVCTSM.stepSize = .3;
-% expSetup.optVCTSM.stepSizeKappa = 5 * expSetup.optVCTSM.stepSize;
 expSetup.plotPred = 3;
+
 experiment
 
