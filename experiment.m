@@ -194,6 +194,7 @@ cvStabMax = inf(nRunAlgos,nFold,nCvals1,nCvals2,2);
 cvStabAvg = inf(nRunAlgos,nFold,nCvals1,nCvals2,2);
 
 % Best parameters based on {CV,stab,test)
+bestParamTrain = zeros(nRunAlgos,nFold);
 bestParamCVerr = zeros(nRunAlgos,nFold);
 bestParamStab = zeros(nRunAlgos,nFold);
 bestParamTest = zeros(nRunAlgos,nFold);
@@ -434,9 +435,10 @@ for fold = 1:nFold
 	
 	% Choose best parameters
 	for a = 1:nRunAlgos
-		[~,bestParamCVerr(a,fold)] = min(cvErrs(a,fold,:));
-		[~,bestParamStab(a,fold)] = min(cvStabMax(a,fold,:));
-		[~,bestParamTest(a,fold)] = min(teErrs(a,fold,:));
+		bestParamTrain(a,fold) = find(trErrs(a,fold,:)==min(trErrs(a,fold,:)),1,'last');
+		bestParamCVerr(a,fold) = find(cvErrs(a,fold,:)==min(cvErrs(a,fold,:)),1,'last');
+		bestParamStab(a,fold) = find(cvStabMax(a,fold,:)==min(cvStabMax(a,fold,:)),'last');
+		bestParamTest(a,fold) = find(teErrs(a,fold,:)==min(teErrs(a,fold,:)),1,'last');
 	end
 	
 	% Store perturbations
