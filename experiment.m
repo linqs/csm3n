@@ -437,7 +437,7 @@ for fold = 1:nFold
 	for a = 1:nRunAlgos
 		bestParamTrain(a,fold) = find(trErrs(a,fold,:)==min(trErrs(a,fold,:)),1,'last');
 		bestParamCVerr(a,fold) = find(cvErrs(a,fold,:)==min(cvErrs(a,fold,:)),1,'last');
-		bestParamStab(a,fold) = find(cvStabMax(a,fold,:)==min(cvStabMax(a,fold,:)),'last');
+		bestParamStab(a,fold) = find(cvStabMax(a,fold,:)==min(cvStabMax(a,fold,:)),1,'last');
 		bestParamTest(a,fold) = find(teErrs(a,fold,:)==min(teErrs(a,fold,:)),1,'last');
 	end
 	

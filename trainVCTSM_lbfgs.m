@@ -36,8 +36,8 @@ end
 options.Method = 'lbfgs';
 % options.LS_type = 0;
 % options.LS_interp = 0;
-if ~isfield(options,'Display')
-	options.Display = 'off';
+if ~isfield(options,'verbose')
+	options.Display = 0;
 end
 
 if ~exist('w','var') || isempty(w)
