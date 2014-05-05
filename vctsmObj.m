@@ -70,7 +70,7 @@ for i = 1:nEx
 	% Gradient
 	if nargout == 2
 		gradW = gradW + (ss_mu-ss_y) / (nEx*ex.nNode);
-		gradKappa = gradKappa + H / (nEx*ex.nNode);;
+		gradKappa = gradKappa + H / (nEx*ex.nNode);
 	end
 	
 end
