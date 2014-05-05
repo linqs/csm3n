@@ -11,158 +11,163 @@ nParam = max(examples{1}.edgeMap(:));
 
 % experiment vars
 if ~exist('expSetup','var')
-	expSetup = struct();
+    expSetup = struct();
 end
 
 if isfield(expSetup,'nFold')
-	nFold = expSetup.nFold;
+    nFold = expSetup.nFold;
 else
-	nFold = 1;
+    nFold = 1;
 end
 if isfield(expSetup,'foldIdx')
-	foldIdx = expSetup.foldIdx;
-	nFold = length(foldIdx);
+    foldIdx = expSetup.foldIdx;
+    nFold = length(foldIdx);
 elseif isfield(expSetup,'foldDist')
-	foldDist = expSetup.foldDist;
-	assert(sum(foldDist) <= nEx, 'Number of examples per fold greater than examples.');
-	foldIdx = makeFolds(nEx,nFold,foldDist);
-	nFold = min(nFold,length(foldIdx));
+    foldDist = expSetup.foldDist;
+    assert(sum(foldDist) <= nEx, 'Number of examples per fold greater than examples.');
+    foldIdx = makeFolds(nEx,nFold,foldDist);
+    nFold = min(nFold,length(foldIdx));
 else
-	nExFold = floor(nEx / nFold);
-	nTrain = 1;
-	nUnlab = 1;
-	nCV = 1;
-	nTest = nExFold - 3;
-	foldIdx = makeFolds(nEx,nFold,nTrain,nUnlab,nCV,nTest);
-	nFold = min(nFold,length(foldIdx));
+    nExFold = floor(nEx / nFold);
+    nTrain = 1;
+    nUnlab = 1;
+    nCV = 1;
+    nTest = nExFold - 3;
+    foldIdx = makeFolds(nEx,nFold,nTrain,nUnlab,nCV,nTest);
+    nFold = min(nFold,length(foldIdx));
 end
 
 algoNames = {'MLE','M3N','M3NLRR','VCTSM','SCTSM','CACC','CSM3N','CSCACC','DLM'};
 if isfield(expSetup,'runAlgos')
-	runAlgos = expSetup.runAlgos;
+    runAlgos = expSetup.runAlgos;
 else
-	runAlgos = 1:length(algoNames);
+    runAlgos = 1:length(algoNames);
 end
 nRunAlgos = length(runAlgos);
 
 % Optimization options
 if isfield(expSetup,'optSGD')
-	optSGD = expSetup.optSGD;
+    optSGD = expSetup.optSGD;
 else
-	optSGD = struct();
+    optSGD = struct();
 end
 if isfield(expSetup,'optLBFGS')
-	optLBFGS = expSetup.optLBFGS;
+    optLBFGS = expSetup.optLBFGS;
 else
-	optLBFGS = struct();
+    optLBFGS = struct();
 end
 % Algorithm-specific optimization options
 if isfield(expSetup,'optM3N')
-	optM3N = expSetup.optM3N;
+    optM3N = expSetup.optM3N;
 else
-	optM3N = optSGD;
+    optM3N = optSGD;
 end
 if isfield(expSetup,'optVCTSM')
-	optVCTSM = expSetup.optVCTSM;
+    optVCTSM = expSetup.optVCTSM;
 else
-% 	optVCTSM = optSGD(); % for SGD version
-	optVCTSM = optLBFGS;
+    % 	optVCTSM = optSGD(); % for SGD version
+    optVCTSM = optLBFGS;
 end
 if isfield(expSetup,'optSCTSM')
-	optSCTSM = expSetup.optSCTSM;
+    optSCTSM = expSetup.optSCTSM;
 else
-% 	optSCTSM = optSGD(); % for SGD version
-	optSCTSM = optLBFGS;
+    % 	optSCTSM = optSGD(); % for SGD version
+    optSCTSM = optLBFGS;
 end
 if isfield(expSetup,'optCACC')
-	optCACC = expSetup.optCACC;
+    optCACC = expSetup.optCACC;
 else
-	optCACC = optSGD;
+    optCACC = optSGD;
 end
 
 % Hyperparameters
 if isfield(expSetup,'Cvec')
-	Cvec = expSetup.Cvec;
+    Cvec = expSetup.Cvec;
 else
-	Cvec = [0 .1 .5 1 5 10 50 100 500 1000 5000 10000];
+    Cvec = [0 .1 .5 1 5 10 50 100 500 1000 5000 10000];
 end
 if isfield(expSetup,'CvecRel')
-	CvecRel = expSetup.CvecRel;
+    CvecRel = expSetup.CvecRel;
 else
-	CvecRel = Cvec;
+    CvecRel = Cvec;
 end
 if isfield(expSetup,'CvecStab')
-	CvecStab = expSetup.CvecStab;
+    CvecStab = expSetup.CvecStab;
 elseif any(runAlgos==3)
-	CvecStab = [.01 .05 .1 .25 .5 .75 1 2];
+    CvecStab = [.01 .05 .1 .25 .5 .75 1 2];
 else
-	CvecStab = 0;
+    CvecStab = 0;
 end
 if isfield(expSetup,'kappaVec')
-	kappaVec = expSetup.kappaVec;
+    kappaVec = expSetup.kappaVec;
 elseif any(runAlgos==5)
-	kappaVec = [.01 .1 .25 .5 1 2];
+    kappaVec = [.01 .1 .25 .5 1 2];
 else
-	kappaVec = 1;
+    kappaVec = 1;
 end
 if isfield(expSetup,'stepSizeVec')
-	stepSizeVec = expSetup.stepSizeVec;
+    stepSizeVec = expSetup.stepSizeVec;
 elseif isfield(optM3N,'stepSize')
-	stepSizeVec = optM3N.stepSize;
+    stepSizeVec = optM3N.stepSize;
 else
-	stepSizeVec = 1;
+    stepSizeVec = 1;
 end
 nCvals1 = length(Cvec);
 nCvals2 = max([length(CvecRel),length(CvecStab),length(kappaVec),length(stepSizeVec)]);
 
 % Init kappa for VCTSM
 if isfield(expSetup,'initKappa')
-	initKappa = expSetup.initKappa;
+    initKappa = expSetup.initKappa;
 else
-	initKappa = 1;
+    initKappa = 1;
 end
 
 % Inference/feature algos
 if isfield(expSetup,'decodeFunc')
-	decodeFunc = expSetup.decodeFunc;
+    decodeFunc = expSetup.decodeFunc;
 else
-	decodeFunc = @UGM_Decode_TRBP;
+    decodeFunc = @UGM_Decode_TRBP;
 end
 if isfield(expSetup,'inferFunc')
-	inferFunc = expSetup.inferFunc;
+    inferFunc = expSetup.inferFunc;
 else
-	inferFunc = @UGM_Infer_TRBP;
+    inferFunc = @UGM_Infer_TRBP;
 end
 if isfield(expSetup,'edgeFeatFunc')
-	edgeFeatFunc = expSetup.edgeFeatFunc;
+    edgeFeatFunc = expSetup.edgeFeatFunc;
 else
-	edgeFeatFunc = @makeEdgeFeatures;
+    edgeFeatFunc = @makeEdgeFeatures;
 end
 
 % OLD STUFF for stability measurements
 if isfield(expSetup,'Xdesc')
-	Xdesc = expSetup.Xdesc;
+    Xdesc = expSetup.Xdesc;
 else
-	Xdesc = [];
+    Xdesc = [];
 end
 if isfield(expSetup,'nStabSamp')
-	nStabSamp = expSetup.nStabSamp;
+    nStabSamp = expSetup.nStabSamp;
 else
-	nStabSamp = 0;
+    nStabSamp = 0;
 end
 
 % File to save workspace
 if isfield(expSetup,'save2file')
-	save2file = expSetup.save2file;
+    save2file = expSetup.save2file;
 else
-	save2file = [];
+    save2file = [];
 end
 
 % Plot last predictions
 if isfield(expSetup,'plotPred')
-	plotPred = expSetup.plotPred;
+    plotPred = expSetup.plotPred;
 else
-	plotPred = 0;
+    plotPred = 0;
+end
+if isfield(expSetup,'plotFunc')
+    plotFunc = expSetup.plotFunc;
+else
+    plotFunc = [];
 end
 
 
@@ -170,11 +175,11 @@ end
 
 % Job metadata
 nJobs = nFold * nCvals1 * (...
-	length(intersect(runAlgos,[1 4 6 9])) + ...
-	length(stepSizeVec) * any(runAlgos==2) + ...
-	length(CvecRel) * any(runAlgos==3) + ...
-	length(kappaVec) * any(runAlgos==5) + ...
-	length(CvecStab) * length(intersect(runAlgos,[7 8])) );
+    length(intersect(runAlgos,[1 4 6 9])) + ...
+    length(stepSizeVec) * any(runAlgos==2) + ...
+    length(CvecRel) * any(runAlgos==3) + ...
+    length(kappaVec) * any(runAlgos==5) + ...
+    length(CvecStab) * length(intersect(runAlgos,[7 8])) );
 totalTimer = tic;
 count = 0;
 
@@ -399,15 +404,20 @@ for fold = 1:nFold
 				teF1(a,fold,c1,c2) = mean(f1);
 				fprintf('Avg test err = %.4f, avg F1 = %.4f\n', teErrs(a,fold,c1,c2),teF1(a,fold,c1,c2));
 
-				% Plot last prediction
-				if plotPred
-					figure(plotPred);
-					subplot(1,nRunAlgos,a);
-					imagesc(reshape(pred,ex.edgeStruct.nRows,ex.edgeStruct.nCols));
-					colormap(gray);
-					title(sprintf('%s : f=%d, C1=%d, C2=%d', algoNames{runAlgos(a)},fold,c1,c2));
-					drawnow;
-				end
+                % Plot last prediction
+                if isempty(plotFunc)
+                    if plotPred
+                        % use default plotting
+                        figure(plotPred);
+                        subplot(1,nRunAlgos,a);
+                        imagesc(reshape(pred,ex.edgeStruct.nRows,ex.edgeStruct.nCols));
+                        colormap(gray);
+                        title(sprintf('%s : f=%d, C1=%d, C2=%d', algoNames{runAlgos(a)},fold,c1,c2));
+                        drawnow;
+                    end
+                else
+                    plotFunc(pred, ex, expSetup);
+                end
 
 				%% PROGRESS
 
@@ -441,7 +451,6 @@ for fold = 1:nFold
 	end
 
 	fprintf('\n');
-
 end
 
 % Generalization error
@@ -452,26 +461,26 @@ colStr = {'TrainErr','ValidErr','TestErr','TestF1','GenErr','MaxStab','AvgStab',
 bestParam = bestParamCVerr;
 bestResults = zeros(nRunAlgos,length(colStr),nFold);
 for fold = 1:nFold
-	% choose best params for fold
-	[c1idx,c2idx] = ind2sub([nCvals1,nCvals2], bestParam(:,fold));
-	bestC1 = Cvec(c1idx);
-	bestC2 = zeros(nRunAlgos,1);
-	for a = 1:nRunAlgos
-		if strcmp(algoNames{runAlgos(a)},'M3N')
-			bestC2(a) = stepSizeVec(c2idx(a));
-		elseif strcmp(algoNames{runAlgos(a)},'M3NLRR')
-			bestC2(a) = CvecRel(c2idx(a));
-		elseif strcmp(algoNames{runAlgos(a)},'SCTSM')
-			bestC2(a) = kappaVec(c2idx(a));
-		elseif strcmp(algoNames{runAlgos(a)},'CSM3N') || strcmp(algoNames{runAlgos(a)},'CSCACC')
-			bestC2(a) = CvecStab(c2idx(a));
-		end
-	end
-	% display results for fold
-	idx = sub2ind(size(teErrs),(1:nRunAlgos)',fold*ones(nRunAlgos,1),c1idx,c2idx);
-	bestResults(:,:,fold) = [trErrs(idx) cvErrs(idx) teErrs(idx) teF1(idx) geErrs(idx) ...
-							 cvStabMax(idx) cvStabAvg(idx) bestC1(:) bestC2(:)];
-	disptable(bestResults(:,:,fold),colStr,algoNames(runAlgos),'%.5f');
+    % choose best params for fold
+    [c1idx,c2idx] = ind2sub([nCvals1,nCvals2], bestParam(:,fold));
+    bestC1 = Cvec(c1idx);
+    bestC2 = zeros(nRunAlgos,1);
+    for a = 1:nRunAlgos
+        if strcmp(algoNames{runAlgos(a)},'M3N')
+            bestC2(a) = stepSizeVec(c2idx(a));
+        elseif strcmp(algoNames{runAlgos(a)},'M3NLRR')
+            bestC2(a) = CvecRel(c2idx(a));
+        elseif strcmp(algoNames{runAlgos(a)},'SCTSM')
+            bestC2(a) = kappaVec(c2idx(a));
+        elseif strcmp(algoNames{runAlgos(a)},'CSM3N') || strcmp(algoNames{runAlgos(a)},'CSCACC')
+            bestC2(a) = CvecStab(c2idx(a));
+        end
+    end
+    % display results for fold
+    idx = sub2ind(size(teErrs),(1:nRunAlgos)',fold*ones(nRunAlgos,1),c1idx,c2idx);
+    bestResults(:,:,fold) = [trErrs(idx) cvErrs(idx) teErrs(idx) teF1(idx) geErrs(idx) ...
+        cvStabMax(idx) cvStabAvg(idx) bestC1(:) bestC2(:)];
+    disptable(bestResults(:,:,fold),colStr,algoNames(runAlgos),'%.5f');
 end
 
 % compute mean/stdev across folds
@@ -487,5 +496,5 @@ fprintf('elapsed time: %.2f min\n',endTime/60);
 
 % save results
 if ~isempty(save2file)
-	save(save2file);
+    save(save2file);
 end
