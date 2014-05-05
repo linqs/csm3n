@@ -162,23 +162,6 @@ expSetup = struct('Xdesc',Xdesc,...
 
 %% Noisy Image
 
-clear;
-cd data/nips14;
-nFold = 1;
-nTrain = 1;
-nCV = 1;
-nTest = 10;
-[examples] = loadExamples(nFold*(nTrain+nCV+nTest),.15,.6,1,1,1);
-for f = 1:nFold
-	sidx = (f-1)*(nTrain+nTest);
-	foldIdx(f).tridx = sidx+1:sidx+nTrain;
-	foldIdx(f).ulidx = [];
-	foldIdx(f).cvidx = sidx+nTrain+1:sidx+nTrain+nCV;
-	foldIdx(f).teidx = sidx+nTrain+nCV+1:sidx+nTrain+nCV+nTest;
-end
-cd ../..;
-
-
 % clear;
 % cd data/nips14;
 % nFold = 1;
@@ -196,13 +179,28 @@ cd ../..;
 % end
 % cd ../..;
 
+clear;
+cd data/nips14;
+nFold = 5;
+nTrain = 1;
+nCV = 1;
+nTest = 10;
+[examples] = loadExamples(nFold*(nTrain+nCV+nTest),.2,.6,1,1,1);
+for f = 1:nFold
+	sidx = (f-1)*(nTrain+nTest);
+	foldIdx(f).tridx = sidx+1:sidx+nTrain;
+	foldIdx(f).ulidx = [];
+	foldIdx(f).cvidx = sidx+nTrain+1:sidx+nTrain+nCV;
+	foldIdx(f).teidx = sidx+nTrain+nCV+1:sidx+nTrain+nCV+nTest;
+end
+cd ../..;
 
 expSetup = struct('foldIdx',foldIdx ...
 				 ,'runAlgos',[4 5] ...
-				 ,'decodeFunc',@UGM_Decode_TRBP,'inferFunc',@UGM_Infer_CountBP ...
-				 ,'Cvec',1 ...
+				 ,'decodeFunc',@UGM_Decode_TRBP,'inferFunc',@UGM_Infer_TRBP ...
+				 ,'Cvec',.01 ...
 				 ,'stepSizeVec',[.01 .02 .05] ...
-				 ,'kappaVec',[.1 .2 .5 1 2 5 10 20 50 100] ...
+				 ,'kappaVec',[20 50 100] ...
 				 );
 expSetup.optSGD = struct('maxIter',1000 ...
 						,'plotObj',2,'plotRefresh',100 ...
