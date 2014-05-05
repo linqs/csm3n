@@ -21,7 +21,6 @@ function [w, kappa, f] = trainVCTSM_lbfgs(examples, inferFunc, C1, C2, options, 
 
 assert(nargin >= 2,'USAGE: trainVCTSM_lbfgs(examples,inferFunc)')
 
-nEx = length(examples);
 nParam = max(examples{1}.edgeMap(:));
 
 if ~exist('C1','var') || isempty(C1)
@@ -49,16 +48,21 @@ if ~exist('kappa','var') || isempty(kappa)
 	kappa = 1;
 end
 
-% initial position
-x0 = [w ; log(kappa)];
+% % Unconstrained optimization (in log space)
+% objFun = @(x, varargin) vctsmObj_log(x, examples, C1, C2, inferFunc, varargin{:});
+% x0 = [w ; log(kappa)];
+% [x,f] = minFunc(objFun, x0, options);
+% w = x(1:end-1);
+% kappa = exp(x(end));
 
-% run optimization
+% Constrained optimization
 objFun = @(x, varargin) vctsmObj(x, examples, C1, C2, inferFunc, varargin{:});
-[x,f] = minFunc(objFun, x0, options);
-
-% parse optimization output
-w = x(1:nParam);
-kappa = exp(x(nParam+1));
+x0 = [w ; kappa];
+lb = -inf(size(x0)); lb(end) = 0;
+ub = inf(size(x0));
+[x,f] = minConf_TMP(objFun, x0, lb, ub, options);
+w = x(1:end-1);
+kappa = x(end);
 
 
 

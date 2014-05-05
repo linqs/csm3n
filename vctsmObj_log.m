@@ -1,16 +1,15 @@
-function [f, g] = sctsmObj(x, examples, C, inferFunc, kappa, varargin)
+function [f, g] = vctsmObj_log(x, examples, C1, C2, inferFunc, varargin)
 %
-% Outputs the objective value and gradient of the SCTSM learning objective
-% (i.e., VCTSM with a fixed kappa).
+% Outputs the objective value and gradient of the VCTSM learning objective.
 %
 % x : current point in optimization
 % examples : nEx x 1 cell array of examples, each containing:
 %	Fx : nParam x length(oc) feature map
 %	suffStat : nParam x 1 vector of sufficient statistics (i.e., Fx * oc)
 %	Ynode : nState x nNode overcomplete matrix representation of labels
-% C : regularization constant or vector
+% C1 : regularization constant for reg/loss tradeoff
+% C2 : regularization constant for weights/convexity tradeoff
 % inferFunc : inference function
-% kappa : predefined modulus of convexity
 % varargin : optional arguments (required by minFunc)
 
 nEx = length(examples);
@@ -18,12 +17,29 @@ nParam = max(examples{1}.edgeMap(:));
 
 % Parse current position
 w = x(1:nParam);
+logKappa = x(nParam+1);
+kappa = exp(logKappa);
+
+% kappa must be positive
+if kappa <= 0
+	err = MException('vctsmObj:BadInput',...
+			sprintf('kappa must be strictly positive; log(kappa)=%f, kappa=%f',logKappa,kappa));
+	throw(err);
+end
 
 % Init outputs
-f = 0.5 * (C .* w)' * w;
+% Convex upper bound regularizer using Young's inequality
+f = 0.5*C1 * (C2*(w'*w) + 1/(C2*kappa^2));
 if nargout == 2
-	gradW = (C .* w);
+	gradW = C1 * C2 * w;
+	gradLogKappa = -C1 / (C2*kappa^2);
 end
+% Non-convex regularizer
+% f = 0.5 * C1 * (w'*w) / kappa^2;
+% if nargout == 2
+% 	gradW = C1 * w / kappa^2;
+% 	gradLogKappa = -C1 * (w'*w) / kappa^2;
+% end
 
 % Main loop
 for i = 1:nEx
@@ -56,12 +72,13 @@ for i = 1:nEx
 	% Gradient
 	if nargout == 2
 		gradW = gradW + (ss_mu-ss_y) / (nEx*ex.nNode);
+		gradLogKappa = gradLogKappa + (kappa*H) / (nEx*ex.nNode);
 	end
 	
 end
 
 if nargout == 2
-	g = gradW;
+	g = [gradW; gradLogKappa];
 end
 
 

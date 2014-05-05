@@ -19,7 +19,6 @@ function [w, f] = trainSCTSM_lbgfs(examples, inferFunc, kappa, C, options, w)
 % parse input
 assert(nargin >= 3, 'USAGE: trainSCTSM(examples,inferFunc,kappa)')
 
-nEx = length(examples);
 nParam = max(examples{1}.edgeMap(:));
 
 if ~exist('C','var') || isempty(C)

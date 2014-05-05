@@ -13,18 +13,15 @@ function [f, g] = vctsmObj(x, examples, C1, C2, inferFunc, varargin)
 % varargin : optional arguments (required by minFunc)
 
 nEx = length(examples);
-nParam = max(examples{1}.edgeMap(:));
 
 % Parse current position
-w = x(1:nParam);
-% kappa = x(nParam+1);
-logKappa = x(nParam+1);
-kappa = exp(logKappa);
+w = x(1:end-1);
+kappa = x(end);
 
 % kappa must be positive
 if kappa <= 0
 	err = MException('vctsmObj:BadInput',...
-			sprintf('kappa must be strictly positive; log(kappa)=%f, kappa=%f',logKappa,kappa));
+			sprintf('kappa must be strictly positive; kappa=%f',kappa));
 	throw(err);
 end
 
@@ -33,14 +30,13 @@ end
 f = 0.5*C1 * (C2*(w'*w) + 1/(C2*kappa^2));
 if nargout == 2
 	gradW = C1 * C2 * w;
-% 	gradKappa = -C1 / (C2*kappa^3);
-	gradLogKappa = -C1 / (C2*kappa^2);
+	gradKappa = -C1 / (C2*kappa^3);
 end
 % Non-convex regularizer
 % f = 0.5 * C1 * (w'*w) / kappa^2;
 % if nargout == 2
 % 	gradW = C1 * w / kappa^2;
-% 	gradLogKappa = -C1 * (w'*w) / kappa^2;
+% 	gradKappa = -C1 * (w'*w) / (C2*kappa^3);
 % end
 
 % Main loop
@@ -55,7 +51,6 @@ for i = 1:nEx
 	% Loss-augmented (approx) marginal inference
 	[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
 	[nodeBel,edgeBel,logZ] = UGM_Infer_ConvexBP(kappa,nodePot.*exp(1-Ynode),edgePot,ex.edgeStruct,inferFunc,varargin{:});
-% 	[nodeBel,edgeBel,logZ] = inferFunc((nodePot.^(1/kappa)).*exp(1-Ynode),edgePot.^(1/kappa),ex.edgeStruct,varargin{:});
 	
 	% Compute sufficient statistics
 	mu = [reshape(nodeBel',[],1) ; edgeBel(:)];
@@ -75,15 +70,13 @@ for i = 1:nEx
 	% Gradient
 	if nargout == 2
 		gradW = gradW + (ss_mu-ss_y) / (nEx*ex.nNode);
-% 		gradKappa = gradKappa + H;
-		gradLogKappa = gradLogKappa + (kappa*H) / (nEx*ex.nNode);
+		gradKappa = gradKappa + H;
 	end
 	
 end
 
 if nargout == 2
-% 	g = [gradW; gradKappa];
-	g = [gradW; gradLogKappa];
+	g = [gradW; gradKappa];
 end
 
 

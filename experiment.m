@@ -275,7 +275,7 @@ for fold = 1:nFold
 
 					% M3N learning
 					case 2
-						fprintf('Training M3N ...\n');
+						fprintf('Training M3N with stepSize=%f ...\n',stepSize);
 						optM3N.stepSize = stepSize;
 						[w,fAvg] = trainM3N(ex_tr,decodeFunc,C_w,optM3N);
 						params{a,fold,c1,c2}.w = w;
