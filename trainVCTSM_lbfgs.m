@@ -58,7 +58,7 @@ end
 % Constrained optimization
 objFun = @(x, varargin) vctsmObj(x, examples, C1, C2, inferFunc, varargin{:});
 x0 = [w ; kappa];
-lb = -inf(size(x0)); lb(end) = 0;
+lb = -inf(size(x0)); lb(end) = 1e-10;
 ub = inf(size(x0));
 [x,f] = minConf_TMP(objFun, x0, lb, ub, options);
 w = x(1:end-1);

@@ -57,7 +57,7 @@ for i = 1:nEx
 	ss_mu = Fx*mu;
 	
 	% Compute pseudo-entropy of pseudo-marginals using the identity:
-	% logZ = U - H, where H is entropy and U = w' * Fx * mu
+	% logZ = U + H, where H is entropy and U = w' * Fx * mu
 	U = w' * ss_mu;
 	H = logZ - U;
 	
@@ -70,7 +70,7 @@ for i = 1:nEx
 	% Gradient
 	if nargout == 2
 		gradW = gradW + (ss_mu-ss_y) / (nEx*ex.nNode);
-		gradKappa = gradKappa + H;
+		gradKappa = gradKappa + H / (nEx*ex.nNode);;
 	end
 	
 end

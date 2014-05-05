@@ -1,4 +1,4 @@
-function synthPlots(expSetup,cvErrs,teErrs,params,plotFolds,plotKappa,plotErrorBars)
+function synthPlots(expSetup,cvErrs,teErrs,params,plotFolds,plotKappa,plotErrorBars,plotNormW)
 %
 % Plots results of synethetic experiment
 %
@@ -16,7 +16,7 @@ m3nIdx = find(expSetup.runAlgos==2);
 vctsmIdx = find(expSetup.runAlgos==4);
 sctsmIdx = find(expSetup.runAlgos==5);
 
-% Which trials to use
+% Which trials to use?
 if ~exist('plotFolds','var') || isempty(plotFolds)
 	plotFolds = 1:nFold;
 end
@@ -27,6 +27,11 @@ end
 % Error bars?
 if ~exist('plotErrorBars','var') || isempty(plotErrorBars)
 	plotErrorBars = 0;
+end
+
+% Plot norm(w)?
+if ~exist('plotNormW','var') || isempty(plotNormW)
+	plotNormW = 0;
 end
 
 
@@ -59,38 +64,45 @@ avgNormW = mean(normW,1)';
 
 %% Plots
 
+numPlots = 1 + plotNormW;
+
 fig = figure();
 figPos = get(fig,'Position');
-figPos(3) = 2*figPos(3);
+figPos(3) = numPlots*figPos(3);
 set(fig,'Position',figPos);
 
-subplot(1,2,1);
+subplot(1,numPlots,1);
 hold on;
 if plotErrorBars
 	% M3N
-	errorbar(kappaVec(plotKappa),repmat(avgErr(1,1),length(plotKappa),1),stdErr(1,:)*ones(length(plotKappa)),'r--');
+	errorbar(kappaVec(plotKappa),repmat(avgErr(1,1),length(plotKappa),1),stdErr(1,:)*ones(length(plotKappa)) ...
+		,'rx--','MarkerSize',16,'LineWidth',1.2);
 	% VCTSM
-	errorbar(kappaVec(plotKappa),repmat(avgErr(2,1),length(plotKappa),1),stdErr(2,:)*ones(length(plotKappa)),'b-.');
+	errorbar(kappaVec(plotKappa),repmat(avgErr(2,1),length(plotKappa),1),stdErr(2,:)*ones(length(plotKappa)) ...
+		,'bo--','MarkerSize',10,'LineWidth',1.2);
 	% SCTSM
-	errorbar(kappaVec(plotKappa),avgErr(3,:)',stdErr(3,:),'g');
+	errorbar(kappaVec(plotKappa),avgErr(3,:)',stdErr(3,:),'gs-','MarkerSize',14,'LineWidth',1.2);
 else
 	% M3N
-	plot(kappaVec(plotKappa),repmat(avgErr(1,1),length(plotKappa),1),'r--');
+	plot(kappaVec(plotKappa),repmat(avgErr(1,1),length(plotKappa),1),'rx:');
 	% VCTSM
-	plot(kappaVec(plotKappa),repmat(avgErr(2,1),length(plotKappa),1),'b-.');
+	plot(kappaVec(plotKappa),repmat(avgErr(2,1),length(plotKappa),1),'bo--');
 	% SCTSM
-	plot(kappaVec(plotKappa),avgErr(3,:)','g');
+	plot(kappaVec(plotKappa),avgErr(3,:)','gd-');
 end
-title('Convexity vs. Test Error');
-xlabel('log(kappa)'); ylabel(sprintf('test error (avg %d folds)',nFold));
-legend({'SCTSM','M3N','VCTSM'},'Location','East');
+% title('Convexity vs. Test Error','FontSize',18);
+xlabel('log(kappa)','FontSize',18);
+ylabel(sprintf('test error (avg %d folds)',nFold),'FontSize',18);
+legend({'MM','VCMM','SCMM'},'Location','East','FontSize',18);
 set(gca,'xscale','log');
 axis tight
 hold off;
 
-subplot(1,2,2);
-plot(kappaVec(plotKappa),avgNormW,'g');
-title('Convexity vs. Norm of Weights (SCTSM)');
-xlabel('kappa');
-ylabel(sprintf('Local ||w||^2 (avg %d folds)',nFold));
+if plotNormW
+	subplot(1,2,2);
+	plot(kappaVec(plotKappa),avgNormW,'g');
+	title('Convexity vs. Norm of Weights (SCMM)','FontSize',18);
+	xlabel('kappa','FontSize',18);
+	ylabel(sprintf('Local ||w||^2 (avg %d folds)',nFold),'FontSize',18);
+end
 
