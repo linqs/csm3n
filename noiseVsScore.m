@@ -13,6 +13,7 @@ for f = 1:length(filenames)
 	kappas(f) = kappas(f) / nFold;
 end
 
+figure();
 errorbar(noiseRates,errs(1,:),stds(1,:),'rx--','MarkerSize',16,'LineWidth',1.2);
 hold on;
 errorbar(noiseRates,errs(2,:),stds(2,:),'bo--','MarkerSize',10,'LineWidth',1.2);

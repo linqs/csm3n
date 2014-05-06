@@ -496,6 +496,8 @@ for fold = 1:nFold
             bestC2(a) = stepSizeVec(c2idx(a));
         elseif strcmp(algoNames{runAlgos(a)},'M3NLRR')
             bestC2(a) = CvecRel(c2idx(a));
+        elseif strcmp(algoNames{runAlgos(a)},'VCTSM')
+            bestC2(a) = params{a,fold,bestParam(a,fold)}.kappa;
         elseif strcmp(algoNames{runAlgos(a)},'SCTSM')
             bestC2(a) = kappaVec(c2idx(a));
         elseif strcmp(algoNames{runAlgos(a)},'CSM3N') || strcmp(algoNames{runAlgos(a)},'CSCACC')

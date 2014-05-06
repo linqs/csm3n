@@ -1,10 +1,12 @@
 function [] = checkObjective(func, x, epsilon)
 
 d = length(x);
-dir = rand(d,1);
+[~,dir] = func(x);
+% dir = rand(d,1);
+% dir(end) = 0;
 dir = dir / norm(dir);
 
-increments = linspace(-epsilon,epsilon,50);
+increments = linspace(-epsilon,epsilon,20);
 
 y = zeros(size(increments));
 
