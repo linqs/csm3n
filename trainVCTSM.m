@@ -65,10 +65,10 @@ x0 = [w ; log(kappa)];
 % Use projected subgradient descent for 1 training example;
 % otherwise, use stochastic subgradient.
 if length(examples) == 1
-	objFun = @(x) vctsmObj(x, examples, C1, C2, inferFunc);
+	objFun = @(x) vctsmObj_log(x, examples, C1, C2, inferFunc);
 	[x,fAvg] = pgd(objFun, @projFun, x0, options);
 else
-	objFun = @(x, ex, t) vctsmObj(x, {ex}, C1, C2, inferFunc);
+	objFun = @(x, ex, t) vctsmObj_log(x, {ex}, C1, C2, inferFunc);
 	[x,fAvg] = sgd(examples, objFun, x0, @projFun, options);
 end
 
