@@ -41,8 +41,8 @@ for i = 1:nEx
     
     % Node features are GMM posterior probabilities
     Xnode = zeros(1, 4, nnz(mask));
-    Xnode(1,1,:) = max(MIN_FEATURE, log(probObj{i}(mask)));
-    Xnode(1,2,:) = max(MIN_FEATURE, log(1-probObj{i}(mask)));
+    Xnode(1,1,:) = max(MIN_FEATURE, (probObj{i}(mask)));
+    Xnode(1,2,:) = max(MIN_FEATURE, (1-probObj{i}(mask)));
     border = (conv2(double(trimap{i} == 64), ones(3), 'same') > 0)*2-1;
     Xnode(1,3,:) = border(mask);
     border = (conv2(double(trimap{i} == 255), ones(3), 'same') > 0)*2-1;

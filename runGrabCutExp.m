@@ -3,11 +3,11 @@ cd ~/Dropbox/Research/csm3n
 setUpPath;
 
 clear;
-nEx = 3;
+nEx = 50;
 nTr = 1;
 nCV = 1;
 
-numFolds = 1;
+numFolds = 50;
 
 for i = 1:numFolds
     foldIdx(i).tridx = (i-1) * nTr + [1:nTr];
@@ -25,7 +25,7 @@ cd ../../;
 
 expSetup = struct('nFold',numFolds,...
     'foldIdx', [foldIdx],...
-    'runAlgos',[4],...
+    'runAlgos',[2 4],...
     'decodeFunc',@UGM_Decode_TRBP,...
     'inferFunc',@UGM_Infer_TRBP,...
     'Cvec',[0.0001 .001 .01 .1 1 10],...
@@ -33,7 +33,7 @@ expSetup = struct('nFold',numFolds,...
 
 expSetup.optSGD = struct('maxIter',500 ...
 						,'verbose',0,'returnBest',1);
-expSetup.optLBFGS = struct('Display','iter', 'verbose', 2);
+expSetup.optLBFGS = struct('Display','iter', 'verbose', 0);
 
 % expSetup.save2file = 'grabCutResults_adhoc';
 expSetup.save2file = 'grabCutResults_fixed_50';
