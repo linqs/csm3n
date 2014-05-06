@@ -183,12 +183,17 @@ nJobs = nFold * nCvals1 * (...
 totalTimer = tic;
 count = 0;
 
-% Storage
+% Parameter storage
 params = cell(nRunAlgos,nFold,nCvals1,nCvals2);
+% Stats storage
 trErrs = inf(nRunAlgos,nFold,nCvals1,nCvals2);
 cvErrs = inf(nRunAlgos,nFold,nCvals1,nCvals2);
 teErrs = inf(nRunAlgos,nFold,nCvals1,nCvals2);
 teF1 = inf(nRunAlgos,nFold,nCvals1,nCvals2);
+% Baseline stats
+baselineErrs = inf(nFold,1);
+baselineF1 = inf(nFold,1);
+% Stability storage
 perturbs = cell(nFold,1);
 cvStabMax = inf(nRunAlgos,nFold,nCvals1,nCvals2,2);
 cvStabAvg = inf(nRunAlgos,nFold,nCvals1,nCvals2,2);
@@ -231,6 +236,27 @@ for fold = 1:nFold
 	
 	% Init perturbations for stability measurement
 	pert = [];
+	
+	% Compute baseline stats
+	errs = zeros(nTest,1);
+	f1 = zeros(nTest,1);
+	for i = 1:nTest
+		ex = ex_te{i};
+		pred = zeros(ex.nNode,1);
+		for n = 1:ex.nNode
+			pred(n) = find(ex.Xnode(1,:,n));
+		end
+		errs(i) = nnz(ex.Y ~= pred) / ex.nNode;
+		[~,~,~,~,s.f1,~,s.f1wavg] = errStats(double(ex.Y),pred);
+		if ex.nState == 2
+			f1(i) = s.f1(1); % If binary, use F1 of first class
+		else
+			f1(i) = s.f1wavg; % If multiclass, use weighted average F1
+		end
+	end
+	baselineErrs(fold) = mean(errs);
+	baselineF1(fold) = mean(f1);
+	fprintf('Baseline: avg err = %.4f, avg F1 = %.4f\n', baselineErrs(fold),baselineF1(fold));
 	
 	for c1 = 1:nCvals1
 		C_w = Cvec(c1);
@@ -339,7 +365,7 @@ for fold = 1:nFold
 				for i = 1:nTrain
 					ex = ex_tr{i};
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
-					if strcmp(runAlgos(a),'VCTSM') || strcmp(runAlgos(a),'SCTSM')
+					if strcmp(algoNames{runAlgos(a)},'VCTSM') || strcmp(algoNames{runAlgos(a)},'SCTSM')
 						pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
 					else
 						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
@@ -356,7 +382,7 @@ for fold = 1:nFold
 				for i = 1:nCV
 					ex = ex_cv{i};
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
-					if strcmp(runAlgos(a),'VCTSM') || strcmp(runAlgos(a),'SCTSM')
+					if strcmp(algoNames{runAlgos(a)},'VCTSM') || strcmp(algoNames{runAlgos(a)},'SCTSM')
 						pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
 						if nStabSamp > 0
 							sctsmDecoder = @(nodePot,edgePot,edgeStruct) UGM_Decode_ConvexBP(kappa,nodePot,edgePot,edgeStruct,inferFunc);
@@ -385,7 +411,7 @@ for fold = 1:nFold
 				for i = 1:nTest
 					ex = ex_te{i};
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
-					if strcmp(runAlgos(a),'VCTSM') || strcmp(runAlgos(a),'SCTSM')
+					if strcmp(algoNames{runAlgos(a)},'VCTSM') || strcmp(algoNames{runAlgos(a)},'SCTSM')
 						pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
 					else
 						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);						
@@ -394,11 +420,9 @@ for fold = 1:nFold
 					[s.cm,s.err,s.pre,s.rec,s.f1,s.f1avg,s.f1wavg] = errStats(double(ex.Y),pred);
 					teStat(a,fold,c1,c2,i) = s;
 					if ex.nState == 2
-						% If binary, use F1 of first class
-						f1(i) = s.f1(1);
+						f1(i) = s.f1(1); % If binary, use F1 of first class
 					else
-						% If multiclass, use weighted average F1
-						f1(i) = s.f1w;
+						f1(i) = s.f1wavg; % If multiclass, use weighted average F1
 					end
 				end
 				teErrs(a,fold,c1,c2) = mean(errs);
@@ -482,6 +506,7 @@ for fold = 1:nFold
     idx = sub2ind(size(teErrs),(1:nRunAlgos)',fold*ones(nRunAlgos,1),c1idx,c2idx);
     bestResults(:,:,fold) = [trErrs(idx) cvErrs(idx) teErrs(idx) teF1(idx) geErrs(idx) ...
         cvStabMax(idx) cvStabAvg(idx) bestC1(:) bestC2(:)];
+	fprintf('Baseline: avg err = %.4f, avg F1 = %.4f\n', baselineErrs(fold),baselineF1(fold));
     disptable(bestResults(:,:,fold),colStr,algoNames(runAlgos),'%.5f');
 end
 
@@ -493,6 +518,7 @@ endTime = toc(totalTimer);
 fprintf('-------------\n');
 fprintf('FINAL RESULTS\n');
 fprintf('-------------\n');
+fprintf('Baseline: avg err = %.4f, avg F1 = %.4f\n', mean(baselineErrs),mean(baselineF1));
 disptable(avgResults,colStr,algoNames(runAlgos),'%.5f');
 fprintf('elapsed time: %.2f min\n',endTime/60);
 
