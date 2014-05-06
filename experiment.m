@@ -238,25 +238,27 @@ for fold = 1:nFold
 	pert = [];
 	
 	% Compute baseline stats
-	errs = zeros(nTest,1);
-	f1 = zeros(nTest,1);
-	for i = 1:nTest
-		ex = ex_te{i};
-		pred = zeros(ex.nNode,1);
-		for n = 1:ex.nNode
-			pred(n) = find(ex.Xnode(1,:,n));
+	if examples{1}.nState == examples{1}.nNodeFeat
+		errs = zeros(nTest,1);
+		f1 = zeros(nTest,1);
+		for i = 1:nTest
+			ex = ex_te{i};
+			pred = zeros(ex.nNode,1);
+			for n = 1:ex.nNode
+				pred(n) = find(ex.Xnode(1,:,n));
+			end
+			errs(i) = nnz(ex.Y ~= pred) / ex.nNode;
+			[~,~,~,~,s.f1,~,s.f1wavg] = errStats(double(ex.Y),pred);
+			if ex.nState == 2
+				f1(i) = s.f1(1); % If binary, use F1 of first class
+			else
+				f1(i) = s.f1wavg; % If multiclass, use weighted average F1
+			end
 		end
-		errs(i) = nnz(ex.Y ~= pred) / ex.nNode;
-		[~,~,~,~,s.f1,~,s.f1wavg] = errStats(double(ex.Y),pred);
-		if ex.nState == 2
-			f1(i) = s.f1(1); % If binary, use F1 of first class
-		else
-			f1(i) = s.f1wavg; % If multiclass, use weighted average F1
-		end
+		baselineErrs(fold) = mean(errs);
+		baselineF1(fold) = mean(f1);
+		fprintf('Baseline: avg err = %.4f, avg F1 = %.4f\n', baselineErrs(fold),baselineF1(fold));
 	end
-	baselineErrs(fold) = mean(errs);
-	baselineF1(fold) = mean(f1);
-	fprintf('Baseline: avg err = %.4f, avg F1 = %.4f\n', baselineErrs(fold),baselineF1(fold));
 	
 	for c1 = 1:nCvals1
 		C_w = Cvec(c1);
@@ -508,7 +510,9 @@ for fold = 1:nFold
     idx = sub2ind(size(teErrs),(1:nRunAlgos)',fold*ones(nRunAlgos,1),c1idx,c2idx);
     bestResults(:,:,fold) = [trErrs(idx) cvErrs(idx) teErrs(idx) teF1(idx) geErrs(idx) ...
         cvStabMax(idx) cvStabAvg(idx) bestC1(:) bestC2(:)];
-	fprintf('Baseline: avg err = %.4f, avg F1 = %.4f\n', baselineErrs(fold),baselineF1(fold));
+	if examples{1}.nState == examples{1}.nNodeFeat
+		fprintf('Baseline: avg err = %.4f, avg F1 = %.4f\n', baselineErrs(fold),baselineF1(fold));
+	end
     disptable(bestResults(:,:,fold),colStr,algoNames(runAlgos),'%.5f');
 end
 
@@ -520,7 +524,9 @@ endTime = toc(totalTimer);
 fprintf('-------------\n');
 fprintf('FINAL RESULTS\n');
 fprintf('-------------\n');
-fprintf('Baseline: avg err = %.4f, avg F1 = %.4f\n', mean(baselineErrs),mean(baselineF1));
+if examples{1}.nState == examples{1}.nNodeFeat
+	fprintf('Baseline: avg err = %.4f, avg F1 = %.4f\n', mean(baselineErrs),mean(baselineF1));
+end
 disptable(avgResults,colStr,algoNames(runAlgos),'%.5f');
 fprintf('elapsed time: %.2f min\n',endTime/60);
 
