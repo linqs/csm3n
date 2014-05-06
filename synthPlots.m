@@ -74,21 +74,33 @@ set(fig,'Position',figPos);
 subplot(1,numPlots,1);
 hold on;
 if plotErrorBars
+% 	% Buggy shit, uses 3rd party code
+% 	% M3N
+% 	boundedline(kappaVec(plotKappa),repmat(avgErr(1,1),1,length(plotKappa)) ...
+% 		,stdErr(1,1)*ones(1,length(plotKappa)), 'r-.');
+% 	% VCTSM
+% 	boundedline(kappaVec(plotKappa),repmat(avgErr(2,1),1,length(plotKappa)) ...
+% 		,stdErr(1,1)*ones(1,length(plotKappa)), 'b--');
+% 	% SCTSM
+% 	errorbar(kappaVec(plotKappa),avgErr(3,:),stdErr(3,:),'gs-','MarkerSize',14,'LineWidth',1.2);
+
 	% M3N
-	errorbar(kappaVec(plotKappa),repmat(avgErr(1,1),length(plotKappa),1),stdErr(1,:)*ones(length(plotKappa)) ...
-		,'rx--','MarkerSize',16,'LineWidth',1.2);
+	errorbar(kappaVec(plotKappa),repmat(avgErr(1,1),1,length(plotKappa)) ...
+		,stdErr(1,1)*ones(1,length(plotKappa)) ...
+		,'r-.','MarkerSize',16,'LineWidth',1.2);
 	% VCTSM
-	errorbar(kappaVec(plotKappa),repmat(avgErr(2,1),length(plotKappa),1),stdErr(2,:)*ones(length(plotKappa)) ...
-		,'bo--','MarkerSize',10,'LineWidth',1.2);
+	errorbar(kappaVec(plotKappa),repmat(avgErr(2,1),1,length(plotKappa)) ...
+		,stdErr(2,1)*ones(1,length(plotKappa)) ...
+		,'b--','MarkerSize',10,'LineWidth',1.2);
 	% SCTSM
-	errorbar(kappaVec(plotKappa),avgErr(3,:)',stdErr(3,:),'gs--','MarkerSize',14,'LineWidth',1.2);
+	errorbar(kappaVec(plotKappa),avgErr(3,:),stdErr(3,:),'gs-','MarkerSize',14,'LineWidth',1.2);
 else
 	% M3N
-	plot(kappaVec(plotKappa),repmat(avgErr(1,1),length(plotKappa),1),'rx--','MarkerSize',16,'LineWidth',1.2);
+	plot(kappaVec(plotKappa),repmat(avgErr(1,1),1,length(plotKappa)),'r-.','MarkerSize',16,'LineWidth',1.2);
 	% VCTSM
-	plot(kappaVec(plotKappa),repmat(avgErr(2,1),length(plotKappa),1),'bo--','MarkerSize',10,'LineWidth',1.2);
+	plot(kappaVec(plotKappa),repmat(avgErr(2,1),1,length(plotKappa)),'b--','MarkerSize',10,'LineWidth',1.2);
 	% SCTSM
-	plot(kappaVec(plotKappa),avgErr(3,:)','gs--','MarkerSize',14,'LineWidth',1.2);
+	plot(kappaVec(plotKappa),avgErr(3,:),'gs-','MarkerSize',14,'LineWidth',1.2);
 end
 % title('Convexity vs. Test Error','FontSize',18);
 xlabel('log(kappa)','FontSize',18);
