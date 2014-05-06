@@ -22,7 +22,7 @@ img = [img; buffer; tmp];
 % make rgb
 rgb = zeros(size(img, 1), size(img, 2), 3);
 for i = 1:3
-    img(1:size(ex.srcbw,1), :) = ex.srcrgb(:,:,i);
+    img(1:size(ex.srcbw,1), :) = double(ex.srcrgb(:,:,i))/255;
     rgb(:,:,i) = img;
 end
 
