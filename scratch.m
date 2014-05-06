@@ -185,7 +185,7 @@ nFold = 1;
 nTrain = 1;
 nCV = 1;
 nTest = 10;
-[examples] = loadExamples(nFold*(nTrain+nCV+nTest),.25,.6,1,1,1);
+[examples] = loadExamples(nFold*(nTrain+nCV+nTest),.15,.6,1,1,101);
 for f = 1:nFold
 	sidx = (f-1)*(nTrain+nTest);
 	foldIdx(f).tridx = sidx+1:sidx+nTrain;
@@ -203,10 +203,10 @@ expSetup = struct('foldIdx',foldIdx ...
 				 ,'kappaVec',[20 50 100] ...
 				 );
 expSetup.optSGD = struct('maxIter',1000 ...
-						,'plotObj',2,'plotRefresh',100 ...
+						,'plotObj',103,'plotRefresh',100 ...
 						,'verbose',1,'returnBest',1);
 expSetup.optLBFGS = struct('Display','iter');
-expSetup.plotPred = 3;
+expSetup.plotPred = 102;
 
 experiment
 

@@ -58,11 +58,18 @@ end
 % Constrained optimization
 objFun = @(x, varargin) vctsmObj(x, examples, C1, C2, inferFunc, varargin{:});
 x0 = [w ; kappa];
-lb = -inf(size(x0)); lb(end) = 1e-10;
-ub = inf(size(x0));
-[x,f] = minConf_TMP(objFun, x0, lb, ub, options);
+% lb = -inf(size(x0)); lb(end) = 1e-10;
+% ub = inf(size(x0));
+% [x,f] = minConf_TMP(objFun, x0, lb, ub, options);
+[x,f] = minConf_PQN(objFun, x0, @projFun, options);
 w = x(1:end-1);
 kappa = x(end);
 
 
+%% Projection function (ensures that kappa is positive)
+function x = projFun(x)
+
+if x(end) < 1e-10
+	x(end) = 1e-10;
+end
 
