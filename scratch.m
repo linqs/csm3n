@@ -188,7 +188,7 @@ nFold = 1;
 nTrain = 1;
 nCV = 1;
 nTest = 10;
-[examples] = loadExamples(nFold*(nTrain+nCV+nTest),.25,.6,1,1,101);
+[examples] = loadExamples(nFold*(nTrain+nCV+nTest),.15,.6,1,1,101);
 for f = 1:nFold
 	sidx = (f-1)*(nTrain+nCV+nTest);
 	foldIdx(f).tridx = sidx+1:sidx+nTrain;
@@ -199,17 +199,58 @@ end
 cd ../..;
 
 expSetup = struct('foldIdx',foldIdx ...
-				 ,'runAlgos',4 ...
+				 ,'runAlgos',5 ...
 				 ,'decodeFunc',@UGM_Decode_TRBP,'inferFunc',@UGM_Infer_TRBP ...
-				 ,'Cvec',1 ...
+				 ,'Cvec',.001 ...
 				 ,'stepSizeVec',.1 ...
-				 ,'kappaVec',[.1 .5 1 5 10 50 100] ...
+				 ,'kappaVec',1 ...
 				 );
 expSetup.optSGD = struct('maxIter',200 ...
 						,'plotObj',103,'plotRefresh',100 ...
 						,'verbose',1,'returnBest',1);
-expSetup.optLBFGS = struct('Display','full','verbose',3);
+expSetup.optLBFGS = struct('Display','full','verbose',3 ...
+						  ,'MaxIter',100,'MaxFunEvals',200);
 expSetup.plotPred = 102;
 
 experiment
+
+
+%% Plot Noisy NIPS
+
+clear
+load results/nips_n15_trbp.mat
+
+f = 1;
+teidx = foldIdx(f).teidx;
+ex_te = examples(teidx);
+
+err = zeros(3,10);
+for i = 1:10
+	
+	ex = ex_te{i};
+	baseline = squeeze(ex.Xnode(1,2,:)==1) + 1;
+	err(1,i) = nnz(ex.Y ~= baseline) / ex.nNode;
+	fprintf('Baseline error:\t%f\n', err(1,i));
+	figure(1)
+	imagesc(reshape(ex.Xnode(1,2,:),42,60)); colormap gray; axis off; set(gca,'Position',[0 0 1 1]);
+
+	w = params{1,f,bestParam(1,f)}.w;
+	[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
+	pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
+	err(2,i) = nnz(ex.Y ~= pred) / ex.nNode;
+	fprintf('M3N error:\t%f\n', err(2,i));
+	figure(2)
+	imagesc(reshape(pred,42,60)); colormap gray; axis off; set(gca,'Position',[0 0 1 1]);
+
+	w = params{2,f,bestParam(2,f)}.w;
+	kappa = params{2,f,bestParam(2,f)}.kappa;
+	[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
+	pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
+	err(3,i) = nnz(ex.Y ~= pred) / ex.nNode;
+	fprintf('VCTSM error:\t%f\n', err(3,i));
+	figure(3)
+	imagesc(reshape(pred,42,60)); colormap gray; axis off; set(gca,'Position',[0 0 1 1]);
+
+end
+mean(err,2)
 

@@ -37,7 +37,7 @@ for i = 1:nEx
 	% Loss-augmented (approx) marginal inference
 	[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
 	[nodeBel,edgeBel,~,H] = UGM_Infer_ConvexBP(kappa,nodePot.*exp(1-Ynode),edgePot,ex.edgeStruct,inferFunc,varargin{:});
-	
+
 	% Compute sufficient statistics
 	ss_mu = Fx * [reshape(nodeBel',[],1) ; edgeBel(:)];
 	
@@ -47,8 +47,12 @@ for i = 1:nEx
 	% Objective
 	% Note: -\Psi = H
 	L1 = norm(Ynode(:)-nodeBel(:), 1);
-	loss = (w'*ssDiff + kappa*H + L1) / (nEx*ex.nNode);
+	loss = (w'*ssDiff + kappa*H + 0.5*L1) / (nEx*ex.nNode);
 	f = f + loss;
+
+% 	if f < 0
+% 		f = inf;
+% 	end
 	
 	% Gradient
 	if nargout == 2

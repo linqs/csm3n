@@ -40,25 +40,10 @@ end
 % otherwise, use stochastic subgradient.
 if length(examples) == 1
 	objFun = @(x) m3nObj(x, examples, C, decodeFunc);
-% 	objFun = @(x) l2M3N(x,examples{1},decodeFunc,C);
 	[w,fAvg] = pgd(objFun, [], w, options);
 else
 	objFun = @(x, ex, t) m3nObj(x, {ex}, C, decodeFunc);
-% 	objFun = @(x,ex,t) l2M3N(x,ex,decodeFunc,C); % TODO: get avg loss from l2M3N
 	[w,fAvg] = sgd(examples, objFun, w, [], options);
 end
 
-
-% Subroutine for L2-regularized M3N objective
-function [f, g] = l2M3N(w, ex, decodeFunc, C)
-
-	% compute M3N objective
-	[loss,g] = UGM_M3N_Obj(w,ex.Xnode,ex.Xedge,ex.Y',ex.nodeMap,ex.edgeMap,ex.edgeStruct,decodeFunc);
-
-	% average loss
-	%lossAvg = (1/t) * loss + ((t-1)/t) * lossAvg;
-	
-	% L2 regularization
-	f = loss + 0.5 * (C.*w)' * w;
-	g = g + C.*w;
 		

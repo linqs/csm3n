@@ -56,7 +56,7 @@ for i = 1:nEx
 	
 	% Objective
 	L1 = norm(Ynode(:)-nodeBel(:), 1);
-	loss = (w'*ssDiff + L1) / (nEx*ex.nNode);
+	loss = (w'*ssDiff + 0.5*L1) / (nEx*ex.nNode);
 	f = f + loss;
 	
 	% Gradient
