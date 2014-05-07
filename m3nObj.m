@@ -49,16 +49,15 @@ for i = 1:nEx
 		n2 = ex.edgeStruct.edgeEnds(e,2);
 		edgeBel(yMAP(n1),yMAP(n2),e) = 1;
 	end
-	mu = [reshape(nodeBel',[],1) ; edgeBel(:)];
-	ss_mu = Fx * mu;
+	ss_mu = Fx * [reshape(nodeBel',[],1) ; edgeBel(:)];
 	
 	% Difference of sufficient statistics
 	ssDiff = ss_mu - ss_y;
 	
 	% Objective
 	L1 = norm(Ynode(:)-nodeBel(:), 1);
-	loss = w'*ssDiff + L1;
-	f = f + loss / (nEx*ex.nNode);
+	loss = (w'*ssDiff + L1) / (nEx*ex.nNode);
+	f = f + loss;
 	
 	% Gradient
 	if nargout == 2

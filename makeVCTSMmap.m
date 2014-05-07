@@ -18,18 +18,18 @@ nStateRel = nEdge * nState^2;
 % create local map
 F_loc = zeros(nParamLoc,nStateLoc);
 idx = localIndex(0,1:nState,nState);
-for i = 1:nNode
+for n = 1:nNode
 	idx = idx + nState;
 	for f = 1:nNodeFeat
-		p = double(nodeMap(i,:,f));
-		F_loc((idx-1)*nParamLoc+p) = Xnode(1,f,i);
-% 		F_loc(sub2ind(size(F_loc),p,idx)) = Xnode(1,f,i);
+		p = double(nodeMap(n,:,f));
+		F_loc((idx-1)*nParamLoc+p) = Xnode(1,f,n);
+% 		F_loc(sub2ind(size(F_loc),p,idx)) = Xnode(1,f,n);
 	end
 end
 
 % create relational map
 F_rel = zeros(nParamRel,nStateRel);
-idx = pairwiseIndex(0,1:nState,1:nState,nNode,nState) - nStateLoc;
+idx = pairwiseIndex(0,1:nState,1:nState,0,nState);
 for e = 1:nEdge
 	idx = idx + nState^2;
 	for f = 1:nEdgeFeat

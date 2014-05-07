@@ -4,6 +4,7 @@ d = length(x);
 [~,dir] = func(x);
 % dir = rand(d,1);
 % dir(end) = 0;
+% dir(1:end-1) = 0;
 dir = dir / norm(dir);
 
 increments = linspace(-epsilon,epsilon,20);
