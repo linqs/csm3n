@@ -39,23 +39,14 @@ for i = 1:nEx
 	yMAP = decodeFunc(nodePot.*exp(1-Ynode),edgePot,ex.edgeStruct,varargin{:});
 
 	% Compute sufficient statistics
-	nodeBel = zeros(size(nodePot));
-	edgeBel = zeros(size(edgePot));
-	for n = 1:ex.nNode
-		nodeBel(n,yMAP(n)) = 1;
-	end
-	for e = 1:ex.nEdge
-		n1 = ex.edgeStruct.edgeEnds(e,1);
-		n2 = ex.edgeStruct.edgeEnds(e,2);
-		edgeBel(yMAP(n1),yMAP(n2),e) = 1;
-	end
-	ss_mu = Fx * [reshape(nodeBel',[],1) ; edgeBel(:)];
+	ocrep = overcompletePairwise(yMAP,ex.nState,ex.edgeStruct);
+	ss_mu = Fx * ocrep;
 	
 	% Difference of sufficient statistics
 	ssDiff = ss_mu - ss_y;
 	
 	% Objective
-	L1 = norm(Ynode(:)-nodeBel(:), 1);
+	L1 = norm(Ynode(:)-ocrep(1:ex.ocLocalScope), 1);
 	loss = (w'*ssDiff + 0.5*L1) / (nEx*ex.nNode);
 	f = f + loss;
 	
