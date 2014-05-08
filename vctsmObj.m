@@ -38,7 +38,7 @@ end
 % f = 0.5 * C1 * (w'*w) / kappa^2;
 % if nargout == 2
 % 	gradW = C1 * w / kappa^2;
-% 	gradKappa = -C1 * (w'*w) / (C2*kappa^3);
+% 	gradKappa = -C1 * (w'*w) / kappa^3;
 % end
 
 %% Main loop

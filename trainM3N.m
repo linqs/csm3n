@@ -46,12 +46,3 @@ else
 	[w,fAvg] = sgd(examples, objFun, w, [], options);
 end
 
-
-% function [f,g] = l2m3n(w, examples, C, decodeFunc)
-% 
-% ex = examples{1};
-% 
-% [f,g] = UGM_M3N_OBJ(w,ex.Xnode,ex.Xedge,ex.Y,ex.nodeMap,ex.edgeMap,ex.edgeStruct,decodeFunc);
-% 
-% f = f + (w.*C)'*w;
-% 		
