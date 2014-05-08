@@ -37,7 +37,7 @@ else
     nFold = min(nFold,length(foldIdx));
 end
 
-algoNames = {'MLE','M3N','M3NLRR','VCTSM','SCTSM','CACC','CSM3N','CSCACC','DLM'};
+algoNames = {'MLE','M3N','M3NLRR','VCTSM','SCTSM','CACC','CSM3N','CSCACC','DLM','M3NFW'};
 if isfield(expSetup,'runAlgos')
     runAlgos = expSetup.runAlgos;
 else
@@ -175,7 +175,7 @@ end
 
 % Job metadata
 nJobs = nFold * nCvals1 * (...
-    length(intersect(runAlgos,[1 4 6 9])) + ...
+    length(intersect(runAlgos,[1 4 6 9 10])) + ...
     length(stepSizeVec) * any(runAlgos==2) + ...
     length(CvecRel) * any(runAlgos==3) + ...
     length(kappaVec) * any(runAlgos==5) + ...
@@ -241,20 +241,20 @@ for fold = 1:nFold
 	if examples{1}.nState == examples{1}.nNodeFeat
 		errs = zeros(nTest,1);
 		f1 = zeros(nTest,1);
-		for i = 1:nTest
-			ex = ex_te{i};
-			pred = zeros(ex.nNode,1);
-			for n = 1:ex.nNode
-				pred(n) = find(ex.Xnode(1,:,n));
-			end
-			errs(i) = nnz(ex.Y ~= pred) / ex.nNode;
-			[~,~,~,~,s.f1,~,s.f1wavg] = errStats(double(ex.Y),pred);
-			if ex.nState == 2
-				f1(i) = s.f1(1); % If binary, use F1 of first class
-			else
-				f1(i) = s.f1wavg; % If multiclass, use weighted average F1
-			end
-		end
+% 		for i = 1:nTest
+% 			ex = ex_te{i};
+% 			pred = zeros(ex.nNode,1);
+% 			for n = 1:ex.nNode
+% 				pred(n) = find(ex.Xnode(1,:,n));
+% 			end
+% 			errs(i) = nnz(ex.Y ~= pred) / ex.nNode;
+% 			[~,~,~,~,s.f1,~,s.f1wavg] = errStats(double(ex.Y),pred);
+% 			if ex.nState == 2
+% 				f1(i) = s.f1(1); % If binary, use F1 of first class
+% 			else
+% 				f1(i) = s.f1wavg; % If multiclass, use weighted average F1
+% 			end
+% 		end
 		baselineErrs(fold) = mean(errs);
 		baselineF1(fold) = mean(f1);
 		fprintf('Baseline: avg err = %.4f, avg F1 = %.4f\n', baselineErrs(fold),baselineF1(fold));
@@ -358,6 +358,12 @@ for fold = 1:nFold
 					case 9
 						fprintf('Training DLM ...\n');
 						[w,fAvg] = trainDLM(ex_tr,decodeFunc,C_w,optSGD);
+						params{a,fold,c1,c2}.w = w;
+                        
+                        					% M3N learning
+					case 10
+						fprintf('Training M3N with Frank-Wolfe\n');
+						[w,fAvg] = bcfw(ex_tr,decodeFunc,C_w,optM3N);
 						params{a,fold,c1,c2}.w = w;
 
 				end
