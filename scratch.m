@@ -201,7 +201,7 @@ cd ../..;
 expSetup = struct('foldIdx',foldIdx ...
 				 ,'runAlgos',[4 5 10] ...
 				 ,'decodeFunc',@UGM_Decode_TRBP,'inferFunc',@UGM_Infer_TRBP ...
-				 ,'Cvec',[.0001 .001 .01 .1 1] ...
+				 ,'Cvec',.01 ...
 				 ,'stepSizeVec',.02...
 				 ,'kappaVec',[.1 .2 .5 1 2] ...
 				 );
@@ -223,6 +223,8 @@ load results/nips_n15_trbp.mat
 f = 1;
 teidx = foldIdx(f).teidx;
 ex_te = examples(teidx);
+vctsmIdx = 1;
+m3nIdx = 3;
 
 err = zeros(3,10);
 for i = 1:10
@@ -234,7 +236,7 @@ for i = 1:10
 	figure(1)
 	imagesc(reshape(ex.Xnode(1,2,:),42,60)); colormap gray; axis off; set(gca,'Position',[0 0 1 1]);
 
-	w = params{1,f,bestParam(1,f)}.w;
+	w = params{m3nIdx,f,bestParam(m3nIdx,f)}.w;
 	[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
 	pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
 	err(2,i) = nnz(ex.Y ~= pred) / ex.nNode;
@@ -242,8 +244,8 @@ for i = 1:10
 	figure(2)
 	imagesc(reshape(pred,42,60)); colormap gray; axis off; set(gca,'Position',[0 0 1 1]);
 
-	w = params{2,f,bestParam(2,f)}.w;
-	kappa = params{2,f,bestParam(2,f)}.kappa;
+	w = params{vctsmIdx,f,bestParam(vctsmIdx,f)}.w;
+	kappa = params{vctsmIdx,f,bestParam(vctsmIdx,f)}.kappa;
 	[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
 	pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
 	err(3,i) = nnz(ex.Y ~= pred) / ex.nNode;
@@ -251,6 +253,7 @@ for i = 1:10
 	figure(3)
 	imagesc(reshape(pred,42,60)); colormap gray; axis off; set(gca,'Position',[0 0 1 1]);
 
+	pause
 end
 mean(err,2)
 
