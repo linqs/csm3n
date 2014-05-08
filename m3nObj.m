@@ -32,11 +32,11 @@ for i = 1:nEx
 	ex = examples{i};
 	Fx = ex.Fx;
 	ss_y = ex.suffStat;
-	Ynode = ex.Ynode'; % assumes Ynode is (nState x nNode)
+	Ynode = ex.Ynode; % assumes Ynode is (nState x nNode)
 	
 	% Loss-augmented inference
 	[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
-	yMAP = decodeFunc(nodePot.*exp(1-Ynode),edgePot,ex.edgeStruct,varargin{:});
+	yMAP = decodeFunc(nodePot.*exp(1-Ynode'),edgePot,ex.edgeStruct,varargin{:});
 
 	% Compute sufficient statistics
 	ocrep = overcompletePairwise(yMAP,ex.nState,ex.edgeStruct);
