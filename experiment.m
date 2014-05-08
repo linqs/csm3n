@@ -37,7 +37,7 @@ else
 	nFold = min(nFold,length(foldIdx));
 end
 
-algoNames = {'MLE','M3N','M3NLRR','VCTSM','SCTSM','CACC','CSM3N','CSCACC','DLM','M3NFW'};
+algoNames = {'MLE','M3N','M3NLRR','VCTSM','SCTSM','CACC','CSM3N','CSCACC','DLM','M3NFW','VCTSM_PP'};
 if isfield(expSetup,'runAlgos')
 	runAlgos = expSetup.runAlgos;
 else
@@ -182,7 +182,7 @@ end
 
 % Job metadata
 nJobs = nFold * nCvals1 * (...
-	length(intersect(runAlgos,[1 4 6 9 10])) + ...
+	length(intersect(runAlgos,[1 4 6 9 10 11])) + ...
 	length(stepSizeVec) * any(runAlgos==2) + ...
 	length(CvecRel) * any(runAlgos==3) + ...
 	length(kappaVec) * any(runAlgos==5) + ...
@@ -372,6 +372,11 @@ for fold = 1:nFold
 						fprintf('Training M3N with Frank-Wolfe\n');
 						[w,fAvg] = bcfw(ex_tr,decodeFunc,C_w,optM3N);
 						params{a,fold,c1,c2}.w = w;
+                    case 11
+						fprintf('Training VCTSM PeterPaul...\n');
+						[w,kappa,f] = trainVCTSM_peterpaul(ex_tr,inferFunc,C_w,optVCTSM,[],initKappa);
+						params{a,fold,c1,c2}.w = w;
+						params{a,fold,c1,c2}.kappa = kappa;
 						
 				end
 				
