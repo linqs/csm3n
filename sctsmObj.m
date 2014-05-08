@@ -49,10 +49,6 @@ for i = 1:nEx
 	L1 = norm(Ynode(:)-nodeBel(:), 1);
 	loss = (w'*ssDiff + kappa*H + 0.5*L1) / (nEx*ex.nNode);
 	f = f + loss;
-
-% 	if f < 0
-% 		f = inf;
-% 	end
 	
 	% Gradient
 	if nargout == 2

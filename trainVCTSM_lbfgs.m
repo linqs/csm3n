@@ -48,22 +48,22 @@ if ~exist('kappa','var') || isempty(kappa)
 	kappa = 1;
 end
 
-% % Unconstrained optimization (in log space)
-% objFun = @(x, varargin) vctsmObj_log(x, examples, C1, C2, inferFunc, varargin{:});
-% x0 = [w ; log(kappa)];
-% [x,f] = minFunc(objFun, x0, options);
-% w = x(1:end-1);
-% kappa = exp(x(end));
-
-% Constrained optimization
-objFun = @(x, varargin) vctsmObj(x, examples, C1, C2, inferFunc, varargin{:});
-x0 = [w ; kappa];
-% lb = -inf(size(x0)); lb(end) = 1e-10;
-% ub = inf(size(x0));
-% [x,f] = minConf_TMP(objFun, x0, lb, ub, options);
-[x,f] = minConf_PQN(objFun, x0, @projFun, options);
+% Unconstrained optimization (in log space)
+objFun = @(x, varargin) vctsmObj_log(x, examples, C1, C2, inferFunc, varargin{:});
+x0 = [w ; log(kappa)];
+[x,f] = minFunc(objFun, x0, options);
 w = x(1:end-1);
-kappa = x(end);
+kappa = exp(x(end));
+
+% % Constrained optimization
+% objFun = @(x, varargin) vctsmObj(x, examples, C1, C2, inferFunc, varargin{:});
+% x0 = [w ; kappa];
+% % lb = -inf(size(x0)); lb(end) = 1e-10;
+% % ub = inf(size(x0));
+% % [x,f] = minConf_TMP(objFun, x0, lb, ub, options);
+% [x,f] = minConf_PQN(objFun, x0, @projFun, options);
+% w = x(1:end-1);
+% kappa = x(end);
 
 
 %% Projection function (ensures that kappa is positive)
