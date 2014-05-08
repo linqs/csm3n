@@ -541,9 +541,10 @@ ttests = zeros(nRunAlgos);
 sigThresh = 0.05;
 for a1 = 1:nRunAlgos
 	for a2 = a1+1:nRunAlgos
-		ttests(a1,a2) = ttest(bestResults(a1,3,:),bestResults(a2,3,:),'alpha',sigThresh);
+		ttests(a1,a2) = ttest2(bestResults(a1,3,:),bestResults(a2,3,:),sigThresh);
 	end
 end
+ttests = ttests | ttests';
 
 % Output final results
 fprintf('-------------\n');
