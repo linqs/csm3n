@@ -50,6 +50,10 @@ for i = 1:nEx
 	loss = (w'*ssDiff + 0.5*L1) / (nEx*ex.nNode);
 	f = f + loss;
 	
+% 	if loss < 0
+% 		loss;
+% 	end
+	
 	% Gradient
 	if nargout == 2
 		gradW = gradW + ssDiff / (nEx*ex.nNode);
