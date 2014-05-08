@@ -29,7 +29,7 @@ if ~isfield(options,'verbose')
     options.verbose = 0;
 end
 if ~isfield(options,'tolerance')
-    options.tolerance = 1e-16;
+    options.tolerance = 1e-6;
 end
 if ~isfield(options,'plotObj')
     options.plotObj = false;
@@ -123,7 +123,7 @@ for k = 1:options.maxIter
         end
     end
     
-    if gap(k) < options.tolerance
+    if gap(k) < options.tolerance && N == 1
         break;
     end
 end
@@ -145,12 +145,15 @@ if nargout == 2
 end
 
 if k == options.maxIter
-    if options.verbose
+    if options.verbose && N == 1
         fprintf('Frank-Wolfe did not converge in %d iterations. Using average w\n', k);
     end
     % use average w because it has better convergence properties if we
     % never achieved a certificate of convergence
     w = wavg;
+else
+    fprintf('Frank-Wolfe reached certificate of optimality within tolerance %s in %d iterations\n', ...
+        options.tolerance, k);
 end
 
 
