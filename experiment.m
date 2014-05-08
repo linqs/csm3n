@@ -544,6 +544,7 @@ for a1 = 1:nRunAlgos
 		ttests(a1,a2) = ttest2(bestResults(a1,3,:),bestResults(a2,3,:),sigThresh);
 	end
 end
+ttests(~isfinite(ttests)) = 0;
 ttests = ttests | ttests';
 
 % Output final results
