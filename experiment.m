@@ -170,6 +170,13 @@ else
 	plotFunc = [];
 end
 
+% Compute baselines?
+if isfield(expSetup,'computeBaseline')
+	computeBaseline = expSetup.computeBaseline;
+else
+	computeBaseline = 0;
+end
+
 
 %% MAIN LOOP
 
@@ -238,23 +245,23 @@ for fold = 1:nFold
 	pert = [];
 	
 	% Compute baseline stats
-	if examples{1}.nState == examples{1}.nNodeFeat
+	if computeBaseline
 		errs = zeros(nTest,1);
 		f1 = zeros(nTest,1);
-		% 		for i = 1:nTest
-		% 			ex = ex_te{i};
-		% 			pred = zeros(ex.nNode,1);
-		% 			for n = 1:ex.nNode
-		% 				pred(n) = find(ex.Xnode(1,:,n));
-		% 			end
-		% 			errs(i) = nnz(ex.Y ~= pred) / ex.nNode;
-		% 			[~,~,~,~,s.f1,~,s.f1wavg] = errStats(double(ex.Y),pred);
-		% 			if ex.nState == 2
-		% 				f1(i) = s.f1(1); % If binary, use F1 of first class
-		% 			else
-		% 				f1(i) = s.f1wavg; % If multiclass, use weighted average F1
-		% 			end
-		% 		end
+		for i = 1:nTest
+			ex = ex_te{i};
+			pred = zeros(ex.nNode,1);
+			for n = 1:ex.nNode
+				pred(n) = find(ex.Xnode(1,:,n));
+			end
+			errs(i) = nnz(ex.Y ~= pred) / ex.nNode;
+			[~,~,~,~,s.f1,~,s.f1wavg] = errStats(double(ex.Y),pred);
+			if ex.nState == 2
+				f1(i) = s.f1(1); % If binary, use F1 of first class
+			else
+				f1(i) = s.f1wavg; % If multiclass, use weighted average F1
+			end
+		end
 		baselineErrs(fold) = mean(errs);
 		baselineF1(fold) = mean(f1);
 		fprintf('Baseline: avg err = %.4f, avg F1 = %.4f\n', baselineErrs(fold),baselineF1(fold));
@@ -360,7 +367,7 @@ for fold = 1:nFold
 						[w,fAvg] = trainDLM(ex_tr,decodeFunc,C_w,optSGD);
 						params{a,fold,c1,c2}.w = w;
 						
-					% M3N learning with FW
+						% M3N learning with FW
 					case 10
 						fprintf('Training M3N with Frank-Wolfe\n');
 						[w,fAvg] = bcfw(ex_tr,decodeFunc,C_w,optM3N);
@@ -487,11 +494,14 @@ for fold = 1:nFold
 	fprintf('\n');
 end
 
+endTime = toc(totalTimer);
+fprintf('elapsed time: %.2f min\n',endTime/60);
+
 % Generalization error
 geErrs = teErrs - trErrs;
 
 % display results at end
-colStr = {'TrainErr','ValidErr','TestErr','TestF1','GenErr','MaxStab','AvgStab','C_w','[step|C_r|C_s|kappa]'};
+colStr = {'TrainErr','ValidErr','TestErr','TestF1','GenErr','MaxStab','AvgStab','C1','C2'};
 bestParam = bestParamCVerr;
 bestResults = zeros(nRunAlgos,length(colStr),nFold);
 for fold = 1:nFold
@@ -516,25 +526,37 @@ for fold = 1:nFold
 	idx = sub2ind(size(teErrs),(1:nRunAlgos)',fold*ones(nRunAlgos,1),c1idx,c2idx);
 	bestResults(:,:,fold) = [trErrs(idx) cvErrs(idx) teErrs(idx) teF1(idx) geErrs(idx) ...
 		cvStabMax(idx) cvStabAvg(idx) bestC1(:) bestC2(:)];
-	if examples{1}.nState == examples{1}.nNodeFeat
+	if computeBaseline
 		fprintf('Baseline: avg err = %.4f, avg F1 = %.4f\n', baselineErrs(fold),baselineF1(fold));
 	end
 	disptable(bestResults(:,:,fold),colStr,algoNames(runAlgos),'%.5f');
 end
 
-% compute mean/stdev across folds
+% Compute mean/stdev across folds
 avgResults = mean(bestResults,3);
 stdResults = std(bestResults,[],3);
 
-endTime = toc(totalTimer);
+% Paired t-tests
+ttests = zeros(nRunAlgos);
+sigThresh = 0.05;
+for a1 = 1:nRunAlgos
+	for a2 = a1+1:nRunAlgos
+		ttests(a1,a2) = ttest(bestResults(a1,3,:),bestResults(a2,3,:),'alpha',sigThresh);
+	end
+end
+
+% Output final results
 fprintf('-------------\n');
 fprintf('FINAL RESULTS\n');
 fprintf('-------------\n');
-if examples{1}.nState == examples{1}.nNodeFeat
+if computeBaseline
 	fprintf('Baseline: avg err = %.4f, avg F1 = %.4f\n', mean(baselineErrs),mean(baselineF1));
 end
 disptable(avgResults,colStr,algoNames(runAlgos),'%.5f');
-fprintf('elapsed time: %.2f min\n',endTime/60);
+fprintf('Significance t-tests (threshold=%f)\n',sigThresh);
+disptable(ttests,algoNames(runAlgos),algoNames(runAlgos));
+
+
 
 % save results
 if ~isempty(save2file)
