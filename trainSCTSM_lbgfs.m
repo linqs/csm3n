@@ -32,6 +32,12 @@ options.Method = 'lbfgs';
 if ~isfield(options,'Display')
 	options.Display = 'off';
 end
+if isfield(options,'plotObj') && options.plotObj ~= 0
+	if ~isfield(options,'plotRefresh')
+		options.plotRefresh = 100;
+	end
+	options.traceFunc = @(trace) plotFunc(trace,options.plotRefresh,options.plotObj);
+end
 
 if ~exist('w','var') || isempty(w)
 	w = zeros(nParam,1);
@@ -44,4 +50,16 @@ end
 % run optimization
 objFun = @(x, varargin) sctsmObj(x, examples, C, inferFunc, kappa, varargin{:});
 [w,f] = minFunc(objFun, w, options);
+
+
+%% Plotting function
+function plotFunc(trace,plotRefresh,fig)
+
+t = length(trace.fval);
+if mod(t,plotRefresh) == 0
+	figure(fig);
+	hAx = plotyy(1:t,trace.fval, 1:t,trace.normx);
+	ylabel(hAx(1),'Objective'); ylabel(hAx(2),'norm(x)');
+	drawnow;
+end
 
