@@ -70,7 +70,8 @@ while abs(prevEpsilon - epsilon) > 1e-6
     epsilon = 1 / norm(w) * kappa;    
     
     if options.verbose
-        fprintf('Completed optimization with epsilon=%s. Starting with new epsilon %s\n', prevEpsilon, epsilon);
+        fprintf('Completed optimization with epsilon=%s\nnorm(w) = %s, kappa = %f\nStarting with new epsilon %s\n', ...
+            prevEpsilon, norm(w), kappa, epsilon);
     end
 end
 
