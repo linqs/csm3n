@@ -40,7 +40,10 @@ for e = 1:nEdge
 end
 
 % Combine maps
-Fx = zeros(nParamLoc+nParamRel,nStateLoc+nStateRel);
-Fx(1:nParamLoc,1:nStateLoc) = F_loc(:,:);
-Fx(nParamLoc+1:end,nStateLoc+1:end) = F_rel(:,:);
+%  Sparse method (faster)
+Fx = [sparse(F_loc(:,:)) sparse(nParamLoc,nStateRel) ; sparse(nParamRel,nStateLoc) sparse(F_rel(:,:))];
+%  Dense method
+% Fx = zeros(nParamLoc+nParamRel,nStateLoc+nStateRel);
+% Fx(1:nParamLoc,1:nStateLoc) = F_loc(:,:);
+% Fx(nParamLoc+1:end,nStateLoc+1:end) = F_rel(:,:);
 
