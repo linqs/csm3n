@@ -21,6 +21,8 @@ function [w, kappa, f] = trainVCTSM_peterpaul(examples, inferFunc, C, options, w
 
 assert(nargin >= 2,'USAGE: trainVCTSM_lbfgs(examples,inferFunc)')
 
+MAX_EPSILON_ITER = 10;
+
 nParam = max(examples{1}.edgeMap(:));
 
 if ~exist('C','var') || isempty(C)
@@ -56,7 +58,9 @@ x = x0;
 
 f = 0;
 
-while abs(prevEpsilon - epsilon) > 1e-6
+iter = 0;
+
+while abs(prevEpsilon - epsilon) > 1e-6 && iter < MAX_EPSILON_ITER
     C1 = C;
     C2 = epsilon;
     
@@ -67,12 +71,14 @@ while abs(prevEpsilon - epsilon) > 1e-6
     kappa = exp(x(end));
     
     prevEpsilon = epsilon;
-    epsilon = 1 / norm(w) * kappa;    
+    epsilon = 1 / (norm(w) * kappa);
     
     if options.verbose
-        fprintf('Completed optimization with epsilon=%s\nnorm(w) = %s, kappa = %f\nStarting with new epsilon %s\n', ...
-            prevEpsilon, norm(w), kappa, epsilon);
+        fprintf('Completed optimization with epsilon=%s. Objective %s\nnorm(w) = %s, kappa = %f\nStarting with new epsilon %s\n', ...
+            prevEpsilon, f, norm(w), kappa, epsilon);
     end
+    
+    iter = iter+1;
 end
 
 
