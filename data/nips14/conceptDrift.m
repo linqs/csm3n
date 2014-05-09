@@ -52,7 +52,7 @@ Ynode = zeros(1,nStatesY,nNodes);
 for n = 1:nNodes
 	Ynode(1,y(n),n) = 1;
 end
-Yedge = makeEdgeFeatures(Ynode(1,:,:),edgeStruct.edgeEnds);
+Yedge = UGM_makeEdgeFeatures(Ynode(1,:,:),edgeStruct.edgeEnds);
 [nodeMap,edgeMap] = UGM_makeCRFmaps(Ynode,Yedge,edgeStruct,0,1,1);
 [nodePot,edgePot] = UGM_CRF_makePotentials(w_high,Ynode,Yedge,nodeMap,edgeMap,edgeStruct);
 samp_high = UGM_Sample_VarMCMC(nodePot,edgePot,edgeStruct,burnIn,.25)';
@@ -77,7 +77,7 @@ Ynode = zeros(1,nStatesY,nNodes);
 for n = 1:nNodes
 	Ynode(1,y_noisy(n),n) = 1;
 end
-Yedge = makeEdgeFeatures(Ynode(1,:,:),edgeStruct.edgeEnds);
+Yedge = UGM_makeEdgeFeatures(Ynode(1,:,:),edgeStruct.edgeEnds);
 [nodeMap,edgeMap] = UGM_makeCRFmaps(Ynode,Yedge,edgeStruct,0,1,1);
 [nodePot,edgePot] = UGM_CRF_makePotentials(w_low,Ynode,Yedge,nodeMap,edgeMap,edgeStruct);
 samp_low = UGM_Sample_VarMCMC(nodePot,edgePot,edgeStruct,burnIn,.25)';
@@ -97,7 +97,7 @@ for i = 1:nSampHigh
 	for n = 1:nNodes
 		Xnode(1,samp_high(n,i),n) = 1;
 	end
-	Xedge = makeEdgeFeatures(Xnode(1,:,:),edgeStruct.edgeEnds);
+	Xedge = UGM_makeEdgeFeatures(Xnode(1,:,:),edgeStruct.edgeEnds);
 	ex_high{i} = makeExample(Xnode(1,:,:),Xedge,y,nStatesY,edgeStruct,[],[]);
 end
 
@@ -107,7 +107,7 @@ for i = 1:nSampLow
 	for n = 1:nNodes
 		Xnode(1,samp_low(n,i),n) = 1;
 	end
-	Xedge = makeEdgeFeatures(Xnode(1,:,:),edgeStruct.edgeEnds);
+	Xedge = UGM_makeEdgeFeatures(Xnode(1,:,:),edgeStruct.edgeEnds);
 	ex_low{i} = makeExample(Xnode(1,:,:),Xedge,y_noisy,nStatesY,edgeStruct,[],[]);
 end
 

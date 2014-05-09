@@ -35,12 +35,19 @@ srcimg = srcimg == max(unique(srcimg));
 Ynode = srcimg(:) + 1;
 nNode = length(Ynode);
 
-% Make nEx noisy observations
-Xnode = zeros(nEx,2,nNode);
+% i.i.d. Bernouli noise
+% Xnode = zeros(nEx,2,nNode);
+% for i = 1:nEx
+% 	noisyimg = abs(srcimg - (rand(size(srcimg)) < noiseRate));
+% % 	noisyimg = (srcimg*2-1 + noiseRate*randn(size(srcimg))) > 0;
+% 	Xnode(i,:,:) = [noisyimg(:)==0 noisyimg(:)==1]';
+% end
+
+% i.i.d. Gaussian noise
+Xnode = zeros(nEx,1,nNode);
 for i = 1:nEx
-	noisyimg = abs(srcimg - (rand(size(srcimg)) < noiseRate));
-% 	noisyimg = (srcimg*2-1 + noiseRate*randn(size(srcimg))) > 0;
-	Xnode(i,:,:) = [noisyimg(:)==0 noisyimg(:)==1]';
+	noisyimg = srcimg*2-1 + noiseRate*randn(size(srcimg));
+	X(i,:,:) = noisyimg(:);
 end
 
 % Plots
@@ -71,6 +78,6 @@ end
 % Make examples
 examples = cell(nEx,1);
 for i = 1:nEx
-	Xedge = makeEdgeFeatures(Xnode(i,:,:),edgeStruct.edgeEnds);
+	Xedge = UGM_makeEdgeFeatures(Xnode(i,:,:),edgeStruct.edgeEnds);
 	examples{i} = makeExample(Xnode(i,:,:),Xedge,Ynode,2,edgeStruct,[],[]);
 end

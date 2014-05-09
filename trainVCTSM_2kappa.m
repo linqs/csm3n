@@ -70,6 +70,7 @@ if mod(t,plotRefresh) == 0
 	figure(fig);
 	hAx = plotyy(1:t,trace.fval, 1:t,trace.normx);
 	ylabel(hAx(1),'Objective'); ylabel(hAx(2),'norm(x)');
+	title('VCTSM (2-kappa) Objective')
 	drawnow;
 end
 

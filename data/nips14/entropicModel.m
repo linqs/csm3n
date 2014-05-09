@@ -1,10 +1,13 @@
-function [examples] = entropicModel(rescale,nStates,nSamp,w_ratio,alpha,burnIn,plotFig)
+function [examples] = entropicModel(rescale,nStates,nSamp,w_ratio,alpha,bias,burnIn,plotFig)
 
 if ~exist('w_ratio','var') || isempty(w_ratio)
 	w_ratio = .1;
 end
 if ~exist('alpha','var') || isempty(alpha)
 	alpha = .8;
+end
+if ~exist('bias','var') || isempty(bias)
+	bias = 0;
 end
 if ~exist('burnIn','var') || isempty(burnIn)
 	burnIn = 10;
@@ -31,16 +34,17 @@ nStatesY = 2;
 
 %% High coupling, low signal
 
+addBias = 1;
 w_max = 1;
 w_min = w_ratio * w_max;
 W_loc = zeros(nStates,nStatesY);
 W_rel = zeros(nStates,nStates,2*nStatesY);
-W_loc(:,1) = linspace(w_max,w_min,nStates)';
-W_loc(:,2) = linspace(w_min,w_max,nStates)';
+W_loc(:,1) = [w_max ; w_min*ones(nStates-1,1)]; %linspace(w_max,w_min,nStates)';
+W_loc(:,2) = [w_min*ones(nStates-1,1) ; w_max]; %linspace(w_min,w_max,nStates)';
 for i = 1:4
 	W_rel(:,:,i) = alpha * (w_min*ones(nStates) + (w_max-w_min)*eye(nStates));
 end
-w_high = [W_loc(:) ; W_rel(:)];
+w = [W_loc(:) ; W_rel(:)];
 
 % Sample from CRF conditioned on image
 edgeStruct = UGM_makeEdgeStruct(G,nStates,1,nSamp);
@@ -48,9 +52,13 @@ Ynode = zeros(1,nStatesY,nNodes);
 for n = 1:nNodes
 	Ynode(1,y(n),n) = 1;
 end
-Yedge = makeEdgeFeatures(Ynode(1,:,:),edgeStruct.edgeEnds);
+Yedge = UGM_makeEdgeFeatures(Ynode(1,:,:),edgeStruct.edgeEnds);
+if bias
+	w = [bias*ones(nStates,1) ; w];
+	Ynode = reshape([ones(1,nNodes) ; squeeze(Ynode(1,:,:))], 1,1+nStatesY,nNodes);
+end
 [nodeMap,edgeMap] = UGM_makeCRFmaps(Ynode,Yedge,edgeStruct,0,1,1);
-[nodePot,edgePot] = UGM_CRF_makePotentials(w_high,Ynode,Yedge,nodeMap,edgeMap,edgeStruct);
+[nodePot,edgePot] = UGM_CRF_makePotentials(w,Ynode,Yedge,nodeMap,edgeMap,edgeStruct);
 samp = UGM_Sample_VarMCMC(nodePot,edgePot,edgeStruct,burnIn,.25)';
 
 
@@ -68,7 +76,8 @@ for i = 1:nSamp
 	for n = 1:nNodes
 		Xnode(1,samp(n,i),n) = 1;
 	end
-	Xedge = makeEdgeFeatures(Xnode(1,:,:),edgeStruct.edgeEnds);
+	Xedge = UGM_makeEdgeFeatures(Xnode(1,:,:),edgeStruct.edgeEnds);
+% 	Xnode = reshape([ones(1,nNodes) ; squeeze(Xnode(1,:,:))], 1,nStates+1,nNodes);
 	examples{i} = makeExample(Xnode(1,:,:),Xedge,y,nStatesY,edgeStruct,[],[]);
 end
 
