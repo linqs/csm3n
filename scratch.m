@@ -188,7 +188,26 @@ nFold = 1;
 nTrain = 1;
 nCV = 1;
 nTest = 10;
-[examples] = loadExamples(nFold*(nTrain+nCV+nTest),.15,.6,1,1,101);
+[examples] = loadExamples(nFold*(nTrain+nCV+nTest),.2,.6,1,1,101);
+for f = 1:nFold
+	sidx = (f-1)*(nTrain+nCV+nTest);
+	foldIdx(f).tridx = sidx+1:sidx+nTrain;
+	foldIdx(f).ulidx = [];
+	foldIdx(f).cvidx = sidx+nTrain+1:sidx+nTrain+nCV;
+	foldIdx(f).teidx = sidx+nTrain+nCV+1:sidx+nTrain+nCV+nTest;
+end
+cd ../..;
+
+clear;
+cd data/nips14;
+nState = 8;
+w_ratio = .4;
+alpha = 1;
+nFold = 1;
+nTrain = 1;
+nCV = 1;
+nTest = 10;
+examples = entropicModel(.6,nState,nFold*(nTrain+nCV+nTest),w_ratio,alpha,[],101);
 for f = 1:nFold
 	sidx = (f-1)*(nTrain+nCV+nTest);
 	foldIdx(f).tridx = sidx+1:sidx+nTrain;
@@ -199,11 +218,12 @@ end
 cd ../..;
 
 expSetup = struct('foldIdx',foldIdx ...
-				 ,'runAlgos',[4 12] ...
+				 ,'runAlgos',[4 10] ...%[4 5 10 12] ...
 				 ,'decodeFunc',@UGM_Decode_TRBP,'inferFunc',@UGM_Infer_TRBP ...
-				 ,'Cvec',.01 ...
+				 ,'Cvec',.01 ...%[.01 .1 1] ...
+				 ,'Cvec2',.01 ...%[.01 .05 .1 .5 1] ...
 				 ,'stepSizeVec',.02...
-				 ,'kappaVec',1 ...
+				 ,'kappaVec',[.1 .2 .5 1 2] ...
 				 ,'computeBaseline',1 ...
 				 );
 expSetup.optSGD = struct('maxIter',100 ...
@@ -211,7 +231,7 @@ expSetup.optSGD = struct('maxIter',100 ...
 						,'verbose',1,'returnBest',1);
 expSetup.optLBFGS = struct('Display','full','verbose',3 ...
 						  ,'MaxIter',100,'MaxFunEvals',100);
-% expSetup.plotPred = 102;
+expSetup.plotPred = 102;
 
 experiment
 

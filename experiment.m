@@ -86,6 +86,11 @@ if isfield(expSetup,'Cvec')
 else
 	Cvec = [0 .1 .5 1 5 10 50 100 500 1000 5000 10000];
 end
+if isfield(expSetup,'Cvec2')
+	Cvec2 = expSetup.Cvec2;
+else
+	Cvec2 = 1;
+end
 if isfield(expSetup,'CvecRel')
 	CvecRel = expSetup.CvecRel;
 else
@@ -113,7 +118,7 @@ else
 	stepSizeVec = 1;
 end
 nCvals1 = length(Cvec);
-nCvals2 = max([length(CvecRel),length(CvecStab),length(kappaVec),length(stepSizeVec)]);
+nCvals2 = max([length(CvecRel),length(Cvec2),length(CvecStab),length(kappaVec),length(stepSizeVec)]);
 
 % Init kappa for VCTSM
 if isfield(expSetup,'initKappa')
@@ -182,9 +187,10 @@ end
 
 % Job metadata
 nJobs = nFold * nCvals1 * (...
-	length(intersect(runAlgos,[1 4 6 9 10 11])) + ...
+	length(intersect(runAlgos,[1 6 9 10 11])) + ...
 	length(stepSizeVec) * any(runAlgos==2) + ...
 	length(CvecRel) * any(runAlgos==3) + ...
+	length(Cvec2) * any(intersect(runAlgos,[4 12])) + ...
 	length(kappaVec) * any(runAlgos==5) + ...
 	length(CvecStab) * length(intersect(runAlgos,[7 8])) );
 totalTimer = tic;
@@ -286,6 +292,12 @@ for fold = 1:nFold
 						continue
 					end
 					C_r = CvecRel(c2);
+				elseif strcmp(algoNames{runAlgos(a)},'VCTSM') || strcmp(algoNames{runAlgos(a)},'VCTSM_2K')
+					% VCTSM or VCTSM_2K
+					if c2 > length(Cvec2)
+						continue
+					end
+					C_pp = Cvec2(c2);
 				elseif strcmp(algoNames{runAlgos(a)},'SCTSM')
 					% SCTSM
 					if c2 > length(kappaVec)
@@ -332,7 +344,7 @@ for fold = 1:nFold
 					case 4
 						fprintf('Training VCTSM ...\n');
 						%[w,kappa,f] = trainVCTSM(ex_tr,inferFunc,C_w,1,optVCTSM,[],initKappa);
-						[w,kappa,f] = trainVCTSM_lbfgs(ex_tr,inferFunc,C_w,1,optVCTSM,[],initKappa);
+						[w,kappa,f] = trainVCTSM_lbfgs(ex_tr,inferFunc,C_w,C_pp,optVCTSM,[],initKappa);
 						params{a,fold,c1,c2}.w = w;
 						params{a,fold,c1,c2}.kappa = kappa;
 						
@@ -383,7 +395,7 @@ for fold = 1:nFold
 					% VCTSM 2-kappa
 					case 12
 						fprintf('Training VCTSM 2-kappa ...\n');
-						[w,kappa,f] = trainVCTSM_2kappa(ex_tr,inferFunc,C_w,1,optVCTSM,[],[initKappa;initKappa]);
+						[w,kappa,f] = trainVCTSM_2kappa(ex_tr,inferFunc,C_w,C_pp,optVCTSM,[],[initKappa;initKappa]);
 						params{a,fold,c1,c2}.w = w;
 						params{a,fold,c1,c2}.kappa = kappa;
 						
@@ -531,32 +543,38 @@ fprintf('elapsed time: %.2f min\n',endTime/60);
 % Generalization error
 geErrs = teErrs - trErrs;
 
-% display results at end
-colStr = {'TrainErr','ValidErr','TestErr','TestF1','GenErr','MaxStab','AvgStab','C1','C2'};
+% Display results at end
+colStr = {'TrainErr','ValidErr','TestErr','TestF1','GenErr','C1','C2','kappa'};
 bestParam = bestParamCVerr;
 bestResults = zeros(nRunAlgos,length(colStr),nFold);
 for fold = 1:nFold
-	% choose best params for fold
+	% Choose best hyperparams for fold
 	[c1idx,c2idx] = ind2sub([nCvals1,nCvals2], bestParam(:,fold));
 	bestC1 = Cvec(c1idx);
 	bestC2 = zeros(nRunAlgos,1);
+	bestKappa = zeros(nRunAlgos,1);
 	for a = 1:nRunAlgos
+		% C2/kappa diplay value
 		if strcmp(algoNames{runAlgos(a)},'M3N')
 			bestC2(a) = stepSizeVec(c2idx(a));
 		elseif strcmp(algoNames{runAlgos(a)},'M3NLRR')
 			bestC2(a) = CvecRel(c2idx(a));
 		elseif strcmp(algoNames{runAlgos(a)},'VCTSM')
-			bestC2(a) = params{a,fold,bestParam(a,fold)}.kappa;
+			bestC2(a) = Cvec2(c2idx(a));
+			bestKappa(a) = params{a,fold,bestParam(a,fold)}.kappa;
 		elseif strcmp(algoNames{runAlgos(a)},'SCTSM')
-			bestC2(a) = kappaVec(c2idx(a));
+			bestKappa(a) = kappaVec(c2idx(a));
 		elseif strcmp(algoNames{runAlgos(a)},'CSM3N') || strcmp(algoNames{runAlgos(a)},'CSCACC')
 			bestC2(a) = CvecStab(c2idx(a));
+		elseif strcmp(algoNames{runAlgos(a)},'VCTSM_2K')
+			bestC2(a) = Cvec2(c2idx(a));
+			bestKappa(a) = params{a,fold,bestParam(a,fold)}.kappa(1);
 		end
-	end
-	% display results for fold
+	end	
+	% Display results for fold
 	idx = sub2ind(size(teErrs),(1:nRunAlgos)',fold*ones(nRunAlgos,1),c1idx,c2idx);
 	bestResults(:,:,fold) = [trErrs(idx) cvErrs(idx) teErrs(idx) teF1(idx) geErrs(idx) ...
-		cvStabMax(idx) cvStabAvg(idx) bestC1(:) bestC2(:)];
+		bestC1(:) bestC2(:) bestKappa(:)];
 	if computeBaseline
 		fprintf('Baseline: avg err = %.4f, avg F1 = %.4f\n', baselineErrs(fold),baselineF1(fold));
 	end
