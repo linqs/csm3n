@@ -2,7 +2,8 @@
 %
 % Variables:
 %   nFold (def: 10)
-%   noiseRate (def: .2)
+%	nFeat (def: 4)
+%   noiseVar (def: 2)
 %   runAlgos (def: [4 5 10])
 %   inferFunc (def: UGM_Infer_TRBP)
 %   decodeFunc (def: UGM_Decode_TRBP)
@@ -12,8 +13,11 @@
 if ~exist('nFold','var')
 	nFold = 10;
 end
-if ~exist('noiseRate','var')
-	noiseRate = .2;
+if ~exist('nFeat','var')
+	nFeat = 10;
+end
+if ~exist('noiseVar','var')
+	noiseVar = 2;
 end
 if ~exist('runAlgos','var')
 	runAlgos = [4 5 10];
@@ -49,7 +53,7 @@ for f = 1:nFold
 	foldIdx(f).cvidx = sidx+nTrain+1:sidx+nTrain+nCV;
 	foldIdx(f).teidx = sidx+nTrain+nCV+1:sidx+nTrain+nCV+nTest;
 end
-[examples] = iidNoiseModel(nFold*(nTrain+nCV+nTest),2,noiseRate,2,.6,1,1,dataFig);
+[examples] = iidNoiseModel(nFold*(nTrain+nCV+nTest),nFeat,noiseVar,1,.6,1,1,dataFig);
 cd ../..;
 
 expSetup = struct('foldIdx',foldIdx ...
@@ -59,7 +63,7 @@ expSetup = struct('foldIdx',foldIdx ...
 				 ,'Cvec2',[.0001 .001 .01 .1 1 10] ...
 				 ,'stepSizeVec',[.1 .2 .5 1 2 5 10] ...
 				 ,'kappaVec',[.1 .2 .5 1 2 5 10] ...
-				 ,'computeBaseline',1 ...
+				 ,'computeBaseline',nFeat==2 ...
 				 );
 expSetup.optSGD = struct('maxIter',100 ...
 						,'plotObj',objFig,'plotRefresh',100 ...

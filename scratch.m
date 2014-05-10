@@ -165,36 +165,20 @@ expSetup = struct('Xdesc',Xdesc,...
 
 %% Noisy Image
 
-% clear;
-% cd data/nips14;
-% nFold = 1;
-% examples = [];
-% nTrain = 1;
-% nTest = 10;
-% for f = 1:nFold
-% 	[ex_high,ex_low] = conceptDrift(.5,10,nTrain,nTest,.2,5,10,0);
-% 	examples = [examples ; ex_high(:) ; ex_low(:)];
-% 	sidx = (f-1)*(nTrain+nTest);
-% 	foldIdx(f).tridx = sidx+1:sidx+nTrain;
-% 	foldIdx(f).ulidx = [];
-% 	foldIdx(f).cvidx = foldIdx(f).tridx;
-% 	foldIdx(f).teidx = sidx+nTrain+1:sidx+nTrain+nTest;
-% end
-% cd ../..;
-
 clear;
 cd data/nips14;
 nFold = 1;
+examples = [];
 nTrain = 1;
-nCV = 1;
 nTest = 10;
-[examples] = loadExamples(nFold*(nTrain+nCV+nTest),.2,.6,1,1,101);
 for f = 1:nFold
-	sidx = (f-1)*(nTrain+nCV+nTest);
+	[ex_high,ex_low] = conceptDrift(.5,10,nTrain,nTest,.2,5,10,0);
+	examples = [examples ; ex_high(:) ; ex_low(:)];
+	sidx = (f-1)*(nTrain+nTest);
 	foldIdx(f).tridx = sidx+1:sidx+nTrain;
 	foldIdx(f).ulidx = [];
-	foldIdx(f).cvidx = sidx+nTrain+1:sidx+nTrain+nCV;
-	foldIdx(f).teidx = sidx+nTrain+nCV+1:sidx+nTrain+nCV+nTest;
+	foldIdx(f).cvidx = foldIdx(f).tridx;
+	foldIdx(f).teidx = sidx+nTrain+1:sidx+nTrain+nTest;
 end
 cd ../..;
 
@@ -218,14 +202,30 @@ for f = 1:nFold
 end
 cd ../..;
 
+clear;
+cd data/nips14;
+nFold = 1;
+nTrain = 1;
+nCV = 1;
+nTest = 10;
+[examples] = iidNoiseModel(nFold*(nTrain+nCV+nTest),4,2,1,.6,1,0,101);
+for f = 1:nFold
+	sidx = (f-1)*(nTrain+nCV+nTest);
+	foldIdx(f).tridx = sidx+1:sidx+nTrain;
+	foldIdx(f).ulidx = [];
+	foldIdx(f).cvidx = sidx+nTrain+1:sidx+nTrain+nCV;
+	foldIdx(f).teidx = sidx+nTrain+nCV+1:sidx+nTrain+nCV+nTest;
+end
+cd ../..;
+
 expSetup = struct('foldIdx',foldIdx ...
 				 ,'runAlgos',[4 10] ...%[4 5 10 12] ...
-				 ,'decodeFunc',@UGM_Decode_TRBP,'inferFunc',@UGM_Infer_TRBP ...
+				 ,'decodeFunc',@UGM_Decode_LBP,'inferFunc',@UGM_Infer_TRBP ...
 				 ,'Cvec',.01 ...%[.01 .1 1] ...
-				 ,'Cvec2',.01 ...%[.01 .05 .1 .5 1] ...
+				 ,'Cvec2',.001 ...%[.01 .05 .1 .5 1] ...
 				 ,'stepSizeVec',.02 ...
 				 ,'kappaVec',1 ... %[.1 .2 .5 1 2] ...
-				 ,'computeBaseline',1 ...
+				 ,'computeBaseline',examples{1}.nNodeFeat==2 ...
 				 );
 expSetup.optSGD = struct('maxIter',100 ...
 						,'plotObj',103,'plotRefresh',10 ...
