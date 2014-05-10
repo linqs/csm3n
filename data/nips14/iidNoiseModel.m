@@ -87,7 +87,8 @@ if makeEdgeDist
 	edgeStruct.edgeDist = UGM_makeEdgeDistribution(edgeStruct,3,[nRows nCols]);
 end
 if makeCounts
-	[edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_ConvexBetheCounts(edgeStruct,1,.1,1);
+	[edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_TRBPCounts(edgeStruct);
+% 	[edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_ConvexBetheCounts(edgeStruct,1,.1,1);
 	edgeStruct.momentum = 1;
 end
 
