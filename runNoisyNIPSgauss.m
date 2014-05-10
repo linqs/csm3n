@@ -2,7 +2,7 @@
 %
 % Variables:
 %   nFold (def: 10)
-%	nFeat (def: 4)
+%	nFeat (def: 10)
 %   noiseVar (def: 2)
 %   runAlgos (def: [4 5 10])
 %   inferFunc (def: UGM_Infer_TRBP)
