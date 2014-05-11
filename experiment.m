@@ -587,7 +587,7 @@ stdResults = std(bestResults,[],3);
 
 % Paired t-tests
 ttests = zeros(nRunAlgos);
-sigThresh = 0.05;
+sigThresh = 0.01;
 for a1 = 1:nRunAlgos
 	for a2 = a1+1:nRunAlgos
 		ttests(a1,a2) = ttest(bestResults(a1,3,:),bestResults(a2,3,:),sigThresh);

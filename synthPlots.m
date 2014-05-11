@@ -12,7 +12,7 @@ end
 Cvec = expSetup.Cvec;
 kappaVec = expSetup.kappaVec;
 
-m3nIdx = find(expSetup.runAlgos==2);
+m3nIdx = find(expSetup.runAlgos==10);
 vctsmIdx = find(expSetup.runAlgos==4);
 sctsmIdx = find(expSetup.runAlgos==5);
 
@@ -60,6 +60,12 @@ end
 avgErr = squeeze(mean(bestErr,2));
 stdErr = squeeze(std(bestErr,0,2));
 avgNormW = mean(normW,1)';
+
+
+%% Statistical significance of best SCMM kappa
+
+[~,bestKappaIdx] = min(avgErr(3,:));
+fprintf('Significance of VCMM vs. best kappa SCMM : %d\n', ttest(bestErr(2,:,1),bestErr(3,:,bestKappaIdx),0.01));
 
 
 %% Plots
