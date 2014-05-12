@@ -256,36 +256,3 @@ for i = 1:length(examples)
 	
 end
 
-f = 1;
-teidx = foldIdx(f).teidx;
-ex_te = examples(teidx);
-vctsmIdx = 1;
-m3nIdx = 3;
-nFeat = 4;
-
-for i = 1:10
-	
-	ex = ex_te{i};
-	figure(1)
-	noisyimg = zeros(ex.nNode,1);
-	for n = 1:ex.nNode
-		noisyimg(n) = find(ex.Xnode(1,:,n)) / nFeat;
-	end
-	imagesc(reshape(noisyimg,42,60)); colormap gray; axis off; set(gca,'Position',[0 0 1 1]);
-
-	w = params{m3nIdx,f,bestParam(m3nIdx,f)}.w;
-	[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
-	pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
-	figure(2)
-	imagesc(reshape(pred,42,60)); colormap gray; axis off; set(gca,'Position',[0 0 1 1]);
-
-	w = params{vctsmIdx,f,bestParam(vctsmIdx,f)}.w;
-	kappa = params{vctsmIdx,f,bestParam(vctsmIdx,f)}.kappa;
-	[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
-	pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
-	figure(3)
-	imagesc(reshape(pred,42,60)); colormap gray; axis off; set(gca,'Position',[0 0 1 1]);
-
-	pause
-end
-
