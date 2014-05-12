@@ -49,10 +49,6 @@ if isempty(splits)
 		end
 	end
 end
-% % cora
-% splits = {1:750,751:1750,1751:length(y)};
-% % citeseer
-% splits = {1:1000,1001:2200,2200:length(y)};
 
 % Throw error if graph not covered
 nNodesCovered = 0;
