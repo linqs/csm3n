@@ -1,5 +1,7 @@
 clear;
 
+maxDim = 100;
+
 %%
 fin = fopen('fileList.txt','r');
 [filenames] = textscan(fin, '%s\n');
@@ -9,9 +11,20 @@ fclose(fin);
 N = length(filenames);
 
 for i = 1:N
-    images{i} = double(loadJpgOrBmp(sprintf('data_GT/%s', filenames{i}))) / 255;
+    images{i} = loadJpgOrBmp(sprintf('data_GT/%s', filenames{i}));
     trimap{i} = loadJpgOrBmp(sprintf('boundary_GT_lasso/%s', filenames{i}));
     label{i} = loadJpgOrBmp(sprintf('boundary_GT/%s', filenames{i}));
+    
+    % shrink images
+    [m,n] = size(label{i});
+    ratio = min(maxDim ./ [m n]);
+    
+    newM = floor(ratio * m);
+    newN = floor(ratio * n);
+    
+    images{i} = imresize(images{i}, [newM, newN]);
+    trimap{i} = imresize(trimap{i}, [newM, newN], 'nearest');
+    label{i} = imresize(label{i}, [newM, newN], 'nearest');
 
     subplot(311);
     imagesc(images{i});
@@ -27,21 +40,22 @@ end
 
 K = 30;
 
+timer = tic;
+
 for i = 1:N
     
-    vecImage = reshape(images{i}, numel(trimap{i}), 3);
+    vecImage = reshape(double(images{i}), numel(trimap{i}), 3);
     
     options = [];
     options.Display = 'final';
-    options.MaxIter = 200;
+    options.MaxIter = 500;
     objectGM{i} = gmdistribution.fit(vecImage(trimap{i}==255,:), K, 'Regularize', 0.001, 'Options', options);
-%     backgrGM{i} = gmdistribution.fit(vecImage(trimap{i}==0 | trimap{i}==64,:), K, 'Regularize', 0.01, 'Options', options);
-     backgrGM{i} = gmdistribution.fit(vecImage(trimap{i}==64 | trimap{i}==0,:), K, 'Regularize', 0.001, 'Options', options);
+    backgrGM{i} = gmdistribution.fit(vecImage(trimap{i}==64,:), K, 'Regularize', 0.001, 'Options', options);
 
-    probObject = pdf(objectGM{i}, vecImage);
-    probBackgr = pdf(backgrGM{i}, vecImage);
+    probObject{i} = reshape(pdf(objectGM{i}, vecImage), size(label{i}));
+    probBackgr{i} = reshape(pdf(backgrGM{i}, vecImage), size(label{i}));
     
-    probObj{i} = reshape(probObject ./ (probObject + probBackgr), size(label{i}));
+    probObj{i} = probObject{i} ./ (probObject{i} + probBackgr{i});
     
     subplot(311);
     imagesc(images{i});
@@ -54,29 +68,8 @@ for i = 1:N
     colormap gray;
     drawnow;
     
-end
-save grabCutProcessed filenames images trimap label probObj objectGM backgrGM;
-
-%%
-clear;
-load grabCutProcessed;
-
-for i = 1:length(images)
-    vecImage = reshape(images{i}, numel(trimap{i}), 3);
+    fprintf('Finished %d of %d in %2.2f minutes. Eta %2.2f minutes\n', i, N, toc(timer)/60, (toc(timer)/i) * (N-i)/60);
     
-    probObject{i} = pdf(objectGM{i}, vecImage);
-    probBackgr{i} = pdf(backgrGM{i}, vecImage); 
 end
-save grabCutProcessed probObject probBackgr filenames images trimap label probObj objectGM backgrGM;
+save grabCutProcessed filenames images trimap label probObj objectGM backgrGM probObject probBackgr;
 
-
-%% shrink file size
-
-clear;
-load grabCutProcessed;
-
-for i = 1:length(images)
-    images{i} = uint8(images{i} * 255);
-end
-
-save grabCutProcessed probObject probBackgr filenames images trimap label probObj objectGM backgrGM;

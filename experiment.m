@@ -507,7 +507,7 @@ for fold = 1:nFold
 						drawnow;
 					end
 				else
-					plotFunc(pred, ex, expSetup);
+					plotFunc(pred, ex, expSetup, algoNames{a}, C_w, a);
 				end
 				
 				%% PROGRESS

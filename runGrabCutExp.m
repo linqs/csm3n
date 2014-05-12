@@ -4,44 +4,93 @@ setUpPath;
 
 clear;
 nEx = 50;
-nTr = 1;
-nCV = 1;
+nTr = 5;
+nCV = 5;
+maxEvals = 200;
 
-numFolds = 50;
+% m3n
+%countBP = false;
+%runAlgos = 10;
+%
+% countbp
+% countBP = true;
+% runAlgos = 4;
+%
+% % trbp
+% countBP = false;
+% runAlgos = 4;
+
+countBP = false;
+runAlgos = [4 10];
+
+numFolds = 5;
+
+rng(1234);
+[~, shuffleOrder] = sort(rand(nEx,1));
+% shuffleOrder
+shuffleOrder = 1:50;
 
 for i = 1:numFolds
-    foldIdx(i).tridx = (i-1) * nTr + [1:nTr];
+    foldIdx(i).tridx = (i-1) * (nTr+nCV) + [1:nTr];
     foldIdx(i).ulidx = [];
-    foldIdx(i).cvidx = mod(i * nTr + [0:nCV-1], nEx) + 1;
+    foldIdx(i).cvidx = mod((i-1) * (nTr+nCV) + [1:nTr] + nTr - 1, nEx) + 1;
     foldIdx(i).teidx = setdiff(1:nEx, [foldIdx(i).tridx, foldIdx(i).cvidx]);
+    
+    % shuffle
+    foldIdx(i).tridx = shuffleOrder(foldIdx(i).tridx);
+    foldIdx(i).cvidx = shuffleOrder(foldIdx(i).cvidx);
+    foldIdx(i).teidx = shuffleOrder(foldIdx(i).teidx);
 end
 
 %% GrabCut experiment
 cd ~/Dropbox/Research/csm3n/data/grabcut;
-[examples] = loadGrabCut(1, nEx);
+[examples] = loadGrabCut(1, nEx, countBP);
 cd ../../;
 
 %%
+inferFunc = @UGM_Infer_TRBP;
+%if countBP
+%    inferFunc = @UGM_Infer_CountBP;
+%end
 
-expSetup = struct('nFold',numFolds,...
-    'foldIdx', [foldIdx],...
-    'runAlgos',[2 4],...
-    'decodeFunc',@UGM_Decode_TRBP,...
-    'inferFunc',@UGM_Infer_TRBP,...
-    'Cvec',[0.0001 .001 .01 .1 1 10],...
-    'stepSizeVec',[.02]);
 
-expSetup.optSGD = struct('maxIter',500 ...
-						,'verbose',0,'returnBest',1);
-expSetup.optLBFGS = struct('Display','iter', 'verbose', 0);
+expSetup = struct('nFold',numFolds ...
+    , 'foldIdx', [foldIdx] ...
+    , 'runAlgos',runAlgos...
+    , 'decodeFunc',@UGM_Decode_TRBP ...
+    , 'inferFunc',inferFunc ...
+    , 'Cvec',10.^[-4:2] ...
+    , 'Cvec2',[0.01 0.1 1.0] ...
+    );
 
-% expSetup.save2file = 'grabCutResults_adhoc';
-expSetup.save2file = 'grabCutResults_fixed_50';
+
+figure(3);
+expSetup.optSGD = struct('maxIter',maxEvals ...
+    ,'verbose',1,'returnBest',1, 'plotObj', gcf, 'plotRefresh', 5);
+expSetup.optLBFGS = struct('Display','iter' ...
+    ,'MaxIter',maxEvals ...
+    ,'MaxFunEvals',maxEvals ...
+    , 'plotObj', gcf ...
+    , 'plotRefresh', 5 ...
+    , 'verbose', 1 ...
+    );
+
+algoNames = {'MLE','M3N','M3NLRR','VCTSM','SCTSM','CACC','CSM3N','CSCACC','DLM','M3NFW','VCTSM_PP','VCTSM_2K'};
+
+algoString = '';
+for i = 1:length(runAlgos)
+    algoString = [algoString algoNames{runAlgos(i)}];
+end
+expSetup.save2file = sprintf('results/grabCutResults_%s_%d_%d', algoString, nEx, numFolds);
 
 expSetup.plotFunc = @plotGrabCut;
 
 figure(1);
 clf;
-expSetup.plotFuncAxis = gca;
+ax{1} = subplot(121);
+ax{2} = subplot(122);
+
+expSetup.plotFuncAxis = ax;
+
 
 experiment;

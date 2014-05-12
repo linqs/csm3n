@@ -1,4 +1,4 @@
-function plotGrabCut(pred, ex, expSetup)
+function plotGrabCut(pred, ex, expSetup, algoName, lambda, a)
 
 if isfield(expSetup, 'plotFuncAxis')
     ax = expSetup.plotFuncAxis;
@@ -8,10 +8,10 @@ end
 
 buffer = 0.75*ones(10, size(ex.srcbw,2));
 
-img = [double(ex.srcrgb(:,:,1)); buffer; ex.probObject; buffer; ex.probBackgr];
+img = [double(ex.srcrgb(:,:,1)); buffer; ex.probObj];
 
 tmp = 0.5*ones(size(ex.srcbw));
-tmp(ex.mask) = ex.probObject(ex.mask) < ex.probBackgr(ex.mask);
+tmp(ex.mask) = ex.probObj(ex.mask) < 0.5;
 img = [img; buffer; tmp];
 
 
@@ -26,9 +26,8 @@ for i = 1:3
     rgb(:,:,i) = img;
 end
 
-imagesc(rgb, 'Parent', ax);
-colormap gray;
-axis image;
+imagesc(rgb, 'Parent', ax{a});
 
-ylabel('Prediction, Local Threshold, Background Prob, Foreground Prob, Original');
+ylabel(ax{a}, 'Prediction, Local Threshold, Background Prob, Foreground Prob, Original');
+xlabel(ax{a}, sprintf('%s lambda=%f', algoName, lambda))
 drawnow;

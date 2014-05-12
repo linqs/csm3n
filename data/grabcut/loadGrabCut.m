@@ -1,18 +1,18 @@
-function examples = loadGrabCut(makeEdgeDist,nEx)
+function examples = loadGrabCut(makeEdgeDist,nEx, countBP)
 
 if nargin < 1
-	makeEdgeDist = 1;
+    makeEdgeDist = 1;
 end
 
-load grabCutProcessedSmall;
+load grabCutProcessed;
 
 if nargin < 2 || nEx > length(images)
-	nEx = length(images);
+    nEx = length(images);
 end
 
 examples = cell(nEx,1);
 
-MIN_FEATURE = -20;
+MIN_FEATURE = -10;
 
 totalTimer = tic;
 
@@ -37,22 +37,61 @@ for i = 1:nEx
     end
     
     
+    if countBP
+        kappa = 1;
+        minKappa = 0.1;
+        [edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_ConvexBetheCounts(edgeStruct,kappa,minKappa);
+    end
+    
     %% FEATURES
     
     % Node features are GMM posterior probabilities
-    Xnode = zeros(1, 4, nnz(mask));
-    Xnode(1,1,:) = max(MIN_FEATURE, (probObj{i}(mask)));
-    Xnode(1,2,:) = max(MIN_FEATURE, (1-probObj{i}(mask)));
-    border = (conv2(double(trimap{i} == 64), ones(3), 'same') > 0)*2-1;
-    Xnode(1,3,:) = border(mask);
-    border = (conv2(double(trimap{i} == 255), ones(3), 'same') > 0)*2-1;
-    Xnode(1,4,:) = border(mask);
-  
-    % Edge features are RBF between pixel intensities
+    Xnode = zeros(1, 0, nnz(mask));
+    Xnode(1,end+1,:) = (max(MIN_FEATURE, log(probObj{i}(mask))) - MIN_FEATURE) / abs(MIN_FEATURE);
+    Xnode(1,end+1,:) = (max(MIN_FEATURE, log(1-probObj{i}(mask))) - MIN_FEATURE) / abs(MIN_FEATURE);
+    % Xnode(1,end+1,:) = (max(MIN_FEATURE, log(probObject{i}(mask))) - MIN_FEATURE)/ abs(MIN_FEATURE);
+    % Xnode(1,end+1,:) = (max(MIN_FEATURE, log(probBackgr{i}(mask))) - MIN_FEATURE)/ abs(MIN_FEATURE);
+    
+% %     masks = { [1 1 1], [1 1 1]', [0 0 1; 0 1 0; 1 0 0], [1 0 0; 0 1 0; 0 0 1] };
+     masks = {ones(3)};
+    
+    for m = 1:length(masks)
+        border = (conv2(double(trimap{i} == 64), masks{m}, 'same') > 0);
+        Xnode(1,end+1,:) = border(mask);
+        border = (conv2(double(trimap{i} == 255), masks{m}, 'same') > 0);
+        Xnode(1,end+1,:) = border(mask);
+    end
+    
+    
+    
+    Xnode(1,end+1,:) = 1; % bias feature
+    
+    %% Edge features are RBF between pixel intensities
     X_bw = double(rgb2gray(images{i}));
     X_bw = X_bw(mask);
     
-    Xedge = makeRbfEdgeFeatures(edgeStruct.edgeEnds, X_bw, edgeDirections, 50);
+    Xedge = makeRbfEdgeFeatures(edgeStruct.edgeEnds, X_bw, edgeDirections, 1/255);
+    
+    % check edge features
+    
+    maskIdx = find(mask);
+    for d = 1:4
+        clf;
+        subplot(211);
+        imagesc(images{i});
+        subplot(212);
+        
+        img = sparse(maskIdx(edgeStruct.edgeEnds(:,1)), ...
+            ones(edgeStruct.nEdges,1), squeeze(Xedge(1,d,:)), nRows*nCols, 1);
+        
+        img = reshape(img, nRows, nCols);
+        
+        imagesc(img);
+        title(sprintf('Edge feature %d', d));
+        colormap gray;
+        drawnow;
+    end
+    
     
     %% LABELS
     
@@ -64,26 +103,32 @@ for i = 1:nEx
     ex = makeExample(Xnode,Xedge,y,nState,edgeStruct,Aeq,beq);
     ex.srcrgb = images{i};
     ex.srcbw = double(rgb2gray(images{i}));
-    ex.probObject = probObject{i};
-    ex.probBackgr = probBackgr{i};
+    ex.probObj = probObj{i};
     ex.mask = mask;
     
     examples{i} = ex;
     
     %% plot node features
     
+    figRows = 5;
+    figCols = ceil(size(Xnode,2) / figRows);
+    
     clf;
     for d = 1:size(Xnode,2)
-        img = zeros(nRows, nCols);
+        img = 0.5*ones(nRows, nCols);
         
         img(mask) = Xnode(1,d,:);
         
-        subplot(size(Xnode,2), 1, d);
+        subplot(figRows, figCols, d);
         imagesc(img);
         colormap gray;
         title(sprintf('Feature %d', d));
+        
     end
+    drawnow;
+    
     %%
-
-    fprintf('Finished setting up %d of %d examples in %2.2f minutes. ETA %2.2f minutes\n', i, nEx, toc(totalTimer)/60, (toc(totalTimer)/60/i) * (nEx - i));
+    
+    fprintf('Finished setting up %d of %d examples (%d nodes, %d edges) in %2.2f minutes. ETA %2.2f minutes\n', ...
+        i, nEx, ex.nNode, ex.nEdge, toc(totalTimer)/60, (toc(totalTimer)/60/i) * (nEx - i));
 end
