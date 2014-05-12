@@ -24,12 +24,12 @@ end
 
 figure();
 if plotErrBars
-	errorbar(noiseRates,errs(m3nIdx,:),stds(1,:),'r--','MarkerSize',16,'LineWidth',4);
+	errorbar(noiseRates,errs(m3nIdx,:),stds(1,:),'r-.','MarkerSize',16,'LineWidth',4);
 	hold on;
 	errorbar(noiseRates,errs(vctsmIdx,:),stds(2,:),'b--','MarkerSize',10,'LineWidth',4);
 % 	errorbar(noiseRates,errs(sctsmIdx,:),stds(3,:),'g--','MarkerSize',14,'LineWidth',4);
 else
-	plot(noiseRates,errs(m3nIdx,:),'r--','MarkerSize',16,'LineWidth',4);
+	plot(noiseRates,errs(m3nIdx,:),'r-.','MarkerSize',16,'LineWidth',4);
 	hold on;
 	plot(noiseRates,errs(vctsmIdx,:),'b--','MarkerSize',10,'LineWidth',4);
 % 	plot(noiseRates,errs(sctsmIdx,:),'g--','MarkerSize',14,'LineWidth',4);
