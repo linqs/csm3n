@@ -22,23 +22,26 @@ for f = 1:length(filenames)
 % 	kappas(f) = kappas(f) / nFold;
 end
 
+fontSize = 24;
+
 figure();
 if plotErrBars
-	errorbar(noiseRates,errs(m3nIdx,:),stds(1,:),'r-.','MarkerSize',16,'LineWidth',4);
+	errorbar(noiseRates,errs(m3nIdx,:),stds(1,:),'rx-.','MarkerSize',16,'LineWidth',4);
 	hold on;
-	errorbar(noiseRates,errs(vctsmIdx,:),stds(2,:),'b--','MarkerSize',10,'LineWidth',4);
+	errorbar(noiseRates,errs(vctsmIdx,:),stds(2,:),'bo--','MarkerSize',10,'LineWidth',4);
 % 	errorbar(noiseRates,errs(sctsmIdx,:),stds(3,:),'g--','MarkerSize',14,'LineWidth',4);
 else
-	plot(noiseRates,errs(m3nIdx,:),'r-.','MarkerSize',16,'LineWidth',4);
+	plot(noiseRates,errs(m3nIdx,:),'rx-.','MarkerSize',16,'LineWidth',4);
 	hold on;
-	plot(noiseRates,errs(vctsmIdx,:),'b--','MarkerSize',10,'LineWidth',4);
+	plot(noiseRates,errs(vctsmIdx,:),'bo--','MarkerSize',10,'LineWidth',4);
 % 	plot(noiseRates,errs(sctsmIdx,:),'g--','MarkerSize',14,'LineWidth',4);
 end
-legend('MM','VCMM','SCMM','Location','SouthEast');
-xlabel('noise rate','FontSize',18);
-ylabel(sprintf('%s (avg %d folds)',scoreName,nFold),'FontSize',18);
+leg = legend('MM','VCMM','SCMM','Location','SouthEast');
+set(leg,'FontSize',fontSize);
+xlabel('noise rate','FontSize',fontSize);
+ylabel(sprintf('%s (avg %d folds)',scoreName,nFold),'FontSize',fontSize);
 axis tight;
 hold off;
 
-figure();
-plot(noiseRates,errs(m3nIdx,:)-errs(vctsmIdx,:),'LineWidth',4);
+% figure();
+% plot(noiseRates,errs(m3nIdx,:)-errs(vctsmIdx,:),'LineWidth',4);

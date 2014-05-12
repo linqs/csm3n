@@ -1,4 +1,4 @@
-function synthPlots(expSetup,cvErrs,teErrs,params,plotFolds,plotKappa,plotErrorBars,plotNormW)
+function synthPlots(expSetup,cvErrs,teErrs,params,plotFolds,plotKappa,plotErrorBars,plotNormW,plotBufferPrec)
 %
 % Plots results of synethetic experiment
 %
@@ -34,6 +34,10 @@ if ~exist('plotNormW','var') || isempty(plotNormW)
 	plotNormW = 0;
 end
 
+% Precision of plotting buffer
+if ~exist('plotBufferPrec') || isempty(plotBufferPrec)
+	plotBufferPrec = .01;
+end
 
 %% Compute stats
 
@@ -77,6 +81,8 @@ figPos = get(fig,'Position');
 figPos(3) = numPlots*figPos(3);
 set(fig,'Position',figPos);
 
+fontSize = 24;
+
 subplot(1,numPlots,1);
 hold on;
 if plotErrorBars
@@ -99,21 +105,25 @@ if plotErrorBars
 		,stdErr(2,1)*ones(1,length(plotKappa)) ...
 		,'b--','MarkerSize',10,'LineWidth',4);
 	% SCTSM
-	errorbar(kappaVec(plotKappa),avgErr(3,:),stdErr(3,:),'gs-','MarkerSize',14,'LineWidth',4);
+	errorbar(kappaVec(plotKappa),avgErr(3,:),stdErr(3,:),'gs:','MarkerSize',14,'LineWidth',4);
 else
 	% M3N
 	plot(kappaVec(plotKappa),repmat(avgErr(1,1),1,length(plotKappa)),'r-.','MarkerSize',16,'LineWidth',4);
 	% VCTSM
 	plot(kappaVec(plotKappa),repmat(avgErr(2,1),1,length(plotKappa)),'b--','MarkerSize',10,'LineWidth',4);
 	% SCTSM
-	plot(kappaVec(plotKappa),avgErr(3,:),'gs-','MarkerSize',14,'LineWidth',4);
+	plot(kappaVec(plotKappa),avgErr(3,:),'gs:','MarkerSize',14,'LineWidth',4);
 end
-% title('Convexity vs. Test Error','FontSize',18);
-xlabel('log(kappa)','FontSize',18);
-ylabel(sprintf('test error (avg %d folds)',nFold),'FontSize',18);
-legend({'MM','VCMM','SCMM'},'Location','East');
+% title('Convexity vs. Test Error','FontSize',fontSize);
+xlabel('log(kappa)','FontSize',fontSize);
+ylabel(sprintf('test error (avg %d folds)',nFold),'FontSize',fontSize);
+leg = legend({'MM','VCMM','SCMM'},'Location','East');
+set(leg,'FontSize',fontSize);
 set(gca,'xscale','log');
-% axis tight
+ax = axis();
+ax(3) = floor(min([avgErr(1,1) avgErr(2,1) avgErr(3,:)])/plotBufferPrec)*plotBufferPrec;
+ax(4) = ceil(max([avgErr(1,1) avgErr(2,1) avgErr(3,:)])/plotBufferPrec)*plotBufferPrec;
+axis(ax);
 hold off;
 
 if plotNormW
