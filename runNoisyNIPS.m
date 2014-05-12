@@ -7,7 +7,7 @@
 %   inferFunc (def: UGM_Infer_TRBP)
 %   decodeFunc (def: UGM_Decode_TRBP)
 %   save2file (def: will not save)
-%	makePlots (def: 0)
+%   makePlots (def: 0)
 
 if ~exist('nFold','var')
 	nFold = 10;
