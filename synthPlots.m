@@ -93,27 +93,27 @@ if plotErrorBars
 	% M3N
 	errorbar(kappaVec(plotKappa),repmat(avgErr(1,1),1,length(plotKappa)) ...
 		,stdErr(1,1)*ones(1,length(plotKappa)) ...
-		,'r-.','MarkerSize',16,'LineWidth',1.2);
+		,'r-.','MarkerSize',16,'LineWidth',4);
 	% VCTSM
 	errorbar(kappaVec(plotKappa),repmat(avgErr(2,1),1,length(plotKappa)) ...
 		,stdErr(2,1)*ones(1,length(plotKappa)) ...
-		,'b--','MarkerSize',10,'LineWidth',1.2);
+		,'b--','MarkerSize',10,'LineWidth',4);
 	% SCTSM
-	errorbar(kappaVec(plotKappa),avgErr(3,:),stdErr(3,:),'gs-','MarkerSize',14,'LineWidth',1.2);
+	errorbar(kappaVec(plotKappa),avgErr(3,:),stdErr(3,:),'gs-','MarkerSize',14,'LineWidth',4);
 else
 	% M3N
-	plot(kappaVec(plotKappa),repmat(avgErr(1,1),1,length(plotKappa)),'r-.','MarkerSize',16,'LineWidth',1.2);
+	plot(kappaVec(plotKappa),repmat(avgErr(1,1),1,length(plotKappa)),'r-.','MarkerSize',16,'LineWidth',4);
 	% VCTSM
-	plot(kappaVec(plotKappa),repmat(avgErr(2,1),1,length(plotKappa)),'b--','MarkerSize',10,'LineWidth',1.2);
+	plot(kappaVec(plotKappa),repmat(avgErr(2,1),1,length(plotKappa)),'b--','MarkerSize',10,'LineWidth',4);
 	% SCTSM
-	plot(kappaVec(plotKappa),avgErr(3,:),'gs-','MarkerSize',14,'LineWidth',1.2);
+	plot(kappaVec(plotKappa),avgErr(3,:),'gs-','MarkerSize',14,'LineWidth',4);
 end
 % title('Convexity vs. Test Error','FontSize',18);
 xlabel('log(kappa)','FontSize',18);
 ylabel(sprintf('test error (avg %d folds)',nFold),'FontSize',18);
 legend({'MM','VCMM','SCMM'},'Location','East');
 set(gca,'xscale','log');
-axis tight
+% axis tight
 hold off;
 
 if plotNormW

@@ -208,7 +208,7 @@ nFold = 1;
 nTrain = 1;
 nCV = 1;
 nTest = 10;
-[examples] = iidNoiseModel(nFold*(nTrain+nCV+nTest),10,2,1,.6,1,1,101);
+[examples] = iidNoiseModel(nFold*(nTrain+nCV+nTest),4,1,1,.6,1,1,101);
 for f = 1:nFold
 	sidx = (f-1)*(nTrain+nCV+nTest);
 	foldIdx(f).tridx = sidx+1:sidx+nTrain;
@@ -242,30 +242,40 @@ experiment
 
 %% Plot Noisy NIPS
 
-clear
-load results/nips_n15_trbp.mat
+for i = 1:length(examples)
+	
+	ex = examples{i};
+	figure(1)
+	noisyimg = zeros(ex.nNode,1);
+	nFeat = size(examples{1}.Xnode,2);
+	for n = 1:ex.nNode
+		noisyimg(n) = find(ex.Xnode(1,:,n)) / nFeat;
+	end
+	imagesc(reshape(noisyimg,42,60)); colormap gray; axis off; set(gca,'Position',[0 0 1 1]);
+	pause
+	
+end
 
 f = 1;
 teidx = foldIdx(f).teidx;
 ex_te = examples(teidx);
 vctsmIdx = 1;
 m3nIdx = 3;
+nFeat = 4;
 
-err = zeros(3,10);
 for i = 1:10
 	
 	ex = ex_te{i};
-	baseline = squeeze(ex.Xnode(1,2,:)==1) + 1;
-	err(1,i) = nnz(ex.Y ~= baseline) / ex.nNode;
-	fprintf('Baseline error:\t%f\n', err(1,i));
 	figure(1)
-	imagesc(reshape(ex.Xnode(1,2,:),42,60)); colormap gray; axis off; set(gca,'Position',[0 0 1 1]);
+	noisyimg = zeros(ex.nNode,1);
+	for n = 1:ex.nNode
+		noisyimg(n) = find(ex.Xnode(1,:,n)) / nFeat;
+	end
+	imagesc(reshape(noisyimg,42,60)); colormap gray; axis off; set(gca,'Position',[0 0 1 1]);
 
 	w = params{m3nIdx,f,bestParam(m3nIdx,f)}.w;
 	[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
 	pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
-	err(2,i) = nnz(ex.Y ~= pred) / ex.nNode;
-	fprintf('M3N error:\t%f\n', err(2,i));
 	figure(2)
 	imagesc(reshape(pred,42,60)); colormap gray; axis off; set(gca,'Position',[0 0 1 1]);
 
@@ -273,12 +283,9 @@ for i = 1:10
 	kappa = params{vctsmIdx,f,bestParam(vctsmIdx,f)}.kappa;
 	[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
 	pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
-	err(3,i) = nnz(ex.Y ~= pred) / ex.nNode;
-	fprintf('VCTSM error:\t%f\n', err(3,i));
 	figure(3)
 	imagesc(reshape(pred,42,60)); colormap gray; axis off; set(gca,'Position',[0 0 1 1]);
 
 	pause
 end
-mean(err,2)
 
