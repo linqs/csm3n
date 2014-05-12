@@ -37,7 +37,7 @@ end
 if ~isfield(options,'plotRefresh')
     options.plotRefresh = 10;
 end
-if nargin < 5
+if nargin < 5 || isempty(w)
     nParam = max(examples{1}.edgeMap(:));
     w = zeros(nParam,1);
 end
@@ -51,12 +51,15 @@ li = 0;
 if options.plotObj
     figure(options.plotObj);
     clf;
-    subplot(211);
+    subplot(311);
     objAx = gca;
-    subplot(212);
+    subplot(312);
     gapAx = gca;
     fvec = m3nObj(w, examples,lambda,decodeFunc,varargin{:});
     normX = norm(w);
+    subplot(313);
+    dualAx = gca;
+    dualObj = [];
 end
 
 N = length(examples);
@@ -88,6 +91,9 @@ for k = 1:options.maxIter
     ls = (1/N) *  L1;
     
     gap(k) = lambda * (w - ws)'*w - l + ls;
+    % compute dual objective
+    dualObj(k) = 0.5 * lambda * norm(w)^2 + l;
+    
     
     % compute step size
     
@@ -108,7 +114,7 @@ for k = 1:options.maxIter
     
     wavg = k/(k+2) * wavg + 2/(k+2) * w;
     
-    if options.plotObj
+    if options.plotObj || (gap(k) < options.tolerance && N == 1)
         
         if mod(k,options.plotRefresh) == 0
             fvec(end+1) = m3nObj(w, examples,lambda,decodeFunc,varargin{:});
@@ -120,24 +126,16 @@ for k = 1:options.maxIter
             xlabel(gapAx, 'Iteration');
             ylabel(gapAx, 'Duality Gap');
             drawnow;
+            
+            
+            semilogy(1:length(dualObj), dualObj, 'Parent', dualAx);
+            ylabel('Dual Objective');
         end
     end
     
     if gap(k) < options.tolerance && N == 1
         break;
     end
-end
-
-if options.plotObj
-    fvec(end+1) = m3nObj(w, examples,lambda,decodeFunc,varargin{:});
-    normX(end+1) = norm(w);
-    hAx = plotyy(1:length(fvec),fvec, 1:length(normX),normX, 'Parent', objAx);
-    ylabel(hAx(1),'Objective'); ylabel(hAx(2),'norm(x)');
-    
-    semilogy(1:k, max(gap, 0), 'Parent', gapAx);
-    xlabel(gapAx, 'Iteration');
-    ylabel(gapAx, 'Duality Gap');
-    drawnow;
 end
 
 if nargout == 2
