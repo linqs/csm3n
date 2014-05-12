@@ -41,7 +41,6 @@ expSetup.optSGD = struct('maxIter',maxIter ...
 						,'verbose',0,'returnBest',1);
 expSetup.optLBFGS = struct('Display','off','verbose',0 ...
 						  ,'MaxIter',maxIter,'MaxFunEvals',maxIter);
-expSetup.plotPred = predFig;
 			  
 if exist('save2file','var')
 	expSetup.save2file = save2file;
