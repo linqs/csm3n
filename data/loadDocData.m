@@ -49,10 +49,17 @@ if isempty(splits)
 		end
 	end
 end
-% cora
-splits = {1:750,751:1750,1751:length(y)};
-% citeseer
-splits = {1:1000,1001:2200,2200:length(y)};
+% % cora
+% splits = {1:750,751:1750,1751:length(y)};
+% % citeseer
+% splits = {1:1000,1001:2200,2200:length(y)};
+
+% Throw error if graph not covered
+nNodesCovered = 0;
+for i = 1:nNet
+	nNodesCovered = nNodesCovered + length(splits{i});
+end
+assert(nNodesCovered==nDocs, 'Splits do not cover nodes.');
 
 % Partition into nNet networks
 examples = cell(nNet,1);
@@ -61,6 +68,7 @@ for i = 1:nNet
 	idx = splits{i};
 	
 	if plotNets
+		figure();
 		subplot(1,nNet,i);
 		spy(G(idx,idx));
 	end

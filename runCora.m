@@ -22,7 +22,7 @@ if ~exist('decodeFunc','var')
 end
 
 cd data;
-[examples,foldIdx] = loadDocData('cora/cora.mat',3,{1:758,759:1758,1751:2708},nPC,1,0);
+[examples,foldIdx] = loadDocData('cora/cora.mat',3,{1:758,759:1758,1759:2708},nPC,1,0);
 cd ..;
 
 maxIter = 200;

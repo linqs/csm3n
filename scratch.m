@@ -129,7 +129,7 @@ expSetup.optSGD = struct('maxIter',200,'stepSize',1e-4);
 %% Cora experiment
 clear;
 cd data;
-[examples,foldIdx] = loadDocData('cora/cora.mat',3,{1:758,759:1758,1751:2708},20,1);
+[examples,foldIdx] = loadDocData('cora/cora.mat',3,{1:758,759:1758,1759:2708},20,1,1);
 % [examples] = loadDocDataSnowball('cora/cora.mat',5,20,0,[1 600 1200 1800 2400],1,1);
 cd ..;
 
