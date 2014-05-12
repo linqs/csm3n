@@ -280,6 +280,7 @@ for fold = 1:nFold
 			
 			for a = 1:nRunAlgos
 				
+				% Select hyperparameters for training
 				if strcmp(algoNames{runAlgos(a)},'M3N')
 					% M3N
 					if c2 > length(stepSizeVec)
@@ -316,6 +317,8 @@ for fold = 1:nFold
 				end
 				
 				%% TRAINING
+				
+				try % Might get an exception during training for certain algos
 				
 				switch(runAlgos(a))
 					
@@ -399,6 +402,11 @@ for fold = 1:nFold
 						params{a,fold,c1,c2}.w = w;
 						params{a,fold,c1,c2}.kappa = kappa;
 						
+				end
+				
+				catch exception % Caught an exception during training
+					fprintf('Caught exception : %s\n  Skipping current job.', exception.message);
+					continue
 				end
 				
 				% Training stats
@@ -508,7 +516,7 @@ for fold = 1:nFold
 				curTime = toc(totalTimer);
 				fprintf('Finished %d of %d; elapsed: %.2f min; ETA: %.2f min\n', ...
 					count, nJobs, curTime/60, (nJobs-count)*(curTime/count)/60);
-				
+							
 			end
 			
 		end

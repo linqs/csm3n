@@ -5,13 +5,14 @@
 %   runAlgos (def: [1 2 4])
 %   inferFunc (def: UGM_Infer_TRBP)
 %   decodeFunc (def: UGM_Decode_TRBP)
-%   filename (def: will not save)
+%   save2file (def: will not save)
+%	makePlots (def: 0)
 
 if ~exist('nPC','var')
 	nPC = 20;
 end
 if ~exist('runAlgos','var')
-	runAlgos = [1 2 4];
+	runAlgos = [4 5 10];
 end
 if ~exist('inferFunc','var')
 	inferFunc = @UGM_Infer_TRBP;
@@ -21,18 +22,30 @@ if ~exist('decodeFunc','var')
 end
 
 cd data;
-[examples,foldIdx] = loadDocData('cora/cora.mat',4,[],nPC,1,1);
+[examples,foldIdx] = loadDocData('cora/cora.mat',3,{1:758,759:1758,1751:2708},nPC,1,0);
 cd ..;
-Xdesc = struct('discreteX',0,'nonneg',0);
-expSetup = struct('Xdesc',Xdesc,...
-				  'foldIdx',foldIdx,...
-				  'runAlgos',runAlgos,...
-				  'Cvec',[.001 .01 .1 .5 1 5 10 50 100 500 1000 5000],...
-				  'nStabSamp',0,...
-				  'decodeFunc',decodeFunc,'inferFunc',inferFunc);
-if exist('filename','var')
-	expSetup.save2file = filename;
+
+maxIter = 200;
+
+expSetup = struct('foldIdx',foldIdx ...
+				 ,'runAlgos',runAlgos ...
+				 ,'decodeFunc',@UGM_Decode_TRBP,'inferFunc',@UGM_Infer_TRBP ...
+				 ,'Cvec',[.001 .01 .1 1 10 100] ...
+				 ,'Cvec2',[.001 .01 .1 1 10 100] ...
+				 ,'stepSizeVec',[.1 .2 .5 1 2 5 10] ...
+				 ,'kappaVec',[.1 .2 .5 1 2 5 10] ...
+				 ,'computeBaseline',1 ...
+				 );
+expSetup.optSGD = struct('maxIter',maxIter ...
+						,'plotObj',objFig,'plotRefresh',10 ...
+						,'verbose',0,'returnBest',1);
+expSetup.optLBFGS = struct('Display','off','verbose',0 ...
+						  ,'MaxIter',maxIter,'MaxFunEvals',maxIter);
+expSetup.plotPred = predFig;
+			  
+if exist('save2file','var')
+	expSetup.save2file = save2file;
 end
-% expSetup.optSGD = struct('maxIter',200);
+
 experiment;
 

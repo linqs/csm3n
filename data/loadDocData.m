@@ -14,18 +14,30 @@ end
 %		y : node labels (nNode x 1)
 load(fName);
 
-% Constants
+% Dimensions
 nState = max(unique(y));
+nDocs = size(G,1);
 
 % Remove diagonal from G
 G = G - diag(diag(G));
 
 % Perform PCA on all observed features
 X = bsxfun(@minus,full(X),mean(X,1));
-[V,~] = eigs(X'*X / (size(X,1)-1), nPC);
+[V,~] = eigs(X'*X / (nDocs-1), nPC);
 X = X * V;
 
 % Compute splits
+
+% % via spectral clustering
+% D = diag(G*ones(nDocs,1));
+% L = D - G; %eye(nDocs) - sqrt(D)*G*sqrt(D);
+% [V,~] = eigs(L,10);
+% C = kmeans(V,nNet);
+% for i = 1:nNet
+% 	splits{i} = find(C == i);
+% end
+
+% the dumb way
 if isempty(splits)
 	nNode = floor(length(y) / nNet);
 	splits = cell(nNet);
@@ -37,10 +49,10 @@ if isempty(splits)
 		end
 	end
 end
-% % cora
-% splits = {1:750,751:1750,1751:length(y)};
-% % citeseer
-% splits = {1:1000,1001:2200,2200:length(y)};
+% cora
+splits = {1:750,751:1750,1751:length(y)};
+% citeseer
+splits = {1:1000,1001:2200,2200:length(y)};
 
 % Partition into nNet networks
 examples = cell(nNet,1);
