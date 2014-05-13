@@ -26,7 +26,8 @@ if makeEdgeDist
 end
 
 if makeCounts
-	[edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_ConvexBetheCounts(edgeStruct,1);
+	[edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_TRBPCounts(edgeStruct);
+% 	[edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_ConvexBetheCounts(edgeStruct,1,.1);
 end
 
 % [Aeq,beq] = pairwiseConstraints(edgeStruct);

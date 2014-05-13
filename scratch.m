@@ -110,12 +110,16 @@ clear;
 cd data/poliblog/Processed/;
 [examples,foldIdx] = loadPoliBlog();
 % perturbed = perturbExamples(examples,.15);
+cd ../../../;
+cd data/poliblog/Raw/pcaProcessed/;
+[examples,foldIdx] = loadPoliBlog(1,0);
+% perturbed = perturbExamples(examples,.15);
 cd ../../../../;
 
 expSetup = struct('nFold',1,'foldDist',[1 0 1 2] ...
-				 ,'runAlgos',[4 10] ...
+				 ,'runAlgos',[4] ...
 				 ,'decodeFunc',@UGM_Decode_TRBP,'inferFunc',@UGM_Infer_TRBP ...
-				 ,'Cvec',1 ...%[.001 .01 .1 1 10 100 1000] ...
+				 ,'Cvec',.01 ...%[.001 .01 .1 1 10 100 1000] ...
 				 ,'Cvec2',1 ...%[.0001 .001 .01 .1 1 10 100] ...
 				 ,'kappaVec',[.1 .2 .5 1 2 5 10] ...
 				 );
@@ -134,8 +138,8 @@ experiment
 %% Cora experiment
 clear;
 cd data;
-[examples,foldIdx] = loadDocData('cora/cora.mat',3,{1:758,759:1758,1759:2708},20,1,1);
-% [examples] = loadDocDataSnowball('cora/cora.mat',5,20,0,[1 600 1200 1800 2400],1,1);
+% [examples,foldIdx] = loadDocData('cora/cora.mat',3,{1:758,759:1758,1759:2708},20,1,1);
+[examples] = loadDocDataSnowball('cora/cora.mat',3,100,0.01,[],1,1);
 cd ..;
 
 expSetup = struct('nFold',1,'foldDist',[1 0 1 1] ...

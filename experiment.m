@@ -579,14 +579,10 @@ for fold = 1:nFold
 			bestKappa(a) = params{a,fold,bestParam(a,fold)}.kappa(1);
 		end
 	end	
-	% Display results for fold
+	% Best results for fold
 	idx = sub2ind(size(teErrs),(1:nRunAlgos)',fold*ones(nRunAlgos,1),c1idx,c2idx);
 	bestResults(:,:,fold) = [trErrs(idx) cvErrs(idx) teErrs(idx) teF1(idx) geErrs(idx) ...
 		bestC1(:) bestC2(:) bestKappa(:)];
-	if computeBaseline
-		fprintf('Baseline: avg err = %.4f, avg F1 = %.4f\n', baselineErrs(fold),baselineF1(fold));
-	end
-	disptable(bestResults(:,:,fold),colStr,algoNames(runAlgos),'%.5f');
 end
 
 % Compute mean/stdev across folds
@@ -604,7 +600,16 @@ end
 ttests(~isfinite(ttests)) = 0;
 ttests = ttests | ttests';
 
-% Output final results
+% Output results
+fprintf('------------\n');
+fprintf('FOLD RESULTS\n');
+fprintf('------------\n');
+for fold = 1:nFold
+	if computeBaseline
+		fprintf('Fold %d baseline: avg err = %.4f, avg F1 = %.4f\n', fold,baselineErrs(fold),baselineF1(fold));
+	end
+	disptable(bestResults(:,:,fold),colStr,algoNames(runAlgos),'%.5f');
+end
 fprintf('-------------\n');
 fprintf('FINAL RESULTS\n');
 fprintf('-------------\n');
