@@ -114,9 +114,9 @@ for k = 1:options.maxIter
     
     wavg = k/(k+2) * wavg + 2/(k+2) * w;
     
-    if options.plotObj || (gap(k) < options.tolerance && N == 1)
+    if options.plotObj
         
-        if mod(k,options.plotRefresh) == 0
+        if mod(k,options.plotRefresh) == 0 || (gap(k) < options.tolerance && N == 1)
             fvec(end+1) = m3nObj(w, examples,lambda,decodeFunc,varargin{:});
             normX(end+1) = norm(w);
             hAx = plotyy(1:length(fvec),fvec, 1:length(normX),normX, 'Parent', objAx);
