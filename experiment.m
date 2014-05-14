@@ -220,14 +220,6 @@ bestParamTest = zeros(nRunAlgos,nFold);
 % Number of local parameters
 nLocParam = max(examples{1}.nodeMap(:));
 
-% % Setup figure for plotting predictions
-% if plotPred
-% 	fig = figure(plotPred);
-% 	figpos = get(fig,'Position');
-% 	figpos(4) = nRunAlgos*figpos(4);
-% 	set(fig,'Position',figpos);
-% 	drawnow;
-% end
 
 for fold = 1:nFold
 	
@@ -591,7 +583,7 @@ stdResults = std(bestResults,[],3);
 
 % Paired t-tests
 ttests = zeros(nRunAlgos);
-sigThresh = 0.01;
+sigThresh = 0.05;
 for a1 = 1:nRunAlgos
 	for a2 = a1+1:nRunAlgos
 		ttests(a1,a2) = ttest(bestResults(a1,3,:),bestResults(a2,3,:),sigThresh);

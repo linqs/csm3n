@@ -1,4 +1,4 @@
-function [examples, foldIdx] = loadDocDataSnowball(fName, nNet, nPC, jumpRate, seeds, makeEdgeDist, plotNets)
+function [examples, foldIdx] = loadDocDataSnowball(fName, nNet, nPC, jumpRate, seeds, makeEdgeDist, makeCounts, plotNets)
 
 if ~exist('jumpRate','var') || isempty(jumpRate)
 	jumpRate = 0;
@@ -8,6 +8,9 @@ if ~exist('seeds','var')
 end
 if ~exist('makeEdgeDist','var') || isempty(makeEdgeDist)
 	makeEdgeDist = 0;
+end
+if ~exist('makeCounts','var') || isempty(makeCounts)
+	makeCounts = 0;
 end
 if ~exist('plotNets','var') || isempty(plotNets)
 	plotNets = 0;
@@ -44,6 +47,10 @@ for i = 1:nNet
 
 	if makeEdgeDist
 		edgeStruct.edgeDist = UGM_makeEdgeDistribution(edgeStruct);
+	end
+	
+	if makeCounts
+		[edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_TRBPCounts(edgeStruct);
 	end
 	
 	Xnode = zeros(1,nPC,length(subgraphs(i).nodes));
