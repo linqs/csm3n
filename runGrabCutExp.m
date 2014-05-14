@@ -23,24 +23,35 @@ maxEvals = 200;
 countBP = false;
 runAlgos = [4 10];
 
-numFolds = 5;
+numFolds = 10;
 
-rng(1234);
+rng(1);
 [~, shuffleOrder] = sort(rand(nEx,1));
 % shuffleOrder
-shuffleOrder = 1:50;
+shuffleOrder = 1:50; % don't shuffle
 
 for i = 1:numFolds
-    foldIdx(i).tridx = (i-1) * (nTr+nCV) + [1:nTr];
-    foldIdx(i).ulidx = [];
-    foldIdx(i).cvidx = mod((i-1) * (nTr+nCV) + [1:nTr] + nTr - 1, nEx) + 1;
-    foldIdx(i).teidx = setdiff(1:nEx, [foldIdx(i).tridx, foldIdx(i).cvidx]);
+    % disjoint train and validation
+%     foldIdx(i).tridx = (i-1) * (nTr+nCV) + [1:nTr];
+%     foldIdx(i).ulidx = [];
+%     foldIdx(i).cvidx = mod((i-1) * (nTr+nCV) + [1:nTr] + nTr - 1, nEx) + 1;
+%     foldIdx(i).teidx = setdiff(1:nEx, [foldIdx(i).tridx, foldIdx(i).cvidx]);
+
+    % rotate train and validation round robin style
     
+    foldIdx(i).tridx = (i-1) * nTr + [1:nTr];
+    foldIdx(i).ulidx = [];
+    foldIdx(i).cvidx = mod((i-1) * nTr + [1:nTr] + nTr - 1, nEx) + 1;
+    foldIdx(i).teidx = setdiff(1:nEx, [foldIdx(i).tridx, foldIdx(i).cvidx]);
+
+
     % shuffle
     foldIdx(i).tridx = shuffleOrder(foldIdx(i).tridx);
     foldIdx(i).cvidx = shuffleOrder(foldIdx(i).cvidx);
     foldIdx(i).teidx = shuffleOrder(foldIdx(i).teidx);
 end
+
+testFoldIdx(foldIdx);
 
 %% GrabCut experiment
 cd ~/Dropbox/Research/csm3n/data/grabcut;
