@@ -50,7 +50,7 @@ for i = 1:nNet
 	end
 	
 	if makeCounts
-		[edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_TRBPCounts(edgeStruct);
+		[edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_ConvexBetheCounts(edgeStruct,1,.1);
 	end
 	
 	Xnode = zeros(1,nPC,length(subgraphs(i).nodes));
