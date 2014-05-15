@@ -31,9 +31,8 @@ edgeStruct.useMex = 0;
 %% TRBP Counts
 
 edgeStruct = ex.edgeStruct;
-edgeStruct.edgeDist = 0.01*ones(edgeStruct.nEdges,1);
+% edgeStruct.edgeDist = 0.01*ones(edgeStruct.nEdges,1);
 [edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_TRBPCounts(edgeStruct);
-% edgeStruct.nodeCount = edgeStruct.nodeCount / .01;
 [nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,edgeStruct);
 
 % TRBP
