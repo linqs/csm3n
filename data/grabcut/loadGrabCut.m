@@ -1,10 +1,20 @@
-function examples = loadGrabCut(makeEdgeDist,nEx, countBP)
+function examples = loadGrabCut(makeEdgeDist,nEx, countBP, validity, scaled)
 
 if nargin < 1
     makeEdgeDist = 1;
 end
+if nargin < 4
+    validity = 0;
+end
+if nargin < 5
+    scaled = 0;
+end
 
-load grabCutProcessed;
+if scaled
+    load grabCutProcessed;
+else
+    load grabCutProcessedFull;
+end
 
 if nargin < 2 || nEx > length(images)
     nEx = length(images);
@@ -39,8 +49,8 @@ for i = 1:nEx
     
     if countBP
         kappa = 1;
-        minKappa = 0.1;
-        [edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_ConvexBetheCounts(edgeStruct,kappa,minKappa);
+        minKappa = 0.01;
+        [edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_ConvexBetheCounts(edgeStruct,kappa,minKappa, validity);
     end
     
     %% FEATURES
