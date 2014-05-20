@@ -27,7 +27,7 @@ end
 cd data;
 examples = {};
 for f = 1:nFold
-	examples(end+1:end+3) = loadDocDataSnowball('citeseer/citeseer.mat',3,nPC,0.01,[],1,0);
+	examples(end+1:end+3) = loadDocDataSnowball('citeseer/citeseer.mat',3,nPC,0.01,[],1,1);
 	foldIdx(f).tridx = 3*(f-1)+1;
 	foldIdx(f).ulidx = [];
 	foldIdx(f).cvidx = 3*(f-1)+2;
