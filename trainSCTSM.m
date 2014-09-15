@@ -1,6 +1,6 @@
-function [w, f] = trainSCTSM_lbgfs(examples, inferFunc, kappa, C, options, w)
+function [w, f] = trainSCTSM(examples, inferFunc, kappa, C, options, w)
 
-% Optimizes the VCTSM objective, learning the optimal (w,kappa).
+% Optimizes the CCTSM objective, learning the optimal w.
 %
 % examples : nEx x 1 cell array of examples, each containing:
 %	Fx : nParam x length(oc) feature map
@@ -8,7 +8,7 @@ function [w, f] = trainSCTSM_lbgfs(examples, inferFunc, kappa, C, options, w)
 %	Ynode : nState x nNode overcomplete matrix representation of labels
 % inferFunc : inference function used for convexified inference
 % kappa : modulus of convexity
-% C : optional regularization constant or vector (def: 1)
+% C : optional regularization constant (def: 1)
 % options : optional struct of optimization options for LBFGS:
 %			Important options (for complete list, see minFunc)
 %				Display : display mode

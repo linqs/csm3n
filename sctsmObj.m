@@ -20,9 +20,9 @@ nParam = max(examples{1}.edgeMap(:));
 w = x(1:nParam);
 
 % Init outputs
-f = 0.5 * (C .* w)' * w;
+f = 0.5 * C * (w'*w);
 if nargout == 2
-	gradW = (C .* w);
+	gradW = C * w;
 end
 
 % Main loop

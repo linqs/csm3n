@@ -37,7 +37,7 @@ else
 	nFold = min(nFold,length(foldIdx));
 end
 
-algoNames = {'MLE','M3N','M3NLRR','VCTSM','SCTSM','CACC','CSM3N','CSCACC','DLM','M3NFW','VCTSM_PP'};
+algoNames = {'MLE','PERC','M3N','M3NFW','SCTSM','VCTSM'};
 if isfield(expSetup,'runAlgos')
 	runAlgos = expSetup.runAlgos;
 else
@@ -57,56 +57,47 @@ else
 	optLBFGS = struct();
 end
 % Algorithm-specific optimization options
+if isfield(expSetup,'optMLE')
+	optMLE = expSetup.optMLE;
+else
+	optMLE = optLBFGS;
+end
+if isfield(expSetup,'optPerc')
+	optPerc = expSetup.optPerc;
+else
+	optPerc = optSGD;
+end
 if isfield(expSetup,'optM3N')
 	optM3N = expSetup.optM3N;
 else
 	optM3N = optSGD;
 end
-if isfield(expSetup,'optVCTSM')
-	optVCTSM = expSetup.optVCTSM;
+if isfield(expSetup,'optM3NFW')
+	optM3NFW = expSetup.optM3NFW;
 else
-	% 	optVCTSM = optSGD(); % for SGD version
-	optVCTSM = optLBFGS;
+	optM3NFW = optSGD;
 end
 if isfield(expSetup,'optSCTSM')
 	optSCTSM = expSetup.optSCTSM;
 else
-	% 	optSCTSM = optSGD(); % for SGD version
 	optSCTSM = optLBFGS;
 end
-if isfield(expSetup,'optCACC')
-	optCACC = expSetup.optCACC;
+if isfield(expSetup,'optVCTSM')
+	optVCTSM = expSetup.optVCTSM;
 else
-	optCACC = optSGD;
+	optVCTSM = optLBFGS;
 end
 
 % Hyperparameters
 if isfield(expSetup,'Cvec')
 	Cvec = expSetup.Cvec;
 else
-	Cvec = [0 .1 .5 1 5 10 50 100 500 1000 5000 10000];
-end
-if isfield(expSetup,'Cvec2')
-	Cvec2 = expSetup.Cvec2;
-else
-	Cvec2 = 1;
-end
-if isfield(expSetup,'CvecRel')
-	CvecRel = expSetup.CvecRel;
-else
-	CvecRel = Cvec;
-end
-if isfield(expSetup,'CvecStab')
-	CvecStab = expSetup.CvecStab;
-elseif any(runAlgos==3)
-	CvecStab = [.01 .05 .1 .25 .5 .75 1 2];
-else
-	CvecStab = 0;
+	Cvec = [.001 .005 .01 .05 .1 .5 1];
 end
 if isfield(expSetup,'kappaVec')
 	kappaVec = expSetup.kappaVec;
 elseif any(runAlgos==5)
-	kappaVec = [.01 .1 .25 .5 1 2];
+	kappaVec = [.1 .2 .5 1 2 5 10];
 else
 	kappaVec = 1;
 end
@@ -118,7 +109,7 @@ else
 	stepSizeVec = 1;
 end
 nCvals1 = length(Cvec);
-nCvals2 = max([length(CvecRel),length(Cvec2),length(CvecStab),length(kappaVec),length(stepSizeVec)]);
+nCvals2 = max([length(kappaVec),length(stepSizeVec)]);
 
 % Init kappa for VCTSM
 if isfield(expSetup,'initKappa')
@@ -142,18 +133,6 @@ if isfield(expSetup,'edgeFeatFunc')
 	edgeFeatFunc = expSetup.edgeFeatFunc;
 else
 	edgeFeatFunc = @makeEdgeFeatures;
-end
-
-% OLD STUFF for stability measurements
-if isfield(expSetup,'Xdesc')
-	Xdesc = expSetup.Xdesc;
-else
-	Xdesc = [];
-end
-if isfield(expSetup,'nStabSamp')
-	nStabSamp = expSetup.nStabSamp;
-else
-	nStabSamp = 0;
 end
 
 % File to save workspace
@@ -187,12 +166,9 @@ end
 
 % Job metadata
 nJobs = nFold * nCvals1 * (...
-	length(intersect(runAlgos,[1 6 9 10 11])) + ...
+	length(intersect(runAlgos,[1 4 6])) + ...
 	length(stepSizeVec) * any(runAlgos==2) + ...
-	length(CvecRel) * any(runAlgos==3) + ...
-	length(Cvec2) * any(runAlgos==4) + ...
 	length(kappaVec) * any(runAlgos==5) + ...
-	length(CvecStab) * length(intersect(runAlgos,[7 8])) );
 totalTimer = tic;
 count = 0;
 
@@ -273,36 +249,18 @@ for fold = 1:nFold
 			for a = 1:nRunAlgos
 				
 				% Select hyperparameters for training
-				if strcmp(algoNames{runAlgos(a)},'M3N')
+				if strcmp(algoNames{runAlgos(a)},'M3N') || strcmp(algoNames{runAlgos(a)},'PERC')
 					% M3N
 					if c2 > length(stepSizeVec)
 						continue
 					end
 					stepSize = stepSizeVec(c2);
-				elseif strcmp(algoNames{runAlgos(a)},'M3NLRR')
-					% M3NLRR
-					if c2 > length(CvecRel)
-						continue
-					end
-					C_r = CvecRel(c2);
-				elseif strcmp(algoNames{runAlgos(a)},'VCTSM') || strcmp(algoNames{runAlgos(a)},'VCTSM_2K')
-					% VCTSM or VCTSM_2K
-					if c2 > length(Cvec2)
-						continue
-					end
-					C_pp = Cvec2(c2);
 				elseif strcmp(algoNames{runAlgos(a)},'SCTSM')
 					% SCTSM
 					if c2 > length(kappaVec)
 						continue
 					end
 					kappa = kappaVec(c2);
-				elseif strcmp(algoNames{runAlgos(a)},'CSM3N') || strcmp(algoNames{runAlgos(a)},'CSCACC')
-					% CSM3N or CSCACC
-					if c2 > length(CvecStab)
-						continue
-					end
-					C_s = CvecStab(c2);
 				elseif c2 > 1
 					% Some algorithms don't use second reg. param.
 					continue
@@ -316,74 +274,41 @@ for fold = 1:nFold
 					
 					% M(P)LE learning
 					case 1
-						fprintf('Training MLE ...\n');
+						fprintf('Training MLE with C=%f \n',C_w);
 						%[w,nll] = trainMLE(ex_tr,inferFunc,C_w,optSGD);
 						[w,nll] = trainMLE_lbfgs(ex_tr,inferFunc,C_w,optVCTSM);
 						params{a,fold,c1,c2}.w = w;
 						
-					% M3N learning
+					% Perceptron learning
 					case 2
-						fprintf('Training M3N with stepSize=%f ...\n',stepSize);
+						fprintf('Training Perceptron with C=%f, stepSize=%f \n',C_w,stepSize);
 						optM3N.stepSize = stepSize;
 						[w,fAvg] = trainM3N(ex_tr,decodeFunc,C_w,optM3N);
 						params{a,fold,c1,c2}.w = w;
 						
-					% M3NLRR learning (M3N with separate local/relational reg.)
+					% M3N learning
 					case 3
-						fprintf('Training M3N with local/relational regularization ...\n');
-						Csplit = [C_w * ones(nLocParam,1) ; C_r * ones(nParam-nLocParam,1)];
-						[w,fAvg] = trainM3N(ex_tr,decodeFunc,Csplit,optM3N);
+						fprintf('Training M3N with C=%f, stepSize=%f \n',C_w,stepSize);
+						optM3N.stepSize = stepSize;
+						[w,fAvg] = trainM3N(ex_tr,decodeFunc,C_w,optM3N);
+						params{a,fold,c1,c2}.w = w;
+						
+					% M3N learning with FW
+					case 4
+						fprintf('Training M3NFW with C=%f ...\n',C_w);
+						[w,fAvg] = bcfw(ex_tr,decodeFunc,C_w,optM3N);
+						params{a,fold,c1,c2}.w = w;
+												
+					% SCTSM learning (fixed convexity)
+					case 5
+						fprintf('Training SCTSM with C=%f, kappa=%f \n',C_w,kappa);
+						[w,f] = trainSCTSM(ex_tr,inferFunc,kappa,C_w,optSCTSM);
 						params{a,fold,c1,c2}.w = w;
 						
 					% VCTSM learning (convexity optimization)
 					case 4
-						fprintf('Training VCTSM ...\n');
-						%[w,kappa,f] = trainVCTSM(ex_tr,inferFunc,C_w,1,optVCTSM,[],initKappa);
-						[w,kappa,f] = trainVCTSM_lbfgs(ex_tr,inferFunc,C_w,C_pp,optVCTSM,[],initKappa);
-						params{a,fold,c1,c2}.w = w;
-						params{a,fold,c1,c2}.kappa = kappa;
-						
-					% SCTSM learning (fixed convexity)
-					case 5
-						fprintf('Training SCTSM with kappa=%f ...\n',kappa);
-						%[w,f] = trainSCTSM(ex_tr,inferFunc,kappa,C_w,optSCTSM);
-						[w,f] = trainSCTSM_lbgfs(ex_tr,inferFunc,kappa,C_w,optSCTSM);
-						params{a,fold,c1,c2}.w = w;
-						
-					% CACC learning (robust M3N)
-					case 6
-						fprintf('Training CACC ...\n');
-						[w,fAvg] = trainCACC(ex_tr,decodeFunc,C_w,optCACC);
-						params{a,fold,c1,c2}.w = w;
-						
-					% CSM3N learning (M3N + stability reg.)
-					case 7
-						fprintf('Training CSM3N ...\n');
-						[w,fAvg] = trainCSM3N(ex_tr,ex_ul,decodeFunc,C_w,C_s,optCACC);
-						params{a,fold,c1,c2}.w = w;
-						
-					% CSCACC learning (CACC + stability reg.)
-					case 8
-						fprintf('Training CSCACC ...\n');
-						[w,fAvg] = trainCSCACC(ex_tr,ex_ul,decodeFunc,C_w,C_s,optCACC);
-						params{a,fold,c1,c2}.w = w;
-						
-					% DLM learning
-					case 9
-						fprintf('Training DLM ...\n');
-						[w,fAvg] = trainDLM(ex_tr,decodeFunc,C_w,optSGD);
-						params{a,fold,c1,c2}.w = w;
-						
-					% M3N learning with FW
-					case 10
-						fprintf('Training M3N with Frank-Wolfe ...\n');
-						[w,fAvg] = bcfw(ex_tr,decodeFunc,C_w,optM3N);
-						params{a,fold,c1,c2}.w = w;
-						
-					% VCTSM Peter-Paul
-					case 11
-						fprintf('Training VCTSM PeterPaul ...\n');
-						[w,kappa,f] = trainVCTSM_peterpaul(ex_tr,inferFunc,C_w,optVCTSM,[],initKappa);
+						fprintf('Training VCTSM with C=%f ...\n',C_w);
+						[w,kappa,f] = trainVCTSM(ex_tr,inferFunc,C_w,optVCTSM,[],initKappa);
 						params{a,fold,c1,c2}.w = w;
 						params{a,fold,c1,c2}.kappa = kappa;
 						
@@ -399,9 +324,7 @@ for fold = 1:nFold
 				for i = 1:nTrain
 					ex = ex_tr{i};
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
-					if strcmp(algoNames{runAlgos(a)},'VCTSM') ...
-					|| strcmp(algoNames{runAlgos(a)},'SCTSM') ...
-					|| strcmp(algoNames{runAlgos(a)},'VCTSM_PP')
+					if strcmp(algoNames{runAlgos(a)},'SCTSM') || strcmp(algoNames{runAlgos(a)},'VCTSM')
 						pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
 					else
 						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
@@ -418,19 +341,10 @@ for fold = 1:nFold
 				for i = 1:nCV
 					ex = ex_cv{i};
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
-					if strcmp(algoNames{runAlgos(a)},'VCTSM') ...
-					|| strcmp(algoNames{runAlgos(a)},'SCTSM') ...
-					|| strcmp(algoNames{runAlgos(a)},'VCTSM_PP')
+					if strcmp(algoNames{runAlgos(a)},'SCTSM') || strcmp(algoNames{runAlgos(a)},'VCTSM')
 						pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
-						if nStabSamp > 0
-							sctsmDecoder = @(nodePot,edgePot,edgeStruct) UGM_Decode_ConvexBP(kappa,nodePot,edgePot,edgeStruct,inferFunc);
-							[stab(i,1),stab(i,2),pert] = measureStabilityRand({w},ex,Xdesc,nStabSamp,sctsmDecoder,edgeFeatFunc,pred,pert);
-						end
 					else
 						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
-						if nStabSamp > 0
-							[stab(i,1),stab(i,2),pert] = measureStabilityRand({w},ex,Xdesc,nStabSamp,decodeFunc,edgeFeatFunc,pred,pert);
-						end
 					end
 					errs(i) = nnz(ex.Y ~= pred) / ex.nNode;
 				end
@@ -449,9 +363,7 @@ for fold = 1:nFold
 				for i = 1:nTest
 					ex = ex_te{i};
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
-					if strcmp(algoNames{runAlgos(a)},'VCTSM') ...
-					|| strcmp(algoNames{runAlgos(a)},'SCTSM') ...
-					|| strcmp(algoNames{runAlgos(a)},'VCTSM_PP')
+					if strcmp(algoNames{runAlgos(a)},'SCTSM') || strcmp(algoNames{runAlgos(a)},'VCTSM')
 						pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
 					else
 						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
@@ -537,17 +449,12 @@ for fold = 1:nFold
 	bestKappa = zeros(nRunAlgos,1);
 	for a = 1:nRunAlgos
 		% C2/kappa diplay value
-		if strcmp(algoNames{runAlgos(a)},'M3N')
+		if strcmp(algoNames{runAlgos(a)},'PERC') || strcmp(algoNames{runAlgos(a)},'M3N')
 			bestC2(a) = stepSizeVec(c2idx(a));
-		elseif strcmp(algoNames{runAlgos(a)},'M3NLRR')
-			bestC2(a) = CvecRel(c2idx(a));
-		elseif strcmp(algoNames{runAlgos(a)},'VCTSM')
-			bestC2(a) = Cvec2(c2idx(a));
-			bestKappa(a) = params{a,fold,bestParam(a,fold)}.kappa;
 		elseif strcmp(algoNames{runAlgos(a)},'SCTSM')
 			bestKappa(a) = kappaVec(c2idx(a));
-		elseif strcmp(algoNames{runAlgos(a)},'CSM3N') || strcmp(algoNames{runAlgos(a)},'CSCACC')
-			bestC2(a) = CvecStab(c2idx(a));
+		elseif strcmp(algoNames{runAlgos(a)},'VCTSM')
+			bestKappa(a) = params{a,fold,bestParam(a,fold)}.kappa;
 		end
 	end	
 	% Best results for fold
