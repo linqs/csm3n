@@ -24,6 +24,9 @@ if ~exist('decodeFunc','var')
 	decodeFunc = @UGM_Decode_TRBP;
 end
 
+% seed the RNG
+rng(0);
+
 cd data;
 examples = {};
 for f = 1:nFold

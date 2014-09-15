@@ -37,7 +37,7 @@ else
 	nFold = min(nFold,length(foldIdx));
 end
 
-algoNames = {'MLE','M3N','M3NLRR','VCTSM','SCTSM','CACC','CSM3N','CSCACC','DLM','M3NFW','VCTSM_PP','VCTSM_2K'};
+algoNames = {'MLE','M3N','M3NLRR','VCTSM','SCTSM','CACC','CSM3N','CSCACC','DLM','M3NFW','VCTSM_PP'};
 if isfield(expSetup,'runAlgos')
 	runAlgos = expSetup.runAlgos;
 else
@@ -190,7 +190,7 @@ nJobs = nFold * nCvals1 * (...
 	length(intersect(runAlgos,[1 6 9 10 11])) + ...
 	length(stepSizeVec) * any(runAlgos==2) + ...
 	length(CvecRel) * any(runAlgos==3) + ...
-	length(Cvec2) * any(intersect(runAlgos,[4 12])) + ...
+	length(Cvec2) * any(runAlgos==4) + ...
 	length(kappaVec) * any(runAlgos==5) + ...
 	length(CvecStab) * length(intersect(runAlgos,[7 8])) );
 totalTimer = tic;
@@ -318,7 +318,7 @@ for fold = 1:nFold
 					case 1
 						fprintf('Training MLE ...\n');
 						%[w,nll] = trainMLE(ex_tr,inferFunc,C_w,optSGD);
-						[w,nll] = trainMLE_lbfgs(ex_tr,inferFunc,C_w);
+						[w,nll] = trainMLE_lbfgs(ex_tr,inferFunc,C_w,optVCTSM);
 						params{a,fold,c1,c2}.w = w;
 						
 					% M3N learning
@@ -387,13 +387,6 @@ for fold = 1:nFold
 						params{a,fold,c1,c2}.w = w;
 						params{a,fold,c1,c2}.kappa = kappa;
 						
-					% VCTSM 2-kappa
-					case 12
-						fprintf('Training VCTSM 2-kappa ...\n');
-						[w,kappa,f] = trainVCTSM_2kappa(ex_tr,inferFunc,C_w,C_pp,optVCTSM,[],[initKappa;initKappa]);
-						params{a,fold,c1,c2}.w = w;
-						params{a,fold,c1,c2}.kappa = kappa;
-						
 				end
 				
 				catch exception % Caught an exception during training
@@ -410,11 +403,6 @@ for fold = 1:nFold
 					|| strcmp(algoNames{runAlgos(a)},'SCTSM') ...
 					|| strcmp(algoNames{runAlgos(a)},'VCTSM_PP')
 						pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
-					elseif strcmp(algoNames{runAlgos(a)},'VCTSM_2K')
-						nodeCount = kappa(1) * ex.edgeStruct.nodeCount;
-						edgeCount = kappa(2) * ex.edgeStruct.edgeCount;
-						nodeBel = UGM_Infer_CountBP(nodePot,edgePot,ex.edgeStruct,nodeCount,edgeCount);
-						[~,pred] = max(nodeBel,[],2);
 					else
 						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
 					end
@@ -438,9 +426,6 @@ for fold = 1:nFold
 							sctsmDecoder = @(nodePot,edgePot,edgeStruct) UGM_Decode_ConvexBP(kappa,nodePot,edgePot,edgeStruct,inferFunc);
 							[stab(i,1),stab(i,2),pert] = measureStabilityRand({w},ex,Xdesc,nStabSamp,sctsmDecoder,edgeFeatFunc,pred,pert);
 						end
-					elseif strcmp(algoNames{runAlgos(a)},'VCTSM_2K')
-						nodeBel = UGM_Infer_CountBP(nodePot,edgePot,ex.edgeStruct,nodeCount,edgeCount);
-						[~,pred] = max(nodeBel,[],2);
 					else
 						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
 						if nStabSamp > 0
@@ -468,9 +453,6 @@ for fold = 1:nFold
 					|| strcmp(algoNames{runAlgos(a)},'SCTSM') ...
 					|| strcmp(algoNames{runAlgos(a)},'VCTSM_PP')
 						pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
-					elseif strcmp(algoNames{runAlgos(a)},'VCTSM_2K')
-						nodeBel = UGM_Infer_CountBP(nodePot,edgePot,ex.edgeStruct,nodeCount,edgeCount);
-						[~,pred] = max(nodeBel,[],2);
 					else
 						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
 					end
@@ -566,9 +548,6 @@ for fold = 1:nFold
 			bestKappa(a) = kappaVec(c2idx(a));
 		elseif strcmp(algoNames{runAlgos(a)},'CSM3N') || strcmp(algoNames{runAlgos(a)},'CSCACC')
 			bestC2(a) = CvecStab(c2idx(a));
-		elseif strcmp(algoNames{runAlgos(a)},'VCTSM_2K')
-			bestC2(a) = Cvec2(c2idx(a));
-			bestKappa(a) = params{a,fold,bestParam(a,fold)}.kappa(1);
 		end
 	end	
 	% Best results for fold
