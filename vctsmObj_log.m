@@ -1,4 +1,4 @@
-function [f, g] = vctsmObj_log(x, examples, C1, C2, inferFunc, varargin)
+function [f, g] = vctsmObj_log(x, examples, C, inferFunc, varargin)
 %
 % Outputs the objective value and gradient of the VCTSM learning objective.
 %
@@ -7,8 +7,7 @@ function [f, g] = vctsmObj_log(x, examples, C1, C2, inferFunc, varargin)
 %	Fx : nParam x length(oc) feature map
 %	suffStat : nParam x 1 vector of sufficient statistics (i.e., Fx * oc)
 %	Ynode : nState x nNode overcomplete matrix representation of labels
-% C1 : regularization constant for reg/loss tradeoff
-% C2 : regularization constant for weights/convexity tradeoff
+% C : regularization constant
 % inferFunc : inference function
 % varargin : optional arguments (required by minFunc)
 
@@ -29,19 +28,12 @@ end
 
 %% Regularizer
 
-% Convex upper bound regularizer using Young's inequality
-f = 0.5*C1 * (C2*(w'*w) + 1/(C2*kappa^2));
+% Convex regularizer
+f = 0.5 * C * (w'*w) / kappa;
 if nargout == 2
-	gradW = C1 * C2 * w;
-	gradLogKappa = -C1 / (C2*kappa^2);
+	gradW = C * w / kappa;
+	gradLogKappa = -0.5 * C * (w'*w) / kappa;
 end
-
-% Non-convex regularizer
-% f = 0.5 * C1 * (w'*w) / kappa^2;
-% if nargout == 2
-% 	gradW = C1 * w / kappa^2;
-% 	gradLogKappa = -C1 * (w'*w) / kappa^2;
-% end
 
 %% Main loop
 

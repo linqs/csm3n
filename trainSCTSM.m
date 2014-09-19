@@ -1,6 +1,6 @@
-function [w, fAvg] = trainSCTSM(examples, inferFunc, kappa, C, options, w)
+function [w, f] = trainSCTSM(examples, inferFunc, kappa, C, options, w)
 
-% Optimizes the VCTSM objective, learning the optimal (w,kappa).
+% Optimizes the CCTSM objective, learning the optimal w.
 %
 % examples : nEx x 1 cell array of examples, each containing:
 %	Fx : nParam x length(oc) feature map
@@ -8,50 +8,59 @@ function [w, fAvg] = trainSCTSM(examples, inferFunc, kappa, C, options, w)
 %	Ynode : nState x nNode overcomplete matrix representation of labels
 % inferFunc : inference function used for convexified inference
 % kappa : modulus of convexity
-% C : optional regularization constant or vector (def: 1)
-% options : optional struct of optimization options for subgradient descent:
-% 			maxIter : iterations (def: 100*length(examples))
-% 			stepSize : step size (def: 1)
-% 			verbose : verbose mode (def: 0)
+% C : optional regularization constant (def: 1)
+% options : optional struct of optimization options for LBFGS:
+%			Important options (for complete list, see minFunc)
+%				Display : display mode
+%				MaxIter : maximum iterations
+%				MaxFunEvals : maximum function evals
 % w : init weights (optional: def=zeros)
 
 % parse input
 assert(nargin >= 3, 'USAGE: trainSCTSM(examples,inferFunc,kappa)')
 
-nEx = length(examples);
 nParam = max(examples{1}.edgeMap(:));
-nCon = 0;
-for i = 1:nEx
-	nCon = nCon + length(examples{i}.beq);
-end
-if nargin < 4
+
+if ~exist('C','var') || isempty(C)
 	C = 1;
 end
-if nargin < 5 || ~isstruct(options)
+
+if ~exist('options','var') || ~isstruct(options)
 	options = struct();
 end
-if ~isfield(options,'maxIter')
-	options.maxIter = 100 * length(examples);
+options.Method = 'lbfgs';
+if ~isfield(options,'Display')
+	options.Display = 'off';
 end
-if ~isfield(options,'stepSize')
-	options.stepSize = 1;
+if isfield(options,'plotObj') && options.plotObj ~= 0
+	if ~isfield(options,'plotRefresh')
+		options.plotRefresh = 100;
+	end
+	options.traceFunc = @(trace) plotFunc(trace,options.plotRefresh,options.plotObj);
 end
-if ~isfield(options,'verbose')
-	options.verbose = 0;
-end
-if nargin < 6 || isempty(w)
+
+if ~exist('w','var') || isempty(w)
 	w = zeros(nParam,1);
 end
 
-% Use projected subgradient descent for 1 training example;
-% otherwise, use stochastic subgradient.
-if length(examples) == 1
-	objFun = @(x) sctsmObj(x, examples, C, inferFunc, kappa);
-	[w,fAvg] = pgd(objFun, [], w, options);
-else
-	objFun = @(x, ex, t) sctsmObj(x, {ex}, C, inferFunc, kappa);
-	[w,fAvg] = sgd(examples, objFun, w, [], options);
+if ~exist('kappa','var') || isempty(kappa)
+	kappa = 1;
 end
 
+% run optimization
+objFun = @(x, varargin) sctsmObj(x, examples, C, inferFunc, kappa, varargin{:});
+[w,f] = minFunc(objFun, w, options);
 
+
+%% Plotting function
+function plotFunc(trace,plotRefresh,fig)
+
+t = length(trace.fval);
+if mod(t,plotRefresh) == 0
+	figure(fig);
+	hAx = plotyy(1:t,trace.fval, 1:t,trace.normx);
+	ylabel(hAx(1),'Objective'); ylabel(hAx(2),'norm(x)');
+	title('SCTSM Objective')
+	drawnow;
+end
 

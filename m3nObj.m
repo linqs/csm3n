@@ -1,7 +1,6 @@
 function [f, g] = m3nObj(x, examples, C, decodeFunc, varargin)
 %
 % Outputs the objective value and gradient of the M3N learning objective
-% (i.e., VCTSM with a fixed kappa).
 %
 % x : current point in optimization
 % examples : nEx x 1 cell array of examples, each containing:
@@ -10,8 +9,7 @@ function [f, g] = m3nObj(x, examples, C, decodeFunc, varargin)
 %	Ynode : nState x nNode overcomplete matrix representation of labels
 % C : regularization constant or vector
 % decodeFunc : decoder function
-% kappa : predefined modulus of convexity
-% varargin : optional arguments (required by minFunc)
+% varargin : optional arguments
 
 nEx = length(examples);
 nParam = max(examples{1}.edgeMap(:));
@@ -31,6 +29,7 @@ for i = 1:nEx
 	% Grab ith example.
 	ex = examples{i};
 	Fx = ex.Fx;
+	y = ex.Y;
 	ss_y = ex.suffStat;
 	Ynode = ex.Ynode; % assumes Ynode is (nState x nNode)
 	
@@ -46,8 +45,8 @@ for i = 1:nEx
 	ssDiff = ss_mu - ss_y;
 	
 	% Objective
-	L1 = norm(Ynode(:)-ocrep(1:ex.ocLocalScope), 1);
-	loss = (w'*ssDiff + 0.5*L1) / (nEx*ex.nNode);
+	Ham = nnz(y ~= yMAP);
+	loss = (w'*ssDiff + Ham) / (nEx*ex.nNode);
 	f = f + loss;
 	
 	% Gradient

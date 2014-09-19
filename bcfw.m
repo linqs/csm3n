@@ -42,10 +42,12 @@ if nargin < 5 || isempty(w)
     w = zeros(nParam,1);
 end
 
-wi = 0;
+N = length(examples);
+
 wavg = w;
+wi = repmat(w,1,N);
 l = 0;
-li = 0;
+li = zeros(N,1);
 
 
 if options.plotObj
@@ -62,13 +64,12 @@ if options.plotObj
     dualObj = [];
 end
 
-N = length(examples);
-
 for k = 1:options.maxIter
     i = randi(N);
     
     ex = examples{i};
     Fx = ex.Fx;
+	y = ex.Y;
     ss_y = ex.suffStat;
     Ynode = ex.Ynode; % assumes Ynode is (nState x nNode)
     
@@ -85,32 +86,34 @@ for k = 1:options.maxIter
     ssDiff = (ss_y - ss_mu) / ex.nNode; % note this is backwards from the m3n version
     
     % Objective
-    L1 = 0.5 * norm(Ynode(:)-ocrep(1:ex.ocLocalScope), 1) / ex.nNode;
+	Ham = nnz(y ~= yMAP) / ex.nNode;
     
-    ws = (1/(N*lambda)) * ssDiff;
-    ls = (1/N) *  L1;
+	ws = ssDiff / (N * lambda);
+    ls = Ham / N;
     
-    gap(k) = lambda * (w - ws)'*w - l + ls;
+    gap(k) = lambda * (w - ws)' * w - l + ls;
+	
     % compute dual objective
     dualObj(k) = 0.5 * lambda * norm(w)^2 + l;
     
-    
     % compute step size
     
-    wimws = wi-ws;
-    gamma = (lambda * (wimws)'*w - li + ls) / (lambda * (wimws'*wimws));
+    wimws = wi(:,i) - ws;
+	gamma = (wimws' * w + (ls - li(i)) / lambda) / (wimws' * wimws);
+	% This is equivalent to: 
+    % gamma = (lambda * wimws'*w - li(i) + ls) / (lambda * (wimws'*wimws));
     gamma = max(0, min(1, gamma));
     
     % take step
     
-    wiPrev = wi;
-    liPrev = li;
+    wiPrev = wi(:,i);
+    liPrev = li(i);
     
-    wi = (1-gamma) * wi + gamma * ws;
-    li = (1-gamma) * li + gamma * ls;
+    wi(:,i) = (1-gamma) * wi(:,i) + gamma * ws;
+    li(i) = (1-gamma) * li(i) + gamma * ls;
     
-    w = w + wi - wiPrev;
-    l = l + li - liPrev;
+    w = w + wi(:,i) - wiPrev;
+    l = l + li(i) - liPrev;
     
     wavg = k/(k+2) * wavg + 2/(k+2) * w;
     
