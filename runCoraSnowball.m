@@ -3,7 +3,7 @@
 % Variables:
 %   nFold (def: 10)
 %   nPC (def: 20)
-%   runAlgos (def: [4 10])
+%   runAlgos (def: [4 6])
 %   inferFunc (def: UGM_Infer_TRBP)
 %   decodeFunc (def: UGM_Decode_TRBP)
 %   save2file (def: will not save)
@@ -15,7 +15,7 @@ if ~exist('nPC','var')
 	nPC = 20;
 end
 if ~exist('runAlgos','var')
-	runAlgos = [4 10];
+	runAlgos = [4 6];
 end
 if ~exist('inferFunc','var')
 	inferFunc = @UGM_Infer_TRBP;
@@ -24,10 +24,33 @@ if ~exist('decodeFunc','var')
 	decodeFunc = @UGM_Decode_TRBP;
 end
 
+Cvec = [.0005 .001 .005 .01 .05 .1 .5 1];
+
+if any(runAlgos == 2) || any(runAlgos == 3)
+	stepSizeVec = [.1 .2 .5 1 2];
+else
+	stepSizeVec = 1;
+end
+
+if any(runAlgos == 5)
+	kappaVec = [.1 .2 .5 1 2 5 10];
+else
+	kappaVec = 1;
+end
+
 % seed the RNG
 rng(0);
 
 cd data;
+% nSplits = 5;
+% examples = loadDocDataSnowball('cora/cora.mat',nSplits,nPC,0.01,[],1,1);
+% for f = 1:nSplits
+% 	shifted = circshift([1:nSplits]',f-1);
+% 	foldIdx(f).tridx = shifted(1:nSplits-2);
+% 	foldIdx(f).ulidx = [];
+% 	foldIdx(f).cvidx = shifted(nSplits-1);
+% 	foldIdx(f).teidx = shifted(nSplits);
+% end
 examples = {};
 for f = 1:nFold
 	examples(end+1:end+3) = loadDocDataSnowball('cora/cora.mat',3,nPC,0.01,[],1,1);
@@ -43,20 +66,22 @@ maxIter = 200;
 expSetup = struct('foldIdx',foldIdx ...
 				 ,'runAlgos',runAlgos ...
 				 ,'decodeFunc',@UGM_Decode_TRBP,'inferFunc',@UGM_Infer_TRBP ...
-				 ,'Cvec',[.001 .005 .01 .05 .1 .5 1] ...
-				 ,'Cvec2',0 ... %[.0001 .001 .01 .1 1 10] ...
-				 ,'stepSizeVec',[.1 .2 .5 1 2] ...
-				 ,'kappaVec',1 ...%[.1 .2 .5 1 2 5 10] ...
+				 ,'Cvec',Cvec ...
+				 ,'stepSizeVec',stepSizeVec ...
+				 ,'kappaVec',kappaVec ...
 				 );
 expSetup.optSGD = struct('maxIter',maxIter ...
-						,'plotObj',0,'plotRefresh',10 ...
+						,'plotObj',1,'plotRefresh',10 ...
 						,'verbose',0,'returnBest',1);
 expSetup.optLBFGS = struct('Display','off','verbose',0 ...
+						  ,'plotObj',1,'plotRefresh',10 ...
 						  ,'MaxIter',maxIter,'MaxFunEvals',maxIter);
 			  
 if exist('save2file','var')
 	expSetup.save2file = save2file;
 end
+
+fprintf('\nSTARTING EXPERIMENT\n\n')
 
 experiment;
 

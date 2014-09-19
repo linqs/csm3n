@@ -1,4 +1,4 @@
-function [f, g] = vctsmObj(x, examples, C1, inferFunc, varargin)
+function [f, g] = vctsmObj(x, examples, C, inferFunc, varargin)
 %
 % Outputs the objective value and gradient of the VCTSM learning objective.
 %
@@ -7,7 +7,7 @@ function [f, g] = vctsmObj(x, examples, C1, inferFunc, varargin)
 %	Fx : nParam x length(oc) feature map
 %	suffStat : nParam x 1 vector of sufficient statistics (i.e., Fx * oc)
 %	Ynode : nState x nNode overcomplete matrix representation of labels
-% C1 : regularization constant
+% C : regularization constant
 % inferFunc : inference function
 % varargin : optional arguments (required by minFunc)
 
@@ -27,10 +27,10 @@ end
 %% Regularizer
 
 % Convex regularizer
-f = 0.5 * C1 * (w'*w) / kappa;
+f = 0.5 * C * (w'*w) / kappa;
 if nargout == 2
-	gradW = C1 * w / kappa;
-	gradKappa = -0.5 * C1 * (w'*w) / kappa^2;
+	gradW = C * w / kappa;
+	gradKappa = -0.5 * C * (w'*w) / kappa^2;
 end
 
 %% Main loop

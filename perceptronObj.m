@@ -30,7 +30,6 @@ for i = 1:nEx
 	ex = examples{i};
 	Fx = ex.Fx;
 	ss_y = ex.suffStat;
-	Ynode = ex.Ynode; % assumes Ynode is (nState x nNode)
 	
 	% Inference
 	[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);

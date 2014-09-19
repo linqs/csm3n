@@ -37,7 +37,7 @@ else
 	nFold = min(nFold,length(foldIdx));
 end
 
-algoNames = {'MLE','PERC','M3N','M3NFW','SCTSM','VCTSM'};
+algoNames = {'MLE','PERC','M3N','M3NFW','SCTSM','VCTSM','VCTSMlog'};
 if isfield(expSetup,'runAlgos')
 	runAlgos = expSetup.runAlgos;
 else
@@ -92,7 +92,7 @@ end
 if isfield(expSetup,'Cvec')
 	Cvec = expSetup.Cvec;
 else
-	Cvec = [.001 .005 .01 .05 .1 .5 1];
+	Cvec = 1;
 end
 if isfield(expSetup,'kappaVec')
 	kappaVec = expSetup.kappaVec;
@@ -166,9 +166,9 @@ end
 
 % Job metadata
 nJobs = nFold * nCvals1 * (...
-	length(intersect(runAlgos,[1 4 6])) + ...
-	length(stepSizeVec) * any(runAlgos==2) + ...
-	length(kappaVec) * any(runAlgos==5) + ...
+	length(intersect(runAlgos,[1 4 6 7])) + ...
+	length(stepSizeVec) * length(intersect(runAlgos,[2 3])) + ...
+	length(kappaVec) * any(runAlgos==5));
 totalTimer = tic;
 count = 0;
 
@@ -283,7 +283,7 @@ for fold = 1:nFold
 					case 2
 						fprintf('Training Perceptron with C=%f, stepSize=%f \n',C_w,stepSize);
 						optM3N.stepSize = stepSize;
-						[w,fAvg] = trainM3N(ex_tr,decodeFunc,C_w,optM3N);
+						[w,fAvg] = trainPerceptron(ex_tr,decodeFunc,C_w,optM3N);
 						params{a,fold,c1,c2}.w = w;
 						
 					% M3N learning
@@ -306,9 +306,16 @@ for fold = 1:nFold
 						params{a,fold,c1,c2}.w = w;
 						
 					% VCTSM learning (convexity optimization)
-					case 4
+					case 6
 						fprintf('Training VCTSM with C=%f ...\n',C_w);
 						[w,kappa,f] = trainVCTSM(ex_tr,inferFunc,C_w,optVCTSM,[],initKappa);
+						params{a,fold,c1,c2}.w = w;
+						params{a,fold,c1,c2}.kappa = kappa;
+						
+					% VCTSM_log learning (log version)
+					case 7
+						fprintf('Training VCTSMlog with C=%f ...\n',C_w);
+						[w,kappa,f] = trainVCTSM_log(ex_tr,inferFunc,C_w,optVCTSM,[],initKappa);
 						params{a,fold,c1,c2}.w = w;
 						params{a,fold,c1,c2}.kappa = kappa;
 						
@@ -324,7 +331,9 @@ for fold = 1:nFold
 				for i = 1:nTrain
 					ex = ex_tr{i};
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
-					if strcmp(algoNames{runAlgos(a)},'SCTSM') || strcmp(algoNames{runAlgos(a)},'VCTSM')
+					if strcmp(algoNames{runAlgos(a)},'SCTSM') ...
+					|| strcmp(algoNames{runAlgos(a)},'VCTSM') ...
+					|| strcmp(algoNames{runAlgos(a)},'VCTSMlog')
 						pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
 					else
 						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
@@ -341,7 +350,9 @@ for fold = 1:nFold
 				for i = 1:nCV
 					ex = ex_cv{i};
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
-					if strcmp(algoNames{runAlgos(a)},'SCTSM') || strcmp(algoNames{runAlgos(a)},'VCTSM')
+					if strcmp(algoNames{runAlgos(a)},'SCTSM') ...
+					|| strcmp(algoNames{runAlgos(a)},'VCTSM') ...
+					|| strcmp(algoNames{runAlgos(a)},'VCTSMlog')
 						pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
 					else
 						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
@@ -350,11 +361,6 @@ for fold = 1:nFold
 				end
 				cvErrs(a,fold,c1,c2) = mean(errs);
 				fprintf('Avg CV err = %.4f\n', cvErrs(a,fold,c1,c2));
-				if nStabSamp > 0
-					cvStabMax(a,fold,c1,c2) = max(stab(:,1));
-					cvStabAvg(a,fold,c1,c2) = mean(stab(:,2));
-					fprintf('CV stab: max = %d, avg = %.4f\n', cvStabMax(a,fold,c1,c2),cvStabAvg(a,fold,c1,c2));
-				end
 				
 				%% TESTING
 				
@@ -363,7 +369,9 @@ for fold = 1:nFold
 				for i = 1:nTest
 					ex = ex_te{i};
 					[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
-					if strcmp(algoNames{runAlgos(a)},'SCTSM') || strcmp(algoNames{runAlgos(a)},'VCTSM')
+					if strcmp(algoNames{runAlgos(a)},'SCTSM') ...
+					|| strcmp(algoNames{runAlgos(a)},'VCTSM') ...
+					|| strcmp(algoNames{runAlgos(a)},'VCTSMlog')
 						pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
 					else
 						pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
@@ -453,7 +461,7 @@ for fold = 1:nFold
 			bestC2(a) = stepSizeVec(c2idx(a));
 		elseif strcmp(algoNames{runAlgos(a)},'SCTSM')
 			bestKappa(a) = kappaVec(c2idx(a));
-		elseif strcmp(algoNames{runAlgos(a)},'VCTSM')
+		elseif strcmp(algoNames{runAlgos(a)},'VCTSM') || strcmp(algoNames{runAlgos(a)},'VCTSMlog')
 			bestKappa(a) = params{a,fold,bestParam(a,fold)}.kappa;
 		end
 	end	

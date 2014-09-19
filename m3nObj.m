@@ -29,6 +29,7 @@ for i = 1:nEx
 	% Grab ith example.
 	ex = examples{i};
 	Fx = ex.Fx;
+	y = ex.Y;
 	ss_y = ex.suffStat;
 	Ynode = ex.Ynode; % assumes Ynode is (nState x nNode)
 	
@@ -44,8 +45,8 @@ for i = 1:nEx
 	ssDiff = ss_mu - ss_y;
 	
 	% Objective
-	L1 = norm(Ynode(:)-ocrep(1:ex.ocLocalScope), 1);
-	loss = (w'*ssDiff + 0.5*L1) / (nEx*ex.nNode);
+	Ham = nnz(y ~= yMAP);
+	loss = (w'*ssDiff + Ham) / (nEx*ex.nNode);
 	f = f + loss;
 	
 	% Gradient

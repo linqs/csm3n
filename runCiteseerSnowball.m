@@ -3,7 +3,7 @@
 % Variables:
 %   nFold (def: 10)
 %   nPC (def: 20)
-%   runAlgos (def: [4 10])
+%   runAlgos (def: [4 6])
 %   inferFunc (def: UGM_Infer_TRBP)
 %   decodeFunc (def: UGM_Decode_TRBP)
 %   save2file (def: will not save)
@@ -15,13 +15,27 @@ if ~exist('nPC','var')
 	nPC = 20;
 end
 if ~exist('runAlgos','var')
-	runAlgos = [4 10];
+	runAlgos = [4 6];
 end
 if ~exist('inferFunc','var')
 	inferFunc = @UGM_Infer_TRBP;
 end
 if ~exist('decodeFunc','var')
 	decodeFunc = @UGM_Decode_TRBP;
+end
+
+Cvec = [.0005 .001 .005 .01 .05 .1 .5 1];
+
+if any(runAlgos == 2) || any(runAlgos == 3)
+	stepSizeVec = [.1 .2 .5 1 2];
+else
+	stepSizeVec = 1;
+end
+
+if any(runAlgos == 5)
+	kappaVec = [.1 .2 .5 1 2 5 10];
+else
+	kappaVec = 1;
 end
 
 % seed the RNG
@@ -43,10 +57,9 @@ maxIter = 200;
 expSetup = struct('foldIdx',foldIdx ...
 				 ,'runAlgos',runAlgos ...
 				 ,'decodeFunc',@UGM_Decode_TRBP,'inferFunc',@UGM_Infer_TRBP ...
-				 ,'Cvec',[.001 .01 .1 1 10 100] ...
-				 ,'Cvec2',[.001 .01 .1 1 10 100] ...
-				 ,'stepSizeVec',1 ...%[.1 .2 .5 1 2 5 10] ...
-				 ,'kappaVec',1 ...%[.1 .2 .5 1 2 5 10] ...
+				 ,'Cvec',Cvec ...
+				 ,'stepSizeVec',stepSizeVec ...
+				 ,'kappaVec',kappaVec ...
 				 );
 expSetup.optSGD = struct('maxIter',maxIter ...
 						,'plotObj',0,'plotRefresh',10 ...
@@ -57,6 +70,8 @@ expSetup.optLBFGS = struct('Display','off','verbose',0 ...
 if exist('save2file','var')
 	expSetup.save2file = save2file;
 end
+
+fprintf('\nSTARTING EXPERIMENT\n\n')
 
 experiment;
 
