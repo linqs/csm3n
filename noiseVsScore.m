@@ -38,6 +38,7 @@ else
 end
 leg = legend('MM','VCMM','SCMM','Location','SouthEast');
 set(leg,'FontSize',fontSize);
+set(gca,'box','off','FontSize',fontSize-6);
 xlabel('noise rate','FontSize',fontSize);
 ylabel(sprintf('%s (avg %d folds)',scoreName,nFold),'FontSize',fontSize);
 axis tight;

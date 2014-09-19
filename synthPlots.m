@@ -119,7 +119,7 @@ xlabel('log(kappa)','FontSize',fontSize);
 ylabel(sprintf('test error (avg %d folds)',nFold),'FontSize',fontSize);
 leg = legend({'MM','VCMM','SCMM'},'Location','East');
 set(leg,'FontSize',fontSize);
-set(gca,'xscale','log');
+set(gca,'xscale','log','FontSize',fontSize-8);
 ax = axis();
 ax(3) = floor(min([avgErr(1,1) avgErr(2,1) avgErr(3,:)])/plotBufferPrec)*plotBufferPrec;
 ax(4) = ceil(max([avgErr(1,1) avgErr(2,1) avgErr(3,:)])/plotBufferPrec)*plotBufferPrec;

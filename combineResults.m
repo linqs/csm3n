@@ -1,7 +1,10 @@
-function [results,algos] = combineResults(fnames,sigThresh)
+function [results,algos] = combineResults(fnames,sigThresh,ttestMetricIdx)
 
 if ~exist('sigThresh','var') || isempty(sigThresh)
 	sigThresh = 0.05;
+end
+if ~exist('ttestMetricIdx','var') || isempty(ttestMetricIdx)
+	ttestMetricIdx = 3;
 end
 
 algoNames = {'MLE','M3N','M3NLRR','VCTSM','SCTSM','CACC','CSM3N','CSCACC','DLM','M3NFW','VCTSM_PP','VCTSM_2K'};
@@ -22,7 +25,6 @@ avgResults = mean(results,3);
 stdResults = std(results,[],3);
 
 % Paired t-tests
-ttestMetricIdx = 3;
 ttests = zeros(length(algos));
 for a1 = 1:length(algos)
 	for a2 = a1+1:length(algos)
