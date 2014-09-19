@@ -2,8 +2,8 @@
 %
 % Variables:
 %   nFold (def: 10)
-%   nPC (def: 20)
-%   runAlgos (def: [4 6])
+%   nPC (def: 100)
+%   runAlgos (def: [4 6 7])
 %   inferFunc (def: UGM_Infer_TRBP)
 %   decodeFunc (def: UGM_Decode_TRBP)
 %   save2file (def: will not save)
@@ -12,10 +12,10 @@ if ~exist('nFold','var')
 	nFold = 10;
 end
 if ~exist('nPC','var')
-	nPC = 20;
+	nPC = 100;
 end
 if ~exist('runAlgos','var')
-	runAlgos = [4 6];
+	runAlgos = [4 6 7];
 end
 if ~exist('inferFunc','var')
 	inferFunc = @UGM_Infer_TRBP;
@@ -24,7 +24,7 @@ if ~exist('decodeFunc','var')
 	decodeFunc = @UGM_Decode_TRBP;
 end
 
-Cvec = [.0005 .001 .005 .01 .05 .1 .5 1];
+Cvec = [.0005 .001 .005 .01 .05 .1];% .5 1];
 
 if any(runAlgos == 2) || any(runAlgos == 3)
 	stepSizeVec = [.1 .2 .5 1 2];

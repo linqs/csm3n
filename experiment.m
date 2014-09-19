@@ -182,16 +182,18 @@ teF1 = inf(nRunAlgos,nFold,nCvals1,nCvals2);
 % Baseline stats
 baselineErrs = inf(nFold,1);
 baselineF1 = inf(nFold,1);
-% Stability storage
-perturbs = cell(nFold,1);
-cvStabMax = inf(nRunAlgos,nFold,nCvals1,nCvals2,2);
-cvStabAvg = inf(nRunAlgos,nFold,nCvals1,nCvals2,2);
 
 % Best parameters based on {CV,stab,test)
 bestParamTrain = zeros(nRunAlgos,nFold);
 bestParamCVerr = zeros(nRunAlgos,nFold);
 bestParamStab = zeros(nRunAlgos,nFold);
 bestParamTest = zeros(nRunAlgos,nFold);
+
+% Stats for training on [tr cv]
+paramsFull = cell(nRunAlgos,nFold);
+trErrsFull = inf(nRunAlgos,nFold);
+teErrsFull = inf(nRunAlgos,nFold);
+teF1Full = inf(nRunAlgos,nFold);
 
 % Number of local parameters
 nLocParam = max(examples{1}.nodeMap(:));
@@ -421,12 +423,122 @@ for fold = 1:nFold
 	for a = 1:nRunAlgos
 		bestParamTrain(a,fold) = find(trErrs(a,fold,:)==min(trErrs(a,fold,:)),1,'last');
 		bestParamCVerr(a,fold) = find(cvErrs(a,fold,:)==min(cvErrs(a,fold,:)),1,'last');
-		bestParamStab(a,fold) = find(cvStabMax(a,fold,:)==min(cvStabMax(a,fold,:)),1,'last');
 		bestParamTest(a,fold) = find(teErrs(a,fold,:)==min(teErrs(a,fold,:)),1,'last');
 	end
 	
-	% Store perturbations
-	perturbs{fold} = pert;
+	% Train on [tr cv]; compute new test stats
+	ex_tr_full = [ex_tr ex_cv];
+	nTrainFull = length(ex_tr_full);
+	for a = 1:nRunAlgos
+		% Choose best hyperparams for fold
+		[c1idx,c2idx] = ind2sub([nCvals1,nCvals2], bestParamCVerr(a,fold));
+		C_w = Cvec(c1idx);
+		if strcmp(algoNames{runAlgos(a)},'PERC') || strcmp(algoNames{runAlgos(a)},'M3N')
+			stepSize = stepSizeVec(c2idx);
+		elseif strcmp(algoNames{runAlgos(a)},'SCTSM')
+			kappa = kappaVec(c2idx);
+		end
+		
+		try
+		switch(runAlgos(a))
+
+			% M(P)LE learning
+			case 1
+				fprintf('Training MLE (full) with C=%f \n',C_w);
+				%[w,nll] = trainMLE(ex_tr,inferFunc,C_w,optSGD);
+				[w,nll] = trainMLE_lbfgs(ex_tr_full,inferFunc,C_w,optVCTSM);
+				paramsFull{a,fold}.w = w;
+
+			% Perceptron learning
+			case 2
+				fprintf('Training Perceptron (full) with C=%f, stepSize=%f \n',C_w,stepSize);
+				optM3N.stepSize = stepSize;
+				[w,fAvg] = trainPerceptron(ex_tr_full,decodeFunc,C_w,optM3N);
+				paramsFull{a,fold}.w = w;
+
+			% M3N learning
+			case 3
+				fprintf('Training M3N (full) with C=%f, stepSize=%f \n',C_w,stepSize);
+				optM3N.stepSize = stepSize;
+				[w,fAvg] = trainM3N(ex_tr_full,decodeFunc,C_w,optM3N);
+				paramsFull{a,fold}.w = w;
+
+			% M3N learning with FW
+			case 4
+				fprintf('Training M3NFW (full) with C=%f ...\n',C_w);
+				[w,fAvg] = bcfw(ex_tr_full,decodeFunc,C_w,optM3N);
+				paramsFull{a,fold}.w = w;
+
+			% SCTSM learning (fixed convexity)
+			case 5
+				fprintf('Training SCTSM (full) with C=%f, kappa=%f \n',C_w,kappa);
+				[w,f] = trainSCTSM(ex_tr_full,inferFunc,kappa,C_w,optSCTSM);
+				paramsFull{a,fold}.w = w;
+
+			% VCTSM learning (convexity optimization)
+			case 6
+				fprintf('Training VCTSM (full) with C=%f ...\n',C_w);
+				[w,kappa,f] = trainVCTSM(ex_tr_full,inferFunc,C_w,optVCTSM,[],initKappa);
+				paramsFull{a,fold}.w = w;
+				paramsFull{a,fold}.kappa = kappa;
+
+			% VCTSM_log learning (log version)
+			case 7
+				fprintf('Training VCTSMlog (full) with C=%f ...\n',C_w);
+				[w,kappa,f] = trainVCTSM_log(ex_tr_full,inferFunc,C_w,optVCTSM,[],initKappa);
+				paramsFull{a,fold}.w = w;
+				paramsFull{a,fold}.kappa = kappa;
+
+		end
+
+		catch exception % Caught an exception during training
+			fprintf('Caught exception : %s\n  Skipping current job.', exception.message);
+			continue
+		end
+		
+		% Training stats (full)
+		errs = zeros(nTrainFull,1);
+		for i = 1:nTrainFull
+			ex = ex_tr_full{i};
+			[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
+			if strcmp(algoNames{runAlgos(a)},'SCTSM') ...
+			|| strcmp(algoNames{runAlgos(a)},'VCTSM') ...
+			|| strcmp(algoNames{runAlgos(a)},'VCTSMlog')
+				pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
+			else
+				pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
+			end
+			errs(i) = nnz(ex.Y ~= pred) / ex.nNode;
+		end
+		trErrsFull(a,fold) = mean(errs);
+		fprintf('Avg train err = %.4f\n', trErrsFull(a,fold));
+		
+		% Test stats (full)
+		errs = zeros(nTest,1);
+		f1 = zeros(nTest,1);
+		for i = 1:nTest
+			ex = ex_te{i};
+			[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
+			if strcmp(algoNames{runAlgos(a)},'SCTSM') ...
+			|| strcmp(algoNames{runAlgos(a)},'VCTSM') ...
+			|| strcmp(algoNames{runAlgos(a)},'VCTSMlog')
+				pred = UGM_Decode_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
+			else
+				pred = decodeFunc(nodePot,edgePot,ex.edgeStruct);
+			end
+			errs(i) = nnz(ex.Y ~= pred) / ex.nNode;
+			[s.cm,s.err,s.pre,s.rec,s.f1,s.f1avg,s.f1wavg] = errStats(double(ex.Y),pred);
+			teStatFull(a,fold) = s;
+			if ex.nState == 2
+				f1(i) = s.f1(1); % If binary, use F1 of first class
+			else
+				f1(i) = s.f1wavg; % If multiclass, use weighted average F1
+			end
+		end
+		teErrsFull(a,fold) = mean(errs);
+		teF1Full(a,fold) = mean(f1);
+		fprintf('Avg test err = %.4f, avg F1 = %.4f\n', teErrsFull(a,fold),teF1Full(a,fold));
+	end
 	
 	% Clear old folds (no sense in keeping them)
 	clear ex_tr ex_ul ex_cv ex_te;
@@ -442,8 +554,14 @@ end
 endTime = toc(totalTimer);
 fprintf('elapsed time: %.2f min\n',endTime/60);
 
+useFullTrain = 0;
+
 % Generalization error
-geErrs = teErrs - trErrs;
+if useFullTrain
+	geErrsFull = teErrsFull - trErrsFull;
+else
+	geErrs = teErrs - trErrs;
+end
 
 % Display results at end
 colStr = {'TrainErr','ValidErr','TestErr','TestF1','GenErr','C1','C2','kappa'};
@@ -462,13 +580,24 @@ for fold = 1:nFold
 		elseif strcmp(algoNames{runAlgos(a)},'SCTSM')
 			bestKappa(a) = kappaVec(c2idx(a));
 		elseif strcmp(algoNames{runAlgos(a)},'VCTSM') || strcmp(algoNames{runAlgos(a)},'VCTSMlog')
-			bestKappa(a) = params{a,fold,bestParam(a,fold)}.kappa;
+			if useFullTrain
+				bestKappa(a) = paramsFull{a,fold}.kappa;
+			else
+				bestKappa(a) = params{a,fold,bestParam(a,fold)}.kappa;
+			end
 		end
 	end	
 	% Best results for fold
 	idx = sub2ind(size(teErrs),(1:nRunAlgos)',fold*ones(nRunAlgos,1),c1idx,c2idx);
-	bestResults(:,:,fold) = [trErrs(idx) cvErrs(idx) teErrs(idx) teF1(idx) geErrs(idx) ...
-		bestC1(:) bestC2(:) bestKappa(:)];
+	if useFullTrain
+		bestResults(:,:,fold) = ...
+			[trErrsFull(:,fold) cvErrs(idx) teErrsFull(:,fold) teF1Full(:,fold) geErrsFull(:,fold) ...
+			bestC1(:) bestC2(:) bestKappa(:)];
+	else
+		bestResults(:,:,fold) = ...
+			[trErrs(idx) cvErrs(idx) teErrs(idx) teF1(idx) geErrs(idx) ...
+			bestC1(:) bestC2(:) bestKappa(:)];
+	end
 end
 
 % Compute mean/stdev across folds
@@ -505,8 +634,6 @@ end
 disptable(avgResults,colStr,algoNames(runAlgos),'%.5f');
 fprintf('Significance t-tests (threshold=%f)\n',sigThresh);
 disptable(ttests,algoNames(runAlgos),algoNames(runAlgos));
-
-
 
 % save results
 if ~isempty(save2file)
