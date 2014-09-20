@@ -1,4 +1,13 @@
-% Requires useFullTrain
+% Variables:
+%   useFullTrain (def: 0)
+%   sigThresh (def: 0.05)
+
+if ~exist('useFullTrain','var')
+	useFullTrain = 0;
+end
+if ~exist('sigThresh','var')
+	sigThresh = 0.05;
+end
 
 % Generalization error
 if useFullTrain
@@ -50,7 +59,6 @@ stdResults = std(bestResults,[],3);
 
 % Paired t-tests
 ttests = zeros(nRunAlgos);
-sigThresh = 0.05;
 for a1 = 1:nRunAlgos
 	for a2 = a1+1:nRunAlgos
 		ttests(a1,a2) = ttest(bestResults(a1,3,:),bestResults(a2,3,:),sigThresh);
