@@ -1,4 +1,4 @@
-% Requires useTrainStats
+% Requires useFullTrain
 
 % Generalization error
 if useFullTrain
