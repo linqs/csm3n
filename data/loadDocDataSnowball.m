@@ -55,7 +55,7 @@ for i = 1:nNet
 	
 	Xnode = zeros(1,nPC,length(subgraphs(i).nodes));
 	Xnode(1,:,:) = X(subgraphs(i).nodes,:)';
-	Xedge = makeEdgeFeatures(Xnode,edgeStruct.edgeEnds);
+	Xedge = makeEdgeFeatures([],edgeStruct.edgeEnds,1); % only bias edge features
 	examples{i} = makeExample(Xnode,Xedge,y(subgraphs(i).nodes),nState,edgeStruct,Aeq,beq);
 
 end
