@@ -39,7 +39,7 @@ else
 end
 
 % seed the RNG
-rng(630);
+rng(311);
 
 cd data;
 examples = {};
