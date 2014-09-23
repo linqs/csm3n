@@ -554,7 +554,7 @@ end
 endTime = toc(totalTimer);
 fprintf('elapsed time: %.2f min\n',endTime/60);
 
-useFullTrain = 0;
+useFullTrain = 1;
 
 % Generalization error
 if useFullTrain
