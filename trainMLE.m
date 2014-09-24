@@ -1,57 +1,54 @@
-function [w, nll] = trainMLE(examples, inferFunc, C, options, w)
+function [w, nll] = trainMLE_lbfgs(examples, inferFunc, C, options, w)
 %
 % Trains an MRF using MLE.
 %
 % examples : cell array of examples
 % inferFunc : inference function (0: use pseudolikelihood)
 % C : optional regularization constant or vector (def: 1)
-% options : optional struct of optimization options for SGD:
-% 			maxIter : iterations of SGD (def: 100*length(examples))
-% 			stepSize : SGD step size (def: 1e-4)
-% 			verbose : verbose mode (def: 0)
+% options : optimization options (optional)
 % w : init weights (optional: def=zeros)
 
 % parse input
-assert(nargin >= 2, 'USAGE: trainM3N(examples,inferFunc)')
+assert(nargin >= 2,'USAGE: trainMLE_lbfgs(examples,inferFunc)')
 usePL = ~isa(inferFunc,'function_handle');
+
+% regularization param
 if nargin < 3
 	C = 1;
 end
+
+% optimization options
 if nargin < 4 || ~isstruct(options)
 	options = struct();
 end
-if ~isfield(options,'maxIter')
-	options.maxIter = 100 * length(examples);
+options.Method = 'lbfgs';
+if ~isfield(options,'Display')
+	options.Display = 'off';
 end
-if ~isfield(options,'stepSize')
-	options.stepSize = 1e-4;
-end
-if ~isfield(options,'verbose')
-	options.verbose = 0;
-end
+
+% inital point
 if nargin < 5
 	nParam = max(examples{1}.edgeMap(:));
 	w = zeros(nParam,1);
 end
 
-% L2-regularized NLL objective
+% L2 regularization
 if length(C) == 1
 	C = C * ones(size(w));
 end
 if usePL
-	objFun = @(w,ex,t) penalizedL2(w,@UGM_CRFcell_PseudoNLL,C,{ex});
+	obj = @(w) penalizedL2(w,@UGM_CRFcell_PseudoNLL,C,examples);
 else
-	objFun = @(w,ex,t) penalizedL2(w,@UGM_CRFcell_NLL,C,{ex},inferFunc);
+	obj = @(w) penalizedL2(w,@UGM_CRFcell_NLL,C,examples,inferFunc);
 end
 
-% SGD
-[w,fAvg] = sgd(examples,objFun,w,options);
+% optimize
+w = minFunc(obj,w,options);
 
-% NLL of learned model
+% compute NLL of solution
 if usePL
 	nll = UGM_CRFcell_PseudoNLL(w,examples);
 else
 	nll = UGM_CRFcell_NLL(w,examples,inferFunc);
 end
 
-		

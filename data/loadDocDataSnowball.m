@@ -55,7 +55,7 @@ for i = 1:nNet
 	
 	% Node features are [bias pc_1 ... pc_k]
 	Xnode = zeros(1,1+nPC,length(subgraphs(i).nodes));
-	Xnode(1,:,:) = [ones(1,size(Xnode,,3)) Xpca(subgraphs(i).nodes,:)'];
+	Xnode(1,:,:) = [ones(size(Xnode,3),1) Xpca(subgraphs(i).nodes,:)]';
 	
 	% Edge features are [bias cos_sim]
 	X_i = X(subgraphs(i).nodes,:);
@@ -63,7 +63,7 @@ for i = 1:nNet
 	Xsim = Xmag^-1 * (X_i * X_i') * Xmag^-1;
 	edgeIdx = sub2ind(size(Xsim),edgeStruct.edgeEnds(:,1),edgeStruct.edgeEnds(:,2));
 	Xedge = zeros(1,2,edgeStruct.nEdges);
-	Xedge(1,:,:) = [ones(1,edgeStruct.nEdges) Xsim(edgeIdx)'];
+	Xedge(1,:,:) = [ones(edgeStruct.nEdges,1) Xsim(edgeIdx)]';
 
 	examples{i} = makeExample(Xnode,Xedge,y(subgraphs(i).nodes),nState,edgeStruct,Aeq,beq);
 
