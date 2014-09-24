@@ -24,7 +24,7 @@ if ~exist('decodeFunc','var')
 	decodeFunc = @UGM_Decode_TRBP;
 end
 
-Cvec = [.0005 .001 .005 .01 .05 .1];% .5 1];
+Cvec = [.0001 .0005 .001 .0025 .005 .0075 .01 .025 .05 .1];
 
 if any(runAlgos == 2) || any(runAlgos == 3)
 	stepSizeVec = [.1 .2 .5 1 2];
@@ -39,7 +39,7 @@ else
 end
 
 % seed the RNG
-rng(0);
+rng(311);
 
 cd data;
 examples = {};
