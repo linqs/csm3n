@@ -3,7 +3,7 @@
 % Variables:
 %   nFold (def: 10)
 %   nPC (def: 100)
-%   runAlgos (def: [4 6 7])
+%   runAlgos (def: [4 7])
 %   inferFunc (def: UGM_Infer_TRBP)
 %   decodeFunc (def: UGM_Decode_TRBP)
 %   save2file (def: will not save)
@@ -15,7 +15,7 @@ if ~exist('nPC','var')
 	nPC = 100;
 end
 if ~exist('runAlgos','var')
-	runAlgos = [4 6 7];
+	runAlgos = [4 7];
 end
 if ~exist('inferFunc','var')
 	inferFunc = @UGM_Infer_TRBP;
