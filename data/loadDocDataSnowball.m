@@ -33,9 +33,9 @@ G = G - diag(diag(G));
 subgraphs = snowballSample(G,nNet,jumpRate,seeds,plotNets);
 
 % Perform PCA on all observed features
-X = bsxfun(@minus,full(X),mean(X,1));
-[V,~] = eigs(X'*X / (size(X,1)-1), nPC);
-X = X * V;
+Xpca = bsxfun(@minus,full(X),mean(X,1));
+[V,~] = eigs(Xpca' * Xpca / (size(X,1)-1), nPC);
+Xpca = Xpca * V;
 
 % Create nNet network examples
 examples = cell(nNet,1);
@@ -53,9 +53,18 @@ for i = 1:nNet
 		[edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_ConvexBetheCounts(edgeStruct,1,.01,1);
 	end
 	
-	Xnode = zeros(1,nPC,length(subgraphs(i).nodes));
-	Xnode(1,:,:) = X(subgraphs(i).nodes,:)';
-	Xedge = makeEdgeFeatures(Xnode,edgeStruct.edgeEnds);
+	% Node features are [bias pc_1 ... pc_k]
+	Xnode = zeros(1,1+nPC,length(subgraphs(i).nodes));
+	Xnode(1,:,:) = [ones(1,size(Xnode,,3)) Xpca(subgraphs(i).nodes,:)'];
+	
+	% Edge features are [bias cos_sim]
+	X_i = X(subgraphs(i).nodes,:);
+	Xmag = diag(sqrt(sum(X_i.^2,2)));
+	Xsim = Xmag^-1 * (X_i * X_i') * Xmag^-1;
+	edgeIdx = sub2ind(size(Xsim),edgeStruct.edgeEnds(:,1),edgeStruct.edgeEnds(:,2));
+	Xedge = zeros(1,2,edgeStruct.nEdges);
+	Xedge(1,:,:) = [ones(1,edgeStruct.nEdges) Xsim(edgeIdx)'];
+
 	examples{i} = makeExample(Xnode,Xedge,y(subgraphs(i).nodes),nState,edgeStruct,Aeq,beq);
 
 end
