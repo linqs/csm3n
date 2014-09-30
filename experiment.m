@@ -161,6 +161,13 @@ else
 	computeBaseline = 0;
 end
 
+% Use full training for stats?
+if isfield(expSetup,'useFullTrain')
+	useFullTrain = expSetup.useFullTrain;
+else
+	useFullTrain = 0;
+end
+
 
 %% MAIN LOOP
 
@@ -552,8 +559,6 @@ end
 
 endTime = toc(totalTimer);
 fprintf('elapsed time: %.2f min\n',endTime/60);
-
-useFullTrain = 1;
 
 % Generalization error
 if useFullTrain
