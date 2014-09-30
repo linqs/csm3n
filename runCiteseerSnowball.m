@@ -41,7 +41,7 @@ else
 end
 
 % seed the RNG
-rng(917);
+rng(529);
 
 cd data;
 examples = {};
@@ -67,6 +67,7 @@ expSetup.optSGD = struct('maxIter',maxIter ...
 						,'plotObj',0,'plotRefresh',10 ...
 						,'verbose',0,'returnBest',1);
 expSetup.optLBFGS = struct('Display','off','verbose',0 ...
+						  ,'plotObj',0,'plotRefresh',10 ...
 						  ,'MaxIter',maxIter,'MaxFunEvals',maxIter);
 			  
 if exist('save2file','var')

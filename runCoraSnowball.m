@@ -41,18 +41,9 @@ else
 end
 
 % seed the RNG
-rng(917);
+rng(529);
 
 cd data;
-% nSplits = 5;
-% examples = loadDocDataSnowball('cora/cora.mat',nSplits,nPC,0.01,[],1,1);
-% for f = 1:nSplits
-% 	shifted = circshift([1:nSplits]',f-1);
-% 	foldIdx(f).tridx = shifted(1:nSplits-2);
-% 	foldIdx(f).ulidx = [];
-% 	foldIdx(f).cvidx = shifted(nSplits-1);
-% 	foldIdx(f).teidx = shifted(nSplits);
-% end
 examples = {};
 for f = 1:nFold
 	examples(end+1:end+3) = loadDocDataSnowball('cora/cora.mat',3,nPC,0.01,[],1,1);
