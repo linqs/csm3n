@@ -277,8 +277,7 @@ for fold = 1:nFold
 					% M(P)LE learning
 					case 1
 						fprintf('Training MLE with C=%f \n',C_w);
-						%[w,nll] = trainMLE(ex_tr,inferFunc,C_w,optSGD);
-						[w,nll] = trainMLE_lbfgs(ex_tr,inferFunc,C_w,optVCTSM);
+						[w,nll] = trainMLE(ex_tr,inferFunc,C_w,optVCTSM);
 						params{a,fold,c1,c2}.w = w;
 						
 					% Perceptron learning

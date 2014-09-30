@@ -3,9 +3,10 @@
 % Variables:
 %   nFold (def: 10)
 %   nPC (def: 100)
-%   runAlgos (def: [4 6 7])
+%   runAlgos (def: [4 7])
 %   inferFunc (def: UGM_Infer_TRBP)
 %   decodeFunc (def: UGM_Decode_TRBP)
+%	Cvec (def: [.0001 .0005 .001 .0025 .005 .0075 .01 .025 .05 .1])
 %   save2file (def: will not save)
 
 if ~exist('nFold','var')
@@ -15,7 +16,7 @@ if ~exist('nPC','var')
 	nPC = 100;
 end
 if ~exist('runAlgos','var')
-	runAlgos = [4 6 7];
+	runAlgos = [4 7];
 end
 if ~exist('inferFunc','var')
 	inferFunc = @UGM_Infer_TRBP;
@@ -23,8 +24,9 @@ end
 if ~exist('decodeFunc','var')
 	decodeFunc = @UGM_Decode_TRBP;
 end
-
-Cvec = [.0001 .0005 .001 .0025 .005 .0075 .01 .025 .05 .1];
+if ~exist('Cvec','var')
+	Cvec = [.0001 .0005 .001 .0025 .005 .0075 .01 .025 .05 .1];
+end
 
 if any(runAlgos == 2) || any(runAlgos == 3)
 	stepSizeVec = [.1 .2 .5 1 2];
@@ -39,7 +41,7 @@ else
 end
 
 % seed the RNG
-rng(311);
+rng(917);
 
 cd data;
 examples = {};
