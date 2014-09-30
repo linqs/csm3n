@@ -61,7 +61,7 @@ stdResults = std(bestResults,[],3);
 ttests = zeros(nRunAlgos);
 for a1 = 1:nRunAlgos
 	for a2 = a1+1:nRunAlgos
-		ttests(a1,a2) = ttest(bestResults(a1,3,:),bestResults(a2,3,:),sigThresh);
+		ttests(a1,a2) = ttest(squeeze(bestResults(a1,3,:)),squeeze(bestResults(a2,3,:)),sigThresh);
 	end
 end
 ttests(~isfinite(ttests)) = 0;

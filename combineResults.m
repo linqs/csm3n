@@ -28,7 +28,7 @@ stdResults = std(results,[],3);
 ttests = zeros(length(algos));
 for a1 = 1:length(algos)
 	for a2 = a1+1:length(algos)
-		ttests(a1,a2) = ttest(results(a1,ttestMetricIdx,:),results(a2,ttestMetricIdx,:),sigThresh);
+		ttests(a1,a2) = ttest(squeeze(results(a1,ttestMetricIdx,:)),squeeze(results(a2,ttestMetricIdx,:)),sigThresh);
 	end
 end
 ttests(~isfinite(ttests)) = 0;
