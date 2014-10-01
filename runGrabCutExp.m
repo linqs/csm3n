@@ -21,7 +21,7 @@ maxEvals = 200;
 % runAlgos = 4;
 
 countBP = false;
-runAlgos = [4 10];
+runAlgos = [4 7];
 
 numFolds = 10;
 
