@@ -1,6 +1,6 @@
-cd ~/Dropbox/Research/csm3n
+%cd ~/Dropbox/Research/csm3n
 
-setUpPath;
+%setUpPath;
 
 clear;
 nEx = 50;
@@ -54,7 +54,7 @@ end
 testFoldIdx(foldIdx);
 
 %% GrabCut experiment
-cd ~/Dropbox/Research/csm3n/data/grabcut;
+cd data/grabcut;
 [examples] = loadGrabCut(1, nEx, countBP);
 cd ../../;
 
@@ -86,7 +86,7 @@ expSetup.optLBFGS = struct('Display','iter' ...
     , 'verbose', 1 ...
     );
 
-algoNames = {'MLE','M3N','M3NLRR','VCTSM','SCTSM','CACC','CSM3N','CSCACC','DLM','M3NFW','VCTSM_PP','VCTSM_2K'};
+algoNames = {'MLE','PERC','M3N','M3NFW','SCTSM','VCTSM','VCTSMlog'};
 
 algoString = '';
 for i = 1:length(runAlgos)
@@ -94,14 +94,14 @@ for i = 1:length(runAlgos)
 end
 expSetup.save2file = sprintf('results/grabCutResults_%s_%d_%d', algoString, nEx, numFolds);
 
-expSetup.plotFunc = @plotGrabCut;
+%expSetup.plotFunc = @plotGrabCut;
 
-figure(1);
-clf;
-ax{1} = subplot(121);
-ax{2} = subplot(122);
+%figure(1);
+%clf;
+%ax{1} = subplot(121);
+%ax{2} = subplot(122);
 
-expSetup.plotFuncAxis = ax;
+%expSetup.plotFuncAxis = ax;
 
 
 experiment;
