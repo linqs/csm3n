@@ -55,7 +55,7 @@ testFoldIdx(foldIdx);
 
 %% GrabCut experiment
 cd data/grabcut;
-[examples] = loadGrabCut(1, nEx, countBP, 1);
+[examples] = loadGrabCut(1, nEx, countBP, 1, 1);
 cd ../../;
 
 %%
