@@ -10,6 +10,8 @@ function [f, g] = vctsmObj_log(x, examples, C, inferFunc, varargin)
 % C : regularization constant
 % inferFunc : inference function
 % varargin : optional arguments (required by minFunc)
+%				decodeFunc : fallback decoding function for when kappa is
+%							 very small (.01)
 
 nEx = length(examples);
 nParam = max(examples{1}.edgeMap(:));
@@ -24,6 +26,15 @@ if kappa <= 0
 	err = MException('vctsmObj:BadInput',...
 			sprintf('kappa must be strictly positive; log(kappa)=%f, kappa=%f',logKappa,kappa));
 	throw(err);
+end
+
+% Small kappa
+if kappa < .01 && ~isempty(varargin)
+	decodeSwitch = 1;
+	decodeFunc = varargin{1};
+	fprintf('kappa=%f; switching to decoding.\n',kappa);
+else
+	decodeSwitch = 0;
 end
 
 %% Regularizer
@@ -47,10 +58,18 @@ for i = 1:nEx
 	
 	% Loss-augmented (approx) marginal inference
 	[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
-	[nodeBel,edgeBel,~,H] = UGM_Infer_ConvexBP(kappa,nodePot.*exp(1-Ynode),edgePot,ex.edgeStruct,inferFunc,varargin{:});
+	nodePot = nodePot .* exp(1-Ynode);
+	if decodeSwitch
+		yMAP = decodeFunc(nodePot,edgePot,ex.edgeStruct);
+		[overcomplete,nodeBel] = overcompletePairwise(yMAP,ex.edgeStruct.nStates(1),ex.edgeStruct);
+		H = 0;
+	else
+		[nodeBel,edgeBel,~,H] = UGM_Infer_ConvexBP(kappa,nodePot,edgePot,ex.edgeStruct,inferFunc);
+		overcomplete = [reshape(nodeBel',[],1) ; edgeBel(:)];
+	end
 	
 	% Compute sufficient statistics
-	ss_mu = Fx * [reshape(nodeBel',[],1) ; edgeBel(:)];
+	ss_mu = Fx * overcomplete;
 	
 	% Difference of sufficient statistics
 	ssDiff = ss_mu - ss_y;
