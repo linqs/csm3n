@@ -433,7 +433,7 @@ for fold = 1:nFold
 	end
 	
 	% Train on [tr cv]; compute new test stats
-	ex_tr_full = [ex_tr ex_cv];
+	ex_tr_full = [ex_tr ; ex_cv];
 	nTrainFull = length(ex_tr_full);
 	for a = 1:nRunAlgos
 		% Choose best hyperparams for fold
