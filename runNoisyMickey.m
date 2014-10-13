@@ -4,7 +4,7 @@
 %   nFold (def: 10)
 %   noiseRate (def: .2)
 %   runAlgos (def: [4 5 7])
-%   inferFunc (def: UGM_Infer_TRBP)
+%   inferFunc (def: UGM_Infer_CountBP)
 %   decodeFunc (def: UGM_Decode_LBP)
 %	Cvec (def: [.0001 .0005 .001 .0025 .005 .0075 .01 .025 .05 .1])
 %   kappaVec (def: [.1 .2 .5 .75 1 1.5 2 5])
@@ -21,7 +21,7 @@ if ~exist('runAlgos','var')
 	runAlgos = [4 5 7];
 end
 if ~exist('inferFunc','var')
-	inferFunc = @UGM_Infer_TRBP;
+	inferFunc = @UGM_Infer_CountBP;
 end
 if ~exist('decodeFunc','var')
 	decodeFunc = @UGM_Decode_LBP;
@@ -30,7 +30,7 @@ if ~exist('Cvec','var')
 	Cvec = [.0001 .0005 .001 .0025 .005 .0075 .01 .025 .05 .1];
 end
 if ~exist('kappaVec','var')
-	kappaVec = [.1 .2 .5 .75 1 1.5 2 5];
+	kappaVec = [.01 .02 .05 .075 .1 .2 .5 .75 1];%[.1 .2 .5 .75 1 1.5 2 5];
 end
 if ~exist('makePlots','var')
 	makePlots = 0;
@@ -92,8 +92,8 @@ expSetup = struct('foldIdx',foldIdx ...
 maxIter = 200;
 expSetup.optSGD = struct('maxIter',maxIter ...
 						,'plotObj',objFig,'plotRefresh',10 ...
-						,'verbose',1,'returnBest',1);
-expSetup.optLBFGS = struct('Display','iter','verbose',0 ...
+						,'verbose',0,'returnBest',1);
+expSetup.optLBFGS = struct('Display','off','verbose',0 ...
 						  ,'MaxIter',maxIter,'MaxFunEvals',maxIter);
 expSetup.plotPred = predFig;
 
