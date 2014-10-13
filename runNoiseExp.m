@@ -1,4 +1,4 @@
-%% Noisy Mickey experiment
+%% Noisy 2014 experiment
 %
 % Variables:
 %   nFold (def: 10)
@@ -63,7 +63,7 @@ for f = 1:nFold
 end
 
 % create the data
-cd data/mickey;
+cd data/2014;
 nFeat = 2;
 noiseType = 2;
 scale = 1;
