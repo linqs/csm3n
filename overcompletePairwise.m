@@ -1,4 +1,4 @@
-function [ocrep] = overcompletePairwise(y, nState, edgeStruct)
+function [ocrep,nodeBel,edgeBel] = overcompletePairwise(y, nState, edgeStruct)
 
 % Converts a vector of values to overcomplete pairwise representation.
 %

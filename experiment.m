@@ -45,6 +45,23 @@ else
 end
 nRunAlgos = length(runAlgos);
 
+% Inference/feature algos
+if isfield(expSetup,'decodeFunc')
+	decodeFunc = expSetup.decodeFunc;
+else
+	decodeFunc = @UGM_Decode_TRBP;
+end
+if isfield(expSetup,'inferFunc')
+	inferFunc = expSetup.inferFunc;
+else
+	inferFunc = @UGM_Infer_TRBP;
+end
+if isfield(expSetup,'edgeFeatFunc')
+	edgeFeatFunc = expSetup.edgeFeatFunc;
+else
+	edgeFeatFunc = @makeEdgeFeatures;
+end
+
 % Optimization options
 if isfield(expSetup,'optSGD')
 	optSGD = expSetup.optSGD;
@@ -87,6 +104,7 @@ if isfield(expSetup,'optVCTSM')
 else
 	optVCTSM = optLBFGS;
 end
+% optVCTSM.decodeFunc = decodeFunc;
 
 % Hyperparameters
 if isfield(expSetup,'Cvec')
@@ -116,23 +134,6 @@ if isfield(expSetup,'initKappa')
 	initKappa = expSetup.initKappa;
 else
 	initKappa = 1;
-end
-
-% Inference/feature algos
-if isfield(expSetup,'decodeFunc')
-	decodeFunc = expSetup.decodeFunc;
-else
-	decodeFunc = @UGM_Decode_TRBP;
-end
-if isfield(expSetup,'inferFunc')
-	inferFunc = expSetup.inferFunc;
-else
-	inferFunc = @UGM_Infer_TRBP;
-end
-if isfield(expSetup,'edgeFeatFunc')
-	edgeFeatFunc = expSetup.edgeFeatFunc;
-else
-	edgeFeatFunc = @makeEdgeFeatures;
 end
 
 % File to save workspace
