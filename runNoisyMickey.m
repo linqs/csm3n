@@ -7,7 +7,7 @@
 %   inferFunc (def: UGM_Infer_CountBP)
 %   decodeFunc (def: UGM_Decode_LBP)
 %	Cvec (def: [.0001 .0005 .001 .0025 .005 .0075 .01 .025 .05 .1])
-%   kappaVec (def: [.1 .2 .5 .75 1 1.5 2 5])
+%   kappaVec (def: [.01 .02 .05 .075 .1 .2 .5 .75 1])
 %   save2file (def: will not save)
 %   makePlots (def: 0)
 
