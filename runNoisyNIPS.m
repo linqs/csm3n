@@ -41,7 +41,6 @@ end
 % seed the RNG
 rng(0);
 
-cd data/nips14;
 nTrain = 1;
 nCV = 1;
 nTest = 10;
@@ -52,6 +51,7 @@ for f = 1:nFold
 	foldIdx(f).cvidx = sidx+nTrain+1:sidx+nTrain+nCV;
 	foldIdx(f).teidx = sidx+nTrain+nCV+1:sidx+nTrain+nCV+nTest;
 end
+cd data/nips14;
 [examples] = iidNoiseModel(nFold*(nTrain+nCV+nTest),2,noiseRate,2,.6,1,1,dataFig);
 cd ../..;
 

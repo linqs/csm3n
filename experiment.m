@@ -45,6 +45,23 @@ else
 end
 nRunAlgos = length(runAlgos);
 
+% Inference/feature algos
+if isfield(expSetup,'decodeFunc')
+	decodeFunc = expSetup.decodeFunc;
+else
+	decodeFunc = @UGM_Decode_TRBP;
+end
+if isfield(expSetup,'inferFunc')
+	inferFunc = expSetup.inferFunc;
+else
+	inferFunc = @UGM_Infer_TRBP;
+end
+if isfield(expSetup,'edgeFeatFunc')
+	edgeFeatFunc = expSetup.edgeFeatFunc;
+else
+	edgeFeatFunc = @makeEdgeFeatures;
+end
+
 % Optimization options
 if isfield(expSetup,'optSGD')
 	optSGD = expSetup.optSGD;
@@ -87,6 +104,7 @@ if isfield(expSetup,'optVCTSM')
 else
 	optVCTSM = optLBFGS;
 end
+% optVCTSM.decodeFunc = decodeFunc;
 
 % Hyperparameters
 if isfield(expSetup,'Cvec')
@@ -116,23 +134,6 @@ if isfield(expSetup,'initKappa')
 	initKappa = expSetup.initKappa;
 else
 	initKappa = 1;
-end
-
-% Inference/feature algos
-if isfield(expSetup,'decodeFunc')
-	decodeFunc = expSetup.decodeFunc;
-else
-	decodeFunc = @UGM_Decode_TRBP;
-end
-if isfield(expSetup,'inferFunc')
-	inferFunc = expSetup.inferFunc;
-else
-	inferFunc = @UGM_Infer_TRBP;
-end
-if isfield(expSetup,'edgeFeatFunc')
-	edgeFeatFunc = expSetup.edgeFeatFunc;
-else
-	edgeFeatFunc = @makeEdgeFeatures;
 end
 
 % File to save workspace
@@ -172,7 +173,7 @@ end
 %% MAIN LOOP
 
 % Job metadata
-nJobs = nFold * nCvals1 * (...
+nJobs = nFold * (nCvals1 + 1) * (... % +1 for full train
 	length(intersect(runAlgos,[1 4 6 7])) + ...
 	length(stepSizeVec) * length(intersect(runAlgos,[2 3])) + ...
 	length(kappaVec) * any(runAlgos==5));
@@ -433,7 +434,7 @@ for fold = 1:nFold
 	end
 	
 	% Train on [tr cv]; compute new test stats
-	ex_tr_full = [ex_tr ex_cv];
+	ex_tr_full = [ex_tr ; ex_cv];
 	nTrainFull = length(ex_tr_full);
 	for a = 1:nRunAlgos
 		% Choose best hyperparams for fold

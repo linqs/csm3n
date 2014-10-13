@@ -13,6 +13,7 @@ function [w, kappa, f] = trainVCTSM_log(examples, inferFunc, C, options, w, kapp
 %				Display : display mode
 %				MaxIter : maximum iterations
 %				MaxFunEvals : maximum function evals
+%				decodeFunc : fallback decoder for small kappa values
 % w : init weights (optional: def=zeros)
 % kappa : init kappa (optional: def=1)
 
@@ -48,8 +49,14 @@ if ~exist('kappa','var') || isempty(kappa)
 	kappa = 1;
 end
 
+% Define objective
+if isfield(options,'decodeFunc')
+	objFun = @(x, varargin) vctsmObj_log(x, examples, C, inferFunc, options.decodeFunc, varargin{:});
+else
+	objFun = @(x, varargin) vctsmObj_log(x, examples, C, inferFunc, varargin{:});
+end
+
 % Unconstrained optimization (in log space)
-objFun = @(x, varargin) vctsmObj_log(x, examples, C, inferFunc, varargin{:});
 x0 = [w ; log(kappa)];
 [x,f] = minFunc(objFun, x0, options);
 w = x(1:end-1);
