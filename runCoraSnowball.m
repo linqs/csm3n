@@ -4,8 +4,8 @@
 %   nFold (def: 10)
 %   nPC (def: 100)
 %   runAlgos (def: [4 7])
-%   inferFunc (def: UGM_Infer_TRBP)
-%   decodeFunc (def: UGM_Decode_TRBP)
+%   inferFunc (def: UGM_Infer_CountBP)
+%   decodeFunc (def: UGM_Decode_LBP)
 %	Cvec (def: [.0001 .0005 .001 .0025 .005 .0075 .01 .025 .05 .1])
 %   save2file (def: will not save)
 
@@ -19,10 +19,10 @@ if ~exist('runAlgos','var')
 	runAlgos = [4 7];
 end
 if ~exist('inferFunc','var')
-	inferFunc = @UGM_Infer_TRBP;
+	inferFunc = @UGM_Infer_CountBP;
 end
 if ~exist('decodeFunc','var')
-	decodeFunc = @UGM_Decode_TRBP;
+	decodeFunc = @UGM_Decode_LBP;
 end
 if ~exist('Cvec','var')
 % 	Cvec = [.0005 .001 .0025 .005 .0075 .01 .025 .05 .1];
@@ -47,7 +47,7 @@ rng(917);
 cd data;
 examples = {};
 for f = 1:nFold
-	examples(end+1:end+3) = loadDocDataSnowball('cora/cora.mat',3,nPC,0.01,[],1,1);
+	examples(end+1:end+3) = loadDocDataSnowball('cora/cora.mat',3,nPC,0.1,[],1,2);
 	foldIdx(f).tridx = 3*(f-1)+1;
 	foldIdx(f).ulidx = [];
 	foldIdx(f).cvidx = 3*(f-1)+2;

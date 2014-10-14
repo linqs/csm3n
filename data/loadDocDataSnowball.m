@@ -49,8 +49,10 @@ for i = 1:nNet
 		edgeStruct.edgeDist = UGM_makeEdgeDistribution(edgeStruct);
 	end
 	
-	if makeCounts
+	if makeCounts == 1
 		[edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_ConvexBetheCounts(edgeStruct,1,.01,1);
+	elseif makeCounts == 2
+		[edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_ConvexBetheCounts2(edgeStruct,1);
 	end
 	
 	% Node features are [bias pc_1 ... pc_k]
