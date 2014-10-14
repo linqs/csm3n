@@ -25,7 +25,8 @@ if ~exist('decodeFunc','var')
 	decodeFunc = @UGM_Decode_TRBP;
 end
 if ~exist('Cvec','var')
-	Cvec = [.0001 .0005 .001 .0025 .005 .0075 .01 .025 .05 .1];
+% 	Cvec = [.0005 .001 .0025 .005 .0075 .01 .025 .05 .1];
+	Cvec = [.00001 .00005 .0001 .0005 .001 .005 .01 .05 .1];
 end
 
 if any(runAlgos == 2) || any(runAlgos == 3)
@@ -41,7 +42,7 @@ else
 end
 
 % seed the RNG
-rng(529);
+rng(917);
 
 cd data;
 examples = {};

@@ -27,7 +27,7 @@ if ~exist('decodeFunc','var')
 	decodeFunc = @UGM_Decode_LBP;
 end
 if ~exist('Cvec','var')
-	Cvec = [.0001 .0005 .001 .0025 .005 .0075 .01 .025 .05 .1];
+	Cvec = [.00001 .00005 .0001 .0005 .001 .005 .01 .05 .1];
 end
 if ~exist('kappaVec','var')
 	kappaVec = [.01 .02 .05 .075 .1 .2 .5 .75 1];%[.1 .2 .5 .75 1 1.5 2 5];
