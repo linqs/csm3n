@@ -1,19 +1,27 @@
-function noiseVsScore(filenames,noiseRates,scoreIdx,scoreName,plotErrBars)
+function noiseVsScore(filenames,noiseRates,scoreIdx,scoreName,useFullTrain,plotErrBars)
+
+if ~exist('useFullTrain','var') || isempty(useFullTrain)
+	useFullTrain = 0;
+end
 
 if ~exist('plotErrBars','var') || isempty(plotErrBars)
 	plotErrBars = 0;
 end
 
-algoNames = {'MM','VCMM','SCMM'};
-m3nIdx = 3;
-vctsmIdx = 1;
+algoNames = {'MM','SCMM','VCMM'};
+m3nIdx = 1;
 sctsmIdx = 2;
+vctsmIdx = 3;
 
 errs = zeros(3,length(noiseRates));
 stds = zeros(3,length(noiseRates));
 % kappas = zeros(1,length(noiseRates));
 for f = 1:length(filenames)
-	load(filenames{f},'avgResults','stdResults','nFold','bestParam','params');
+	fname = filenames{f};
+	if useFullTrain
+		fname = [fname '_full'];
+	end
+	load(fname,'avgResults','stdResults','nFold');
 	errs(:,f) = avgResults(:,scoreIdx);
 	stds(:,f) = stdResults(:,scoreIdx);
 % 	for fold = 1:nFold
