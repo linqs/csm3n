@@ -5,6 +5,7 @@
 %   inferFunc (def: UGM_Infer_CountBP)
 %   decodeFunc (def: UGM_Decode_LBP)
 %   Cvec (def: 10.^[-4:2])
+%   cbpkappa (def: 1)
 %   save2file (def: will not save)
 
 clear;
@@ -24,6 +25,9 @@ if ~exist('decodeFunc','var')
 end
 if ~exist('Cvec','var')
 	Cvec = 10.^[-4:2];
+end
+if ~exist('cbpkappa','var')
+	cbpkappa = 1;
 end
 
 if any(runAlgos == 2) || any(runAlgos == 3)
@@ -72,9 +76,8 @@ testFoldIdx(foldIdx);
 cd data/grabcut;
 makeEdgeDist = 1;
 countBP = 2;
-kappa = 1;
 scaled = 1;
-[examples] = loadGrabCut(nEx,makeEdgeDist,countBP,kappa,scaled);
+[examples] = loadGrabCut(nEx,makeEdgeDist,countBP,cbpkappa,scaled);
 cd ../../;
 
 %% Experiment
