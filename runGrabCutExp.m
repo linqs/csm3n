@@ -8,7 +8,6 @@
 %   cbpkappa (def: 1)
 %   save2file (def: will not save)
 
-clear;
 nEx = 50;
 nTr = 5;
 nCV = 5;
