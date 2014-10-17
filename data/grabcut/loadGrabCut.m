@@ -1,12 +1,15 @@
-function examples = loadGrabCut(makeEdgeDist,nEx, countBP, validity, scaled)
+function examples = loadGrabCut(nEx,makeEdgeDist,countBP,kappa,scaled)
 
-if nargin < 1
+if ~exist('makeEdgeDist','var') || isempty(makeEdgeDist)
     makeEdgeDist = 1;
 end
-if nargin < 4
-    validity = 0;
+if ~exist('countBP','var') || isempty(countBP)
+    countBP = 2;
 end
-if nargin < 5
+if ~exist('kappa','var') || isempty(kappa)
+    kappa = 1;
+end
+if ~exist('scaled','var') || isempty(scaled)
     scaled = 0;
 end
 
@@ -46,11 +49,11 @@ for i = 1:nEx
         edgeStruct.edgeDist = UGM_makeEdgeDistribution(edgeStruct,3,[nRows nCols]);
     end
     
-    
-    if countBP
-        kappa = 1;
+    if countBP == 1
         minKappa = 0.01;
-        [edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_ConvexBetheCounts(edgeStruct,kappa,minKappa, validity);
+        [edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_ConvexBetheCounts(edgeStruct,kappa,minKappa,1);
+	elseif countBP == 2
+		[edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_ConvexBetheCounts2(edgeStruct,kappa);
     end
     
     %% FEATURES

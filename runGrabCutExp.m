@@ -1,6 +1,11 @@
-%cd ~/Dropbox/Research/csm3n
-
-%setUpPath;
+%% GrabCut experiment
+%
+% Variables:
+%   runAlgos (def: [4 7])
+%   inferFunc (def: UGM_Infer_CountBP)
+%   decodeFunc (def: UGM_Decode_LBP)
+%   Cvec (def: 10.^[-4:2])
+%   save2file (def: will not save)
 
 clear;
 nEx = 50;
@@ -8,26 +13,37 @@ nTr = 5;
 nCV = 5;
 maxEvals = 200;
 
-% m3n
-%countBP = false;
-%runAlgos = 10;
-%
-% countbp
-% countBP = true;
-% runAlgos = 4;
-%
-% % trbp
-% countBP = false;
-% runAlgos = 4;
+if ~exist('runAlgos','var')
+	runAlgos = [4 7];
+end
+if ~exist('inferFunc','var')
+	inferFunc = @UGM_Infer_CountBP;
+end
+if ~exist('decodeFunc','var')
+	decodeFunc = @UGM_Decode_LBP;
+end
+if ~exist('Cvec','var')
+	Cvec = 10.^[-4:2];
+end
 
-countBP = false;
-runAlgos = [4 7];
+if any(runAlgos == 2) || any(runAlgos == 3)
+	stepSizeVec = [.1 .2 .5 1 2];
+else
+	stepSizeVec = 1;
+end
+
+if any(runAlgos == 5)
+	kappaVec = [.1 .2 .5 1 2 5 10];
+else
+	kappaVec = 1;
+end
 
 numFolds = 10;
 
-rng(1);
-[~, shuffleOrder] = sort(rand(nEx,1));
-% shuffleOrder
+%% Partition folds
+
+rng(917);
+% [~, shuffleOrder] = sort(rand(nEx,1)); % shuffle
 shuffleOrder = 1:50; % don't shuffle
 
 for i = 1:numFolds
@@ -37,13 +53,11 @@ for i = 1:numFolds
 %     foldIdx(i).cvidx = mod((i-1) * (nTr+nCV) + [1:nTr] + nTr - 1, nEx) + 1;
 %     foldIdx(i).teidx = setdiff(1:nEx, [foldIdx(i).tridx, foldIdx(i).cvidx]);
 
-    % rotate train and validation round robin style
-    
+    % rotate train and validation round robin style    
     foldIdx(i).tridx = (i-1) * nTr + [1:nTr];
     foldIdx(i).ulidx = [];
     foldIdx(i).cvidx = mod((i-1) * nTr + [1:nTr] + nTr - 1, nEx) + 1;
     foldIdx(i).teidx = setdiff(1:nEx, [foldIdx(i).tridx, foldIdx(i).cvidx]);
-
 
     % shuffle
     foldIdx(i).tridx = shuffleOrder(foldIdx(i).tridx);
@@ -53,37 +67,41 @@ end
 
 testFoldIdx(foldIdx);
 
-%% GrabCut experiment
+
+%% Load data
 cd data/grabcut;
-[examples] = loadGrabCut(1, nEx, countBP, 1, 1);
+makeEdgeDist = 1;
+countBP = 2;
+kappa = 1;
+scaled = 1;
+[examples] = loadGrabCut(nEx,makeEdgeDist,countBP,kappa,scaled);
 cd ../../;
 
-%%
-inferFunc = @UGM_Infer_TRBP;
-%if countBP
-%    inferFunc = @UGM_Infer_CountBP;
-%end
+%% Experiment
 
-
-expSetup = struct('nFold',numFolds ...
-    , 'foldIdx', [foldIdx] ...
-    , 'runAlgos',runAlgos...
-    , 'decodeFunc',@UGM_Decode_TRBP ...
-    , 'inferFunc',inferFunc ...
-    , 'Cvec',10.^[-4:2] ...
-    , 'Cvec2',[0.01 0.1 1.0] ...
+expSetup = struct(...
+	 'nFold',numFolds ...
+    ,'foldIdx', foldIdx ...
+    ,'runAlgos',runAlgos...
+    ,'decodeFunc',decodeFunc ...
+    ,'inferFunc',inferFunc ...
+    ,'Cvec',Cvec ...
+    ,'stepSizeVec',stepSizeVec ...
+	,'kappaVec', kappaVec ...
     );
 
-
 figure(3);
-expSetup.optSGD = struct('maxIter',maxEvals ...
-    ,'verbose',1,'returnBest',1, 'plotObj', gcf, 'plotRefresh', 5);
-expSetup.optLBFGS = struct('Display','iter' ...
+expSetup.optSGD = struct(...
+	 'maxIter',maxEvals ...
+	,'verbose',1,'returnBest',1 ...
+	,'plotObj', gcf, 'plotRefresh', 5);
+expSetup.optLBFGS = struct(...
+	 'Display','iter' ...
     ,'MaxIter',maxEvals ...
     ,'MaxFunEvals',maxEvals ...
-    , 'plotObj', gcf ...
-    , 'plotRefresh', 5 ...
-    , 'verbose', 1 ...
+    ,'plotObj', gcf ...
+    ,'plotRefresh', 5 ...
+    ,'verbose', 1 ...
     );
 
 algoNames = {'MLE','PERC','M3N','M3NFW','SCTSM','VCTSM','VCTSMlog'};
