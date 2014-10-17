@@ -5,7 +5,6 @@
 %   inferFunc (def: UGM_Infer_CountBP)
 %   decodeFunc (def: UGM_Decode_LBP)
 %   Cvec (def: 10.^[-4:2])
-%   save2file (def: will not save)
 
 clear;
 nEx = 50;
