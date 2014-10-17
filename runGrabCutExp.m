@@ -5,6 +5,7 @@
 %   inferFunc (def: UGM_Infer_CountBP)
 %   decodeFunc (def: UGM_Decode_LBP)
 %   Cvec (def: 10.^[-4:2])
+%   save2file (def: will not save)
 
 clear;
 nEx = 50;
@@ -109,7 +110,11 @@ algoString = '';
 for i = 1:length(runAlgos)
     algoString = [algoString algoNames{runAlgos(i)}];
 end
-expSetup.save2file = sprintf('results/grabCutResults_%s_%d_%d', algoString, nEx, numFolds);
+
+if exist('save2file','var')
+	expSetup.save2file = save2file;
+end
+% expSetup.save2file = sprintf('results/grabCutResults_%s_%d_%d', algoString, nEx, numFolds);
 
 %expSetup.plotFunc = @plotGrabCut;
 
@@ -119,6 +124,5 @@ expSetup.save2file = sprintf('results/grabCutResults_%s_%d_%d', algoString, nEx,
 %ax{2} = subplot(122);
 
 %expSetup.plotFuncAxis = ax;
-
 
 experiment;
