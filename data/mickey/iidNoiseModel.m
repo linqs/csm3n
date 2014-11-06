@@ -1,4 +1,4 @@
-function examples = iidNoiseModel(nEx,nFeat,noiseRate,noiseType,rescale,makeEdgeDist,makeCounts,makePlots)
+function examples = iidNoiseModel(nEx,nFeat,noiseRate,noiseType,rescale,makeEdgeDist,makeCounts,convexity,makePlots)
 %
 % Loads and processes an example image
 %
@@ -23,6 +23,9 @@ if ~exist('makeEdgeDist','var')
 end
 if ~exist('makeCounts','var')
 	makeCounts = 1;
+end
+if ~exist('convexity','var')
+	convexity = 1;
 end
 if ~exist('makePlots','var')
 	makePlots = 0;
@@ -87,9 +90,9 @@ if makeEdgeDist
 	edgeStruct.edgeDist = UGM_makeEdgeDistribution(edgeStruct,3,[nRows nCols]);
 end
 if makeCounts == 1
-	[edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_ConvexBetheCounts(edgeStruct,1,.1,1);
+	[edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_ConvexBetheCounts(edgeStruct,convexity,.1,1);
 elseif makeCounts == 2
-	[edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_ConvexBetheCounts2(edgeStruct,1);
+	[edgeStruct.nodeCount,edgeStruct.edgeCount] = UGM_ConvexBetheCounts2(edgeStruct,convexity);
 end
 
 % Make examples

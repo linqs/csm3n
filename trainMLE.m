@@ -1,4 +1,4 @@
-function [w, nll] = trainMLE_lbfgs(examples, inferFunc, C, options, w)
+function [w,nll,iters,funcnt] = trainMLE(examples, inferFunc, C, options, w)
 %
 % Trains an MRF using MLE.
 %
@@ -43,7 +43,9 @@ else
 end
 
 % optimize
-w = minFunc(obj,w,options);
+[w,~,~,output] = minFunc(obj,w,options);
+iters = output.iterations;
+funcnt = output.funcCount;
 
 % compute NLL of solution
 if usePL

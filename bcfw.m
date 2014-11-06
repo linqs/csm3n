@@ -1,4 +1,4 @@
-function [w,f] = bcfw(examples, decodeFunc, lambda, options, w, varargin)
+function [w,f,k] = bcfw(examples, decodeFunc, lambda, options, w, varargin)
 %
 % Trains an MRF using max-margin block coordinate frank-wolfe.
 %
@@ -141,7 +141,7 @@ for k = 1:options.maxIter
     end
 end
 
-if nargout == 2
+if nargout >= 2
     f = m3nObj(w, examples,lambda,decodeFunc,varargin{:});
 end
 

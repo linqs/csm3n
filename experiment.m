@@ -278,6 +278,7 @@ for fold = 1:nFold
 				
 				%% TRAINING
 				
+				trainStart = tic;
 				try % Might get an exception during training for certain algos
 				
 				switch(runAlgos(a))
@@ -305,14 +306,16 @@ for fold = 1:nFold
 					% M3N learning with FW
 					case 4
 						fprintf('Training M3NFW with C=%f ...\n',C_w);
-						[w,fAvg] = bcfw(ex_tr,decodeFunc,C_w,optM3N);
+						[w,fAvg,iters] = bcfw(ex_tr,decodeFunc,C_w,optM3N);
 						params{a,fold,c1,c2}.w = w;
+						fprintf('Iters: %d\n',iters);
 												
 					% SCTSM learning (fixed convexity)
 					case 5
 						fprintf('Training SCTSM with C=%f, kappa=%f \n',C_w,kappa);
-						[w,f] = trainSCTSM(ex_tr,inferFunc,kappa,C_w,optSCTSM);
+						[w,f,iters,funcnt] = trainSCTSM(ex_tr,inferFunc,kappa,C_w,optSCTSM);
 						params{a,fold,c1,c2}.w = w;
+						fprintf('Iters: %d; FunCnt: %d\n',iters,funcnt);
 						
 					% VCTSM learning (convexity optimization)
 					case 6
@@ -334,6 +337,7 @@ for fold = 1:nFold
 					fprintf('Caught exception : %s\n  Skipping current job.', exception.message);
 					continue
 				end
+				fprintf('Elapsed train time : %f s\n', toc(trainStart));
 				
 				% Training stats
 				errs = zeros(nTrain,1);

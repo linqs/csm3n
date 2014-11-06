@@ -1,4 +1,4 @@
-function [w, kappa, f] = trainVCTSM_log(examples, inferFunc, C, options, w, kappa)
+function [w,kappa,f,iters,funcnt] = trainVCTSM_log(examples, inferFunc, C, options, w, kappa)
 
 % Optimizes the VCTSM objective with LBFGS, learning the optimal (w,kappa).
 %
@@ -58,9 +58,11 @@ end
 
 % Unconstrained optimization (in log space)
 x0 = [w ; log(kappa)];
-[x,f] = minFunc(objFun, x0, options);
+[x,f,~,output] = minFunc(objFun, x0, options);
 w = x(1:end-1);
 kappa = exp(x(end));
+iters = output.iterations;
+funcnt = output.funcCount;
 
 
 %% Plotting function

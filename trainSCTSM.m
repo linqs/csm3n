@@ -1,4 +1,4 @@
-function [w, f] = trainSCTSM(examples, inferFunc, kappa, C, options, w)
+function [w,f,iters,funcnt] = trainSCTSM(examples, inferFunc, kappa, C, options, w)
 
 % Optimizes the CCTSM objective, learning the optimal w.
 %
@@ -49,8 +49,9 @@ end
 
 % run optimization
 objFun = @(x, varargin) sctsmObj(x, examples, C, inferFunc, kappa, varargin{:});
-[w,f] = minFunc(objFun, w, options);
-
+[w,f,~,output] = minFunc(objFun, w, options);
+iters = output.iterations;
+funcnt = output.funcCount;
 
 %% Plotting function
 function plotFunc(trace,plotRefresh,fig)

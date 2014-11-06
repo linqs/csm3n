@@ -6,6 +6,7 @@
 %   runAlgos (def: [4 5 7])
 %   inferFunc (def: UGM_Infer_CountBP)
 %   decodeFunc (def: UGM_Decode_LBP)
+%   convexity (def: 1)
 %   Cvec (def: [.0001 .00025 .0005 .001 .0025 .005 .01 .025 .05 .1])
 %   kappaVec (def: [.01 .02 .05 .075 .1 .2 .5 .75 1])
 %   save2file (def: will not save)
@@ -26,11 +27,14 @@ end
 if ~exist('decodeFunc','var')
 	decodeFunc = @UGM_Decode_LBP;
 end
+if ~exist('convexity','var')
+	convexity = 1;
+end
 if ~exist('Cvec','var')
 	Cvec = [.0001 .00025 .0005 .001 .0025 .005 .01 .025 .05 .1];
 end
 if ~exist('kappaVec','var')
-	kappaVec = [.01 .02 .05 .075 .1 .2 .5 .75 1];%[.1 .2 .5 .75 1 1.5 2 5];
+	kappaVec = [.01 .02 .05 .075 .1 .2 .5 .75 1];
 end
 if ~exist('makePlots','var')
 	makePlots = 0;
@@ -67,7 +71,8 @@ cd data/mickey;
 nFeat = 2;
 noiseType = 2;
 scale = .5;
-[examples] = iidNoiseModel(nFold*(nTrain+nCV+nTest),nFeat,noiseRate,noiseType,scale,1,2,dataFig);
+[examples] = iidNoiseModel(nFold*(nTrain+nCV+nTest),nFeat,...
+						   noiseRate,noiseType,scale,1,2,convexity,dataFig);
 cd ../..;
 
 % add RCN to training examples
@@ -89,7 +94,7 @@ expSetup = struct('foldIdx',foldIdx ...
 				 ,'kappaVec',kappaVec ...
 				 ,'computeBaseline',1 ...
 				 );
-maxIter = 200;
+maxIter = 1000;
 expSetup.optSGD = struct('maxIter',maxIter ...
 						,'plotObj',objFig,'plotRefresh',10 ...
 						,'verbose',0,'returnBest',1);
