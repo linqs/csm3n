@@ -12,9 +12,9 @@ end
 Cvec = expSetup.Cvec;
 kappaVec = expSetup.kappaVec;
 
-m3nIdx = find(expSetup.runAlgos==10);
-vctsmIdx = find(expSetup.runAlgos==4);
+m3nIdx = find(expSetup.runAlgos==4);
 sctsmIdx = find(expSetup.runAlgos==5);
+vctsmIdx = find(expSetup.runAlgos==7);
 
 % Which trials to use?
 if ~exist('plotFolds','var') || isempty(plotFolds)
