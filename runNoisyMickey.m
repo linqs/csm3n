@@ -66,7 +66,7 @@ end
 cd data/mickey;
 nFeat = 2;
 noiseType = 2;
-scale = 1;
+scale = .5;
 [examples] = iidNoiseModel(nFold*(nTrain+nCV+nTest),nFeat,noiseRate,noiseType,scale,1,2,dataFig);
 cd ../..;
 

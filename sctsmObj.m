@@ -37,10 +37,6 @@ for i = 1:nEx
 	% Loss-augmented (approx) marginal inference
 	[nodePot,edgePot] = UGM_CRF_makePotentials(w,ex.Xnode,ex.Xedge,ex.nodeMap,ex.edgeMap,ex.edgeStruct);
 	[nodeBel,edgeBel,~,H] = UGM_Infer_ConvexBP(kappa,nodePot.*exp(1-Ynode),edgePot,ex.edgeStruct,inferFunc,varargin{:});
-	
-	% FOR TESTING
-% 	[nodeBel2,edgeBel2,~,H2] = UGM_Infer_ConvexBP(kappa,nodePot.*exp(1-Ynode),edgePot,ex.edgeStruct,@UGM_Infer_TRBP,varargin{:});
-% 	fprintf('Differences in: nodeBel=%f, edgeBel=%f, H=%f\n',sum(abs(nodeBel(:)-nodeBel2(:))),sum(abs(edgeBel(:)-edgeBel2(:))),abs(H-H2));
 
 	% Compute sufficient statistics
 	ss_mu = Fx * [reshape(nodeBel',[],1) ; edgeBel(:)];
